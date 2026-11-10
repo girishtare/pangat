@@ -37,7 +37,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
 ## Connecting Supabase
 
-1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql` and `0003_advisor_fixes.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding.
+1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql` and `0003_advisor_fixes.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
 2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
 3. Set these in Vercel (Project → Settings → Environment Variables, Production), then redeploy:
    - `SUPABASE_URL`: the project URL.

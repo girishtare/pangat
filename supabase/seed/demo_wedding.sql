@@ -1,8 +1,15 @@
+begin;
+
 -- Test data: the same sample wedding as demo mode, in a real database.
 -- For testing the guest flow and host access against Supabase before the
--- dry run. Not for production. Safe to re-run: it replaces the event.
+-- dry run. Not for production. Safe to re-run: it replaces the event and all
+-- replies, but keeps the host links (who may sign in, and for which side).
 --
 -- Guest pages: /r/demo-family-1 .. /r/demo-family-8 (4 bride side, 4 groom side).
+
+create temp table keep_hosts on commit drop as
+  select h.user_id, h.side from public.hosts h join public.events e on e.id = h.event_id
+  where e.slug = 'demo-wedding';
 
 delete from public.events where slug = 'demo-wedding';
 
@@ -41,3 +48,8 @@ select hh.id, fns.id
 from hh, fns
 where fns.name_en <> 'Haldi'
    or hh.token in ('demo-family-1', 'demo-family-4', 'demo-family-8');
+
+insert into public.hosts (event_id, user_id, side)
+select e.id, k.user_id, k.side from public.events e, keep_hosts k where e.slug = 'demo-wedding';
+
+commit;
