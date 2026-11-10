@@ -95,6 +95,11 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - Forecast: `expected = confirmed heads x yesShowRate + pending households x average heads per yes x pendingShowRate`. Defaults 0.90 and 0.40 are guesses, stored per event.
 - Departures from the original spec: replies are yes or no only (no "maybe"); the form asks total people and vegetarian count (no adults and children split).
 
+## UI
+
+- Redesigned 10 Nov (PRs 10-13) from docs/ui-brief.md and the owner's reference images: tokens and shared classes in src/app/globals.css (paper, kumkum, haldi, ink; .btn, .input, .card, .badge, .alert, .table-p, .choice), fonts Noto Sans/Serif + Devanagari via next/font, shared pieces in src/app/ui (kit.tsx, Stepper, MobileNav), event shell EventShell in src/app/host/HostChrome.tsx (laptop rail, phone menu). Wide tables have a stacked-card version below lg. Reviewed live at 1440x900, 1366x768, 390 and 360 px.
+- Review tip: the browser pane's phone emulation crops screenshots; review phones by loading pages in 390/360 px iframes on a desktop-size pane (same origin, so the sign-in carries over).
+
 ## Verification status (updated 10 November 2026)
 
 - CI passes: type-check, 18 tests under vitest, Next build.
