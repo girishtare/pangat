@@ -13,7 +13,7 @@ npm run dev
 
 Open http://localhost:3000. With no `.env.local`, the app runs in **demo mode**: a sample wedding with eight households, held in memory and reset on restart. The home page links to each guest page and to the host dashboard.
 
-Other commands: `npm test`, `npm run typecheck`, `npm run build`.
+Other commands: `npm test`, `npm run typecheck`, `npm run build` (Next.js build plus the Cloudflare Workers bundle in `.open-next`), `npm run build:next` (Next.js only).
 
 ## What is built
 
