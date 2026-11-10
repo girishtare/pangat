@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-kumkum: #8c1c13;
+  --color-haldi: #e3a008;
+  --color-paper: #fdf8ef;
+  --color-ink: #2b1d16;
+  --font-sans: "Noto Sans", "Noto Sans Devanagari", "Nirmala UI", system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}

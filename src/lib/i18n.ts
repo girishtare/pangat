@@ -1,0 +1,95 @@
+import type { Lang } from "./types";
+
+// Marathi strings are a first draft: please have a native reader check them
+// before the page goes to guests.
+const strings = {
+  en: {
+    switchLang: "मराठी",
+    invitedBy: "You are invited",
+    isThisYou: "Is this invitation for you?",
+    yesThatsUs: "Yes, that's us",
+    notUs: "No, this isn't us",
+    notUsHelp: "Sorry about that. Please call the family so we can send you the right link.",
+    intro: "Help us host you well. Tell us who's coming.",
+    coming: "Coming",
+    notComing: "Can't come",
+    howMany: "How many people?",
+    howManyVeg: "How many vegetarian?",
+    nonVeg: "Non-vegetarian",
+    arrival: "When will you arrive?",
+    early: "Early",
+    on_time: "On time",
+    late: "A little late",
+    submit: "Send our reply",
+    saving: "Sending…",
+    thanksYes: "Thank you! We look forward to seeing you.",
+    thanksNo: "Thank you for letting us know. You'll be missed.",
+    yourReply: "Your reply",
+    people: "people",
+    veg: "veg",
+    change: "Change our reply",
+    changeUntil: "You can change this until",
+    closed: "Replies are now closed. Please call the family for any change.",
+    answerAll: "Please answer for every function.",
+    error: "Something went wrong. Please try again.",
+    notFound: "This link isn't valid. Please check the invitation or call the family.",
+    map: "Map",
+  },
+  mr: {
+    switchLang: "English",
+    invitedBy: "आपणांस सस्नेह निमंत्रण",
+    isThisYou: "हे निमंत्रण आपल्यासाठी आहे का?",
+    yesThatsUs: "हो, आम्हीच",
+    notUs: "नाही, हे आमचे नाही",
+    notUsHelp: "क्षमस्व. कृपया कुटुंबाशी संपर्क साधा, आम्ही योग्य लिंक पाठवू.",
+    intro: "आपल्या स्वागताची योग्य तयारी करता यावी म्हणून कृपया आपली उपस्थिती कळवा.",
+    coming: "येणार",
+    notComing: "येऊ शकणार नाही",
+    howMany: "किती जण येणार?",
+    howManyVeg: "त्यापैकी शाकाहारी किती?",
+    nonVeg: "मांसाहारी",
+    arrival: "आपण केव्हा पोहोचाल?",
+    early: "लवकर",
+    on_time: "वेळेवर",
+    late: "थोडे उशिरा",
+    submit: "उत्तर पाठवा",
+    saving: "पाठवत आहे…",
+    thanksYes: "धन्यवाद! आपल्या भेटीची आम्ही वाट पाहत आहोत.",
+    thanksNo: "कळवल्याबद्दल धन्यवाद. आपली उणीव भासेल.",
+    yourReply: "आपले उत्तर",
+    people: "जण",
+    veg: "शाकाहारी",
+    change: "उत्तर बदला",
+    changeUntil: "आपण हे उत्तर या तारखेपर्यंत बदलू शकता:",
+    closed: "उत्तरे स्वीकारणे आता बंद झाले आहे. बदलासाठी कृपया कुटुंबाशी संपर्क साधा.",
+    answerAll: "कृपया प्रत्येक कार्यक्रमासाठी उत्तर द्या.",
+    error: "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा.",
+    notFound: "ही लिंक वैध नाही. कृपया निमंत्रण तपासा किंवा कुटुंबाशी संपर्क साधा.",
+    map: "नकाशा",
+  },
+} as const;
+
+export type StringKey = keyof (typeof strings)["en"];
+
+export function t(lang: Lang, key: StringKey): string {
+  return strings[lang][key];
+}
+
+export function formatWhen(iso: string, lang: Lang): string {
+  return new Intl.DateTimeFormat(lang === "mr" ? "mr-IN" : "en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(iso));
+}
+
+export function formatDay(iso: string, lang: Lang): string {
+  return new Intl.DateTimeFormat(lang === "mr" ? "mr-IN" : "en-IN", {
+    day: "numeric",
+    month: "long",
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(iso));
+}
