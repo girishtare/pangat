@@ -470,3 +470,94 @@ export async function dashboardViewStats(eventId: string): Promise<Map<string, {
   }
   return out;
 }
+
+/* ---------- "Not us" lookup requests ---------- */
+
+const LOOKUPS_PER_LINK_PER_DAY = 5;
+
+/**
+ * A guest says the link isn't theirs and leaves a mobile. Finds a household of
+ * the event with that mobile (if any) for the host to review. The guest is
+ * never told whether there was a match. At most 5 requests per link per day;
+ * a repeat of a pending request is ignored.
+ */
+export async function createLookupRequest(eventId: string, openedHouseholdId: string, mobile: string): Promise<void> {
+  const db = admin();
+  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const { data: recent, error: recentErr } = await db
+    .from("lookup_requests")
+    .select("mobile, status")
+    .eq("opened_household_id", openedHouseholdId)
+    .gte("created_at", since);
+  if (recentErr) throw new Error(`lookup check failed: ${recentErr.message}`);
+  if ((recent ?? []).length >= LOOKUPS_PER_LINK_PER_DAY) return;
+  if ((recent ?? []).some((r) => r.mobile === mobile && r.status === "pending")) return;
+
+  const { data: match, error: matchErr } = await db
+    .from("households")
+    .select("id")
+    .eq("event_id", eventId)
+    .eq("mobile", mobile)
+    .limit(1)
+    .maybeSingle();
+  if (matchErr) throw new Error(`lookup match failed: ${matchErr.message}`);
+
+  const { error } = await db.from("lookup_requests").insert({
+    event_id: eventId,
+    opened_household_id: openedHouseholdId,
+    mobile,
+    matched_household_id: match?.id ?? null,
+  });
+  if (error) throw new Error(`saving lookup failed: ${error.message}`);
+}
+
+export interface LookupHousehold {
+  id: string;
+  side: Side;
+  nameEn: string;
+  nameMr: string | null;
+  mobile: string | null;
+  token: string;
+}
+
+export interface LookupRequest {
+  id: number;
+  mobile: string;
+  createdAt: string;
+  opened: LookupHousehold;
+  matched: LookupHousehold | null;
+}
+
+const HH_COLS = "id, side, name_en, name_mr, mobile, token";
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+const toLookupHousehold = (r: any): LookupHousehold | null =>
+  r ? { id: r.id, side: r.side, nameEn: r.name_en, nameMr: r.name_mr, mobile: r.mobile, token: r.token } : null;
+
+export async function listPendingLookups(eventId: string): Promise<LookupRequest[]> {
+  const { data, error } = await admin()
+    .from("lookup_requests")
+    .select(`id, mobile, created_at, opened:households!lookup_requests_opened_household_id_fkey(${HH_COLS}), matched:households!lookup_requests_matched_household_id_fkey(${HH_COLS})`)
+    .eq("event_id", eventId)
+    .eq("status", "pending")
+    .order("created_at")
+    .range(0, 499);
+  if (error) throw new Error(`lookups failed: ${error.message}`);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  return ((data ?? []) as any[]).map((r) => ({
+    id: r.id,
+    mobile: r.mobile,
+    createdAt: r.created_at,
+    opened: toLookupHousehold(r.opened)!,
+    matched: toLookupHousehold(r.matched),
+  }));
+}
+
+export async function resolveLookup(eventId: string, id: number, status: "sent" | "dismissed", userId: string): Promise<void> {
+  const { error } = await admin()
+    .from("lookup_requests")
+    .update({ status, resolved_by: userId, resolved_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("event_id", eventId)
+    .eq("status", "pending");
+  if (error) throw new Error(`resolving lookup failed: ${error.message}`);
+}

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { formatDay, formatWhen, t } from "@/lib/i18n";
 import { pick, type ArrivalSlot, type HouseholdView, type Lang } from "@/lib/types";
 import { MAX_HEADS } from "@/lib/validate";
-import { submitReply } from "./actions";
+import { reportNotUs, submitReply } from "./actions";
 
 type Step = "confirm" | "form" | "done" | "notus";
 
@@ -33,14 +33,22 @@ export default function GuestFlow({
   view,
   closed,
   source,
+  initialLang,
 }: {
   token: string;
   view: HouseholdView;
   closed: boolean;
   source: "qr" | "link";
+  /** Language the guest chose last time on this phone (cookie), if any. */
+  initialLang?: Lang;
 }) {
   const hasReplied = view.responses.length > 0;
-  const [lang, setLang] = useState<Lang>(view.household.name.mr ? "mr" : "en");
+  const [lang, setLangState] = useState<Lang>(initialLang ?? (view.household.name.mr ? "mr" : "en"));
+  const setLang = (next: Lang) => {
+    setLangState(next);
+    // Remember the choice on this phone, so the page opens in it next time.
+    document.cookie = `pangat_lang=${next}; path=/; max-age=31536000; samesite=lax`;
+  };
   const [step, setStep] = useState<Step>(hasReplied || closed ? "done" : "confirm");
   const [answers, setAnswers] = useState(() => initialAnswers(view));
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +114,7 @@ export default function GuestFlow({
         </section>
       )}
 
-      {step === "notus" && <p className="mt-8 rounded-xl bg-white p-5 text-center text-lg">{t(lang, "notUsHelp")}</p>}
+      {step === "notus" && <NotUs token={token} lang={lang} onBack={() => setStep("confirm")} />}
 
       {step === "form" && (
         <section className="mt-6 space-y-5">
@@ -217,6 +225,54 @@ export default function GuestFlow({
         </section>
       )}
     </main>
+  );
+}
+
+/** "This isn't us": take their mobile so a host can send them their own link. Reveals nothing about the guest list. */
+function NotUs({ token, lang, onBack }: { token: string; lang: Lang; onBack: () => void }) {
+  const [mobile, setMobile] = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  if (sent) return <p className="mt-8 rounded-xl bg-white p-5 text-center text-lg">{t(lang, "notUsThanks")}</p>;
+
+  return (
+    <section className="mt-8 space-y-4 rounded-xl bg-white p-5">
+      <p className="text-center text-lg">{t(lang, "notUsAsk")}</p>
+      <label className="block">
+        <span className="text-base font-semibold">{t(lang, "mobileLabel")}</span>
+        <input
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          inputMode="tel"
+          autoComplete="tel"
+          maxLength={20}
+          className="mt-1 block w-full rounded-xl border-2 border-haldi/60 px-4 py-3 text-xl"
+          placeholder="98765 43210"
+        />
+      </label>
+      {error && (
+        <p role="alert" className="rounded-xl bg-kumkum/10 px-4 py-3 text-kumkum">
+          {error}
+        </p>
+      )}
+      <BigButton
+        onClick={() =>
+          startTransition(async () => {
+            setError(null);
+            const r = await reportNotUs(token, mobile);
+            if (r.ok) setSent(true);
+            else setError(t(lang, r.error === "bad_mobile" ? "badMobile" : "notUsHelp"));
+          })
+        }
+      >
+        {pending ? t(lang, "saving") : t(lang, "send")}
+      </BigButton>
+      <BigButton variant="quiet" onClick={onBack}>
+        {t(lang, "back")}
+      </BigButton>
+    </section>
   );
 }
 
