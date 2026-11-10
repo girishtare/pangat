@@ -34,7 +34,7 @@ export default function Dashboard({ data, hostSide }: { data: DashboardData; hos
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Stat icon={Users} value={n(totals.households)} label={primary === "both" ? "Households invited" : `Households · ${scopeLabel(primary)}`} />
         <Stat
           icon={Users}
@@ -92,9 +92,9 @@ function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
             {formatWhen(fn.startsAt, "en")}
           </span>
           {fn.venue && (
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-4 w-4" aria-hidden="true" />
-              {fn.venue}
+            <span className="inline-flex items-start gap-1" title={fn.venue}>
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="line-clamp-2">{fn.venue}</span>
             </span>
           )}
         </p>

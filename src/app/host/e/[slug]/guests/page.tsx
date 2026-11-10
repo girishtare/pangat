@@ -53,7 +53,6 @@ export default async function GuestList({
         match,
       };
     });
-  const fnName = new Map(host.functions.map((f) => [f.id, f.name.en]));
   const noMobile = guests.filter((g) => !g.mobile).length;
   const noMarathi = guests.filter((g) => !g.nameMr).length;
   const qLower = q.toLowerCase();
@@ -68,13 +67,14 @@ export default async function GuestList({
       )
     : guests;
   const link = (id: string) => `/host/e/${slug}/guests/${id}`;
-  const invitedTo = (ids: string[]) => ids.map((id) => fnName.get(id) ?? "?").join(" · ");
+  // In date order, like the functions themselves.
+  const invitedTo = (ids: string[]) => host.functions.filter((f) => ids.includes(f.id)).map((f) => f.name.en).join(" · ");
 
   return (
     <EventShell host={host} current="guests">
       <PageHeader icon={Users} title="Guest list" subtitle="One household per printed card. Open a household to record a reply taken by phone." />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Stat icon={Users} value={guests.length.toLocaleString("en-IN")} label="Households" />
         <Stat icon={PhoneOff} value={noMobile} label="No mobile" tone={noMobile ? "warn" : "default"} />
         <Stat icon={Languages} value={noMarathi} label="No Marathi name" tone={noMarathi ? "warn" : "default"} />
@@ -99,7 +99,7 @@ export default async function GuestList({
           </Alert>
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
           <details className="card group p-0" open={guests.length === 0}>
             <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-kumkum text-white">

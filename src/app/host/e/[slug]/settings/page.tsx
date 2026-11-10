@@ -1,6 +1,7 @@
 import { CalendarDays, Flower2, Settings, Users } from "lucide-react";
 import { isoToIstInput } from "@/lib/events";
 import { hostGate } from "@/lib/host";
+import { displayPhone } from "@/lib/outreach";
 import { scopeLabel } from "@/lib/sides";
 import { dashboardViewStats, functionUsage, listHosts, MAX_CO_OWNERS_PER_SIDE } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
@@ -50,13 +51,13 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     <EventShell host={host} current="settings">
       <PageHeader icon={Settings} title="Event settings" />
 
-      <nav aria-label="Settings sections" className="card sticky top-16 z-20 mb-6 flex gap-1 overflow-x-auto p-1 lg:top-4">
+      <nav aria-label="Settings sections" className="card sticky top-16 z-20 mb-6 grid grid-cols-3 gap-1 p-1 sm:flex lg:top-4">
         {[
           ["#details", "Event details"],
           ["#functions", "Functions"],
           ["#people", "Owner and co-owners"],
         ].map(([href, label]) => (
-          <a key={href} href={href} className="flex min-h-11 shrink-0 items-center rounded-xl px-4 font-semibold text-kumkum hover:bg-paper-deep">
+          <a key={href} href={href} className="flex min-h-11 items-center justify-center rounded-xl px-2 text-center text-sm font-semibold leading-tight text-kumkum hover:bg-paper-deep sm:px-4 sm:text-base">
             {label}
           </a>
         ))}
@@ -71,8 +72,8 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             cutoff={isoToIstInput(host.event.cutoffAt)}
             yesShowRate={host.event.yesShowRate}
             pendingShowRate={host.event.pendingShowRate}
-            contactBride={host.event.contactPhone.bride}
-            contactGroom={host.event.contactPhone.groom}
+            contactBride={displayPhone(host.event.contactPhone.bride)}
+            contactGroom={displayPhone(host.event.contactPhone.groom)}
             catererDueOn={host.event.catererDueOn}
             catererFinalOn={host.event.catererFinalOn}
           />

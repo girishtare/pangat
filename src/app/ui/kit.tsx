@@ -96,8 +96,8 @@ export function Section({
 }) {
   return (
     <section id={id} className={`${tone === "card" ? "card p-4 sm:p-6" : ""} scroll-mt-24 ${className}`}>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
           {n !== undefined && (
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-lg font-bold text-white">
               {n}
@@ -113,7 +113,7 @@ export function Section({
             {subtitle && <div className="mt-0.5 text-sm text-ink-soft">{subtitle}</div>}
           </div>
         </div>
-        {actions}
+        {actions && <div className="shrink-0">{actions}</div>}
       </div>
       {children}
     </section>
@@ -137,15 +137,15 @@ export function Stat({
 }) {
   const ring = { default: "", warn: "border-haldi/70 bg-haldi-soft/50", good: "border-leaf/30 bg-leaf-soft/50", accent: "border-kumkum/30 bg-kumkum-soft/50" }[tone];
   return (
-    <div className={`card flex items-center gap-3 p-4 ${ring}`}>
+    <div className={`card flex items-center gap-3 p-3 sm:p-4 ${ring}`}>
       {Icon && (
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-haldi-soft text-haldi-deep">
+        <span className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-haldi-soft text-haldi-deep sm:flex">
           <Icon className="h-6 w-6" aria-hidden="true" />
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="font-display text-3xl font-bold leading-tight text-ink">{value}</div>
-        <div className="text-sm font-semibold text-ink-soft">{label}</div>
+        <div className="font-display text-2xl font-bold leading-tight text-ink sm:text-3xl">{value}</div>
+        <div className="text-xs font-semibold text-ink-soft sm:text-sm">{label}</div>
         {sub && <div className="text-xs text-ink-soft">{sub}</div>}
         {progress && (
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-paper-deep" role="presentation">
