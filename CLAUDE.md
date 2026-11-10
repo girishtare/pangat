@@ -71,7 +71,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 
 ## Stage 2 (next), in suggested order
 
-1. Host sign-in (Supabase Auth) and RLS policies so each host sees only their side. Then enable `/host` outside demo mode.
+1. Host sign-in (Supabase Auth) and RLS policies so each host sees only their side. Then enable `/host` outside demo mode. **Code written 10 Nov (migration 0002, `/host/login`, edge `src/middleware.ts`); not yet run against Supabase.**
 2. Guest list import from a sheet, add a late household, token and short-code generation (`src/lib/token.ts`).
 3. Mark on behalf (source `on_behalf`, `updated_by` = host).
 4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi.
@@ -85,6 +85,8 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - Repo: github.com/girishtare/pangat (private). No `.env.example` on purpose: Cloudflare's import form makes every listed variable required. Variables are listed in README.
 - Do not build or install locally: Windows Smart App Control on the owner's PC blocks new native npm binaries (rolldown, rollup). Push and let CI and Cloudflare build.
 - Guests never reach the database directly. Server code uses the service-role key and looks households up by token. RLS is on with no anonymous policies. Keep it that way.
+- Hosts sign in with email and password (owner creates accounts; public sign-up off, because Supabase's built-in email only reaches org members). `/host` reads with the host's own session (publishable key), so RLS limits it to their event and side; hosts have read-only policies and the `authenticated` role has no write grants. Writes stay server-side with the service-role key. Policy helpers are in the unexposed `private` schema.
+- Env vars: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secret), `PANGAT_EVENT_SLUG`. No `NEXT_PUBLIC_` prefix: they must be read at runtime on Cloudflare.
 - `src/lib/store` has two implementations behind one interface: `demo.ts` (in memory) and `supabase.ts`. The app uses demo mode when the Supabase env vars are missing.
 - Forecast: `expected = confirmed heads x yesShowRate + pending households x average heads per yes x pendingShowRate`. Defaults 0.90 and 0.40 are guesses, stored per event.
 - Departures from the original spec: replies are yes or no only (no "maybe"); the form asks total people and vegetarian count (no adults and children split).
@@ -95,7 +97,9 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - On the live Cloudflare site (demo mode): `/`, `/r/demo-family-1` and `/host` load; a guest reply (demo-family-3) submitted, survived reload, showed on `/host` with correct expected figures, and a changed reply updated the dashboard without double-counting. Unknown tokens show a bilingual "link isn't valid" message.
 - Demo mode on Workers keeps data per isolate, so replies can vanish or not appear on `/host`. Supabase is needed before the dry run.
 - Seen in testing: the English/Marathi choice is not remembered on reload (page reverts to Marathi); Marathi view mixes Devanagari dates with Latin digits and "AM/PM" in headcounts and times.
-- `src/lib/store/supabase.ts` and the migration have not been run against a live project.
+- Supabase project `pangat` (ref `sibsiwicyoawdysgqeft`, Mumbai, free plan) created 10 Nov; migrations 0001 to 0003 and the demo-wedding seed applied; security advisor clean. RLS tested in SQL with throwaway users (rolled back): bride host sees 4 households/10 invites, groom host 4/9, both-sides host 8/19, signed-in non-host 0; anon read and host writes are refused.
+- Not yet run live: `src/lib/store/supabase.ts` (guest flow), `/host/login`, the edge middleware on Cloudflare. Needs the Cloudflare variables set and a real host account.
+- Free Supabase projects pause after a week without activity; a pause would break guest links.
 - Marathi strings in `src/lib/i18n.ts` are a first draft and need a native reader.
 
 ## Do not
