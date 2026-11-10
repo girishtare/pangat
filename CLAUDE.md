@@ -57,9 +57,9 @@ The owner will decide after 3 January whether the product is sold on savings or 
 
 ## Open decisions (owner has not answered)
 
-1. Which functions get their own headcount, and which are catered?
+1. ~~Which functions get their own headcount, and which are catered?~~ Answered 10 Nov: hosts set this per event on the page (each function has its own headcount and a "food served" flag).
 2. Is the groom's side in the tool with its own login, or do they hand over one number?
-3. Does each card map to one household, and is there a soft cap on heads per card?
+3. ~~Does each card map to one household, and is there a soft cap on heads per card?~~ Answered 10 Nov: one card = one household, with an optional soft cap (Cap column). The cap is stored but not yet enforced on the guest form.
 4. How far can the caterer's count move after 15 December, and at what cost?
 5. Is the menu all-vegetarian? If so, drop the diet question.
 
@@ -73,6 +73,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 
 1. Host sign-in (Supabase Auth) and RLS policies so each host sees only their side. Then enable `/host` outside demo mode. **Code written 10 Nov (migration 0002, `/host/login`, `src/proxy.ts`); RLS tested in SQL; owner signed in on the live site and saw the both-sides dashboard. Done.**
 2. Guest list import from a sheet, add a late household, token and short-code generation (`src/lib/token.ts`). **Code written 10 Nov: `/host/guests`, `src/lib/guestlist.ts`, migration 0004 (atomic `import_households`, service role only). Import function tested in SQL; the page not yet used live.**
+   Also (owner's call, 10 Nov: "everything that needs a change should be on page"): events are created on the page with Haldi/Wedding/Reception by default; functions, event details, show rates and hosts are edited on Event settings (hosts of both sides only). Routes are per event: `/host/e/<slug>`. Migration 0005; `PANGAT_EVENT_SLUG` is gone.
 3. Mark on behalf (source `on_behalf`, `updated_by` = host).
 4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi.
 5. "Not us" mobile lookup and approval queue.
@@ -86,7 +87,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - Do not build or install locally: Windows Smart App Control on the owner's PC blocks new native npm binaries (rolldown, rollup). Push and let CI and Vercel build.
 - Guests never reach the database directly. Server code uses the service-role key and looks households up by token. RLS is on with no anonymous policies. Keep it that way.
 - Hosts sign in with email and password (owner creates accounts; public sign-up off, because Supabase's built-in email only reaches org members). `/host` reads with the host's own session (publishable key), so RLS limits it to their event and side; hosts have read-only policies and the `authenticated` role has no write grants. Writes stay server-side with the service-role key. Policy helpers are in the unexposed `private` schema.
-- Env vars: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secret), `PANGAT_EVENT_SLUG`. No `NEXT_PUBLIC_` prefix: no browser code uses them, and NEXT_PUBLIC_ values are frozen at build time.
+- Env vars: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secret). No `NEXT_PUBLIC_` prefix: no browser code uses them, and NEXT_PUBLIC_ values are frozen at build time.
 - `src/lib/store` has two implementations behind one interface: `demo.ts` (in memory) and `supabase.ts`. The app uses demo mode when the Supabase env vars are missing.
 - Forecast: `expected = confirmed heads x yesShowRate + pending households x average heads per yes x pendingShowRate`. Defaults 0.90 and 0.40 are guesses, stored per event.
 - Departures from the original spec: replies are yes or no only (no "maybe"); the form asks total people and vegetarian count (no adults and children split).

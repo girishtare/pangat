@@ -76,7 +76,7 @@ export const supabaseStore = {
     const functions: FunctionInfo[] = (row.invites ?? [])
       .map((i: any) => i.functions)
       .filter(Boolean)
-      .sort((a: any, b: any) => a.sort_order - b.sort_order || a.starts_at.localeCompare(b.starts_at))
+      .sort((a: any, b: any) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime() || a.sort_order - b.sort_order)
       .map(toFunction);
     return {
       event: toEvent(row.events),
@@ -115,7 +115,7 @@ export async function loadDashboard(client: SupabaseClient, eventSlug: string): 
   if (!ev) return null;
 
   const [fnRes, hhRes] = await Promise.all([
-    client.from("functions").select("*").eq("event_id", ev.id).order("sort_order").order("starts_at"),
+    client.from("functions").select("*").eq("event_id", ev.id).order("starts_at").order("sort_order"),
     client
       .from("households")
       .select("id, side, invites(function_id), responses(function_id, status, heads, veg, nonveg)")

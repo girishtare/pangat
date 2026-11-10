@@ -13,8 +13,8 @@ export type SaveResult =
   | { ok: true; added: number; skipped: number; codes: { name: string; shortCode: string }[] }
   | { ok: false; error: string; check?: SheetCheck };
 
-async function signedInHost(): Promise<{ host: HostContext } | { error: string }> {
-  const gate = await hostGate();
+async function signedInHost(slug: string): Promise<{ host: HostContext } | { error: string }> {
+  const gate = await hostGate(slug);
   if (gate.ok) return { host: gate.host };
   if (gate.reason === "demo") return { error: "The guest list can't be changed in demo mode." };
   if (gate.reason === "not_host") return { error: "You are not a host of this event." };
@@ -28,18 +28,18 @@ async function runCheck(host: HostContext, text: string) {
 }
 
 /** Read the pasted sheet and report what would happen. Writes nothing. */
-export async function checkImport(text: string): Promise<CheckResult> {
+export async function checkImport(slug: string, text: string): Promise<CheckResult> {
   if (typeof text !== "string" || text.length > MAX_TEXT) return { ok: false, error: "That paste is too large." };
-  const who = await signedInHost();
+  const who = await signedInHost(slug);
   if ("error" in who) return { ok: false, error: who.error };
   const { check } = await runCheck(who.host, text);
   return { ok: true, check };
 }
 
 /** Check again and, if every row is fine, add the new households. */
-export async function saveImport(text: string): Promise<SaveResult> {
+export async function saveImport(slug: string, text: string): Promise<SaveResult> {
   if (typeof text !== "string" || text.length > MAX_TEXT) return { ok: false, error: "That paste is too large." };
-  const who = await signedInHost();
+  const who = await signedInHost(slug);
   if ("error" in who) return { ok: false, error: who.error };
   const { check, usedCodes } = await runCheck(who.host, text);
   if (check.problem) return { ok: false, error: check.problem, check };
@@ -61,8 +61,7 @@ export async function saveImport(text: string): Promise<SaveResult> {
     console.error("saveImport failed", err);
     return { ok: false, error: "Saving failed, so nothing was added. Please try again." };
   }
-  revalidatePath("/host/guests");
-  revalidatePath("/host");
+  revalidatePath("/host", "layout");
   return {
     ok: true,
     added: rows.length,
@@ -76,7 +75,7 @@ export type AddState = SaveResult | null;
 const oneLine = (v: FormDataEntryValue | null) => String(v ?? "").replace(/[\t\r\n]+/g, " ").trim();
 
 /** Add one late household. Goes through exactly the same checks as an import. */
-export async function addHousehold(_prev: AddState, formData: FormData): Promise<AddState> {
+export async function addHousehold(slug: string, _prev: AddState, formData: FormData): Promise<AddState> {
   const functions = formData.getAll("functions").map(oneLine).filter(Boolean);
   const header = ["Name", "Marathi name", "Side", "Mobile", "Functions", "Cap"];
   const row = [
@@ -89,5 +88,5 @@ export async function addHousehold(_prev: AddState, formData: FormData): Promise
   ];
   if (!row[0]) return { ok: false, error: "Enter the household's name." };
   if (!functions.length) return { ok: false, error: "Tick at least one function." };
-  return saveImport(`${header.join("\t")}\n${row.join("\t")}`);
+  return saveImport(slug, `${header.join("\t")}\n${row.join("\t")}`);
 }

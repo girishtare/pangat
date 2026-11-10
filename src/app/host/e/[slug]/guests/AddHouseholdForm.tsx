@@ -6,8 +6,8 @@ import { addHousehold } from "./actions";
 
 const input = "mt-1 block w-full rounded-xl border-2 border-haldi/60 bg-white px-3 py-2";
 
-export default function AddHouseholdForm({ hostSide, functions }: { hostSide: Side | null; functions: { id: string; name: string }[] }) {
-  const [state, action, pending] = useActionState(addHousehold, null);
+export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: string; hostSide: Side | null; functions: { id: string; name: string }[] }) {
+  const [state, action, pending] = useActionState(addHousehold.bind(null, slug), null);
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) form.current?.reset();

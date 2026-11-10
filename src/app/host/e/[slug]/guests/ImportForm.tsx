@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import type { SheetCheck } from "@/lib/guestlist";
 import { checkImport, saveImport } from "./actions";
 
-export default function ImportForm() {
+export default function ImportForm({ slug }: { slug: string }) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [checked, setChecked] = useState<{ text: string; check: SheetCheck } | null>(null);
@@ -18,14 +18,14 @@ export default function ImportForm() {
   const onCheck = () =>
     start(async () => {
       setMessage(null);
-      const r = await checkImport(text);
+      const r = await checkImport(slug, text);
       if (!r.ok) setMessage({ kind: "error", text: r.error });
       else setChecked({ text, check: r.check });
     });
 
   const onSave = () =>
     start(async () => {
-      const r = await saveImport(text);
+      const r = await saveImport(slug, text);
       if (!r.ok) {
         setMessage({ kind: "error", text: r.error });
         if (r.check) setChecked({ text, check: r.check });
