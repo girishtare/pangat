@@ -22,13 +22,14 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 - Host area at `/host`: a signed-in host's events (straight into the event if there is only one) and **Create an event** (`/host/new`): name, wedding date, optional reply cut-off (default 15 days before). A new event starts with Haldi (day before, 10 am), Wedding (11:30 am) and Reception (7 pm).
 - Each event at `/host/e/<event>`: **Dashboard**, **Guest list** and, for hosts of both sides, **Event settings**: event name and cut-off, show rates, functions (rename, re-time, venue, map link, food yes/no, delete unless someone has replied, add e.g. Sangeet and optionally invite every household), and hosts (add by email with side and a starting password, remove).
 - Guest list at `/host/e/<event>/guests`: download the event's **Excel template** (dropdowns for Side and Functions, Mobile kept as text, a "How to fill" sheet), fill it in Excel or Google Sheets, and upload it (`.xlsx` or `.csv`); or paste cells. Pangat checks every row, then adds. One row per household; header row with **Name** (required), Marathi name, Side, Mobile, Functions (blank = all), Cap. Mobiles are normalised to +91…; duplicates inside the paste and households already in the list are caught; a one-side host can only add to their side. "Add one household" uses the same checks. Each new household gets a token and a six-character short code.
-- Forecast, validation, token and guest-list logic in `src/lib`, with tests in `tests`.
+- Household page (`/host/e/<event>/guests/<id>`, from the guest list or its search by name, mobile or code): record a reply taken by phone or in person (source `on_behalf`, signed with the host; works after the cut-off), edit details and invitations (functions already replied to can't be removed), delete if no reply, copy the guest's link.
+- **Caterer numbers** tab (hosts of both sides): the family's baseline per function, a button to freeze the tool's expected headcount and veg/non-veg split (for 14 December), the number for the caterer (the higher of the two), actual counts on the day, and which number came closer. Migration 0006 (`function_numbers`).
+- Forecast, validation, token, guest-list and pilot logic in `src/lib`, with tests in `tests`.
 - Database schema in `supabase/migrations/0001_init.sql`.
 - Supabase data layer in `src/lib/store/supabase.ts`.
 
 ## Not built yet
 
-- Mark on behalf.
 - Printable slips with QR codes and short codes.
 - "Not us" mobile-number lookup and approval queue.
 - WhatsApp nudge links.
@@ -40,7 +41,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
 ## Connecting Supabase
 
-1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`, `0003_advisor_fixes.sql`, `0004_import_households.sql` and `0005_event_setup.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
+1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`, `0003_advisor_fixes.sql`, `0004_import_households.sql`, `0005_event_setup.sql` and `0006_pilot_numbers.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
 2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
 3. Set these in Vercel (Project → Settings → Environment Variables, Production), then redeploy:
    - `SUPABASE_URL`: the project URL.
