@@ -2,7 +2,7 @@
 
 Know who is really coming. Guests reply through a personal link or QR code; the host sees a headcount per function.
 
-Stage 1 of the v1 spec plus stage 2 item 1 (host sign-in), 10 November 2026. Live in demo mode at https://pangat.girish-s-tare.workers.dev (Cloudflare Workers, deployed on every push to `main`). Project context for Claude Code is in `CLAUDE.md`.
+Stage 1 of the v1 spec plus stage 2 item 1 (host sign-in), 10 November 2026. Hosted on Vercel (project `pangat`, functions in Mumbai `bom1`, next to the Supabase database), deployed on every push to `main`. Project context for Claude Code is in `CLAUDE.md`.
 
 ## Run it
 
@@ -13,7 +13,7 @@ npm run dev
 
 Open http://localhost:3000. With no `.env.local`, the app runs in **demo mode**: a sample wedding with eight households, held in memory and reset on restart. The home page links to each guest page and to the host dashboard.
 
-Other commands: `npm test`, `npm run typecheck`, `npm run build` (Next.js build plus the Cloudflare Workers bundle in `.open-next`), `npm run build:next` (Next.js only).
+Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run these on the owner's Windows PC (see CLAUDE.md); GitHub Actions runs them on every push.
 
 ## What is built
 
@@ -39,13 +39,13 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build` (Next.js build 
 
 1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql` and `0003_advisor_fixes.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding.
 2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
-3. Set these on the host (Cloudflare: Worker → Settings → Variables and Secrets), then redeploy:
+3. Set these in Vercel (Project → Settings → Environment Variables, Production), then redeploy:
    - `SUPABASE_URL`: the project URL.
    - `SUPABASE_PUBLISHABLE_KEY`: the publishable (anon) key. Used only for host sessions; row-level security applies.
-   - `SUPABASE_SERVICE_ROLE_KEY`: the secret key. Store it as a **Secret**. Server-only; bypasses row-level security.
+   - `SUPABASE_SERVICE_ROLE_KEY`: the secret key. Mark it **Sensitive**. Server-only; bypasses row-level security.
    - `PANGAT_EVENT_SLUG`: slug of the event the host dashboard shows (defaults to `demo-wedding`).
 
-   Leave both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` unset to run in demo mode. None of these use the `NEXT_PUBLIC_` prefix: no browser code talks to Supabase. There is deliberately no `.env.example`: Cloudflare's import form turns every variable in it into a required field, which blocks a demo-mode deploy.
+   Leave both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` unset to run in demo mode. None of these use the `NEXT_PUBLIC_` prefix: no browser code talks to Supabase.
 
 ## Adding a host
 

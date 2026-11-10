@@ -20,7 +20,7 @@ export async function hostClient(): Promise<SupabaseClient | null> {
         try {
           for (const { name, value, options } of list) store.set(name, value, options);
         } catch {
-          // Server Components cannot set cookies. src/middleware.ts refreshes
+          // Server Components cannot set cookies. src/proxy.ts refreshes
           // the session on every /host request, so this is safe to ignore.
         }
       },
