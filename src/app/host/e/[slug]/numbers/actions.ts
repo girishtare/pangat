@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { forecast } from "@/lib/forecast";
 import { hostGate, type HostContext } from "@/lib/host";
 import { readCount, splitByConfirmed } from "@/lib/pilot";
-import { saveNumbers } from "@/lib/store/admin";
+import { loadNumbers, saveNumbers } from "@/lib/store/admin";
 import { supabaseStore } from "@/lib/store/supabase";
 
 export type FormState = { ok: boolean; message: string } | null;
@@ -36,32 +36,65 @@ export async function saveBaselines(slug: string, _prev: FormState, fd: FormData
   return done("Baseline saved.");
 }
 
-/** Freezes the tool's expected headcount (and veg split) as it stands now. Meant for 14 December. */
-export async function freezePredicted(slug: string, _prev: FormState): Promise<FormState> {
-  const who = await manager(slug);
-  if ("error" in who) return { ok: false, message: who.error };
-  // Both sides: the caterer's number is for the whole event.
+/** The tool's expected headcount and veg split per function, over both sides, as of now. */
+async function snapshot(slug: string) {
   const data = await supabaseStore.getDashboard(slug);
-  if (!data) return { ok: false, message: "Event not found." };
+  if (!data) return null;
   const rates = { yesShowRate: data.event.yesShowRate, pendingShowRate: data.event.pendingShowRate };
-  const now = new Date().toISOString();
-  const rows = data.functions.map((fn) => {
+  return data.functions.map((fn) => {
     const f = forecast(
       data.facts.filter((x) => x.functionId === fn.id),
       rates,
     );
     const split = splitByConfirmed(f.expected, f.veg, f.nonveg);
-    return {
-      functionId: fn.id,
-      predicted: f.expected,
-      predicted_veg: split?.veg ?? null,
-      predicted_nonveg: split?.nonveg ?? null,
+    return { functionId: fn.id, count: f.expected, veg: split?.veg ?? null, nonveg: split?.nonveg ?? null };
+  });
+}
+
+/** Freezes the tool's numbers for the caterer's first count. The pilot is judged on these. */
+export async function freezePredicted(slug: string, _prev: FormState): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const snap = await snapshot(slug);
+  if (!snap) return { ok: false, message: "Event not found." };
+  const now = new Date().toISOString();
+  await saveNumbers(
+    snap.map((r) => ({
+      functionId: r.functionId,
+      predicted: r.count,
+      predicted_veg: r.veg,
+      predicted_nonveg: r.nonveg,
       predicted_at: now,
       predicted_by: who.host.userId,
-    };
-  });
-  await saveNumbers(rows, who.host.userId);
+    })),
+    who.host.userId,
+  );
   return done("The tool's numbers are frozen. These are the ones the pilot is judged on.");
+}
+
+/** Freezes a revised number for the caterer, after the first count. Doesn't change the pilot verdict. */
+export async function freezeRevised(slug: string, _prev: FormState): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const existing = await loadNumbers(who.host.functions.map((f) => f.id));
+  if (![...existing.values()].some((n) => n.predictedAt)) {
+    return { ok: false, message: "Freeze the first count before freezing a revision." };
+  }
+  const snap = await snapshot(slug);
+  if (!snap) return { ok: false, message: "Event not found." };
+  const now = new Date().toISOString();
+  await saveNumbers(
+    snap.map((r) => ({
+      functionId: r.functionId,
+      revised: r.count,
+      revised_veg: r.veg,
+      revised_nonveg: r.nonveg,
+      revised_at: now,
+      revised_by: who.host.userId,
+    })),
+    who.host.userId,
+  );
+  return done("Revised numbers frozen. Send the new 'To the caterer' figures; the pilot is still judged on the first count.");
 }
 
 /** Counted on the day, per function. */

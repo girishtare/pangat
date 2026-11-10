@@ -11,6 +11,11 @@ export interface FunctionNumbers {
   predictedVeg: number | null;
   predictedNonveg: number | null;
   predictedAt: string | null;
+  /** A later revision for the caterer (frozen after the first count). Not used for the verdict. */
+  revised: number | null;
+  revisedVeg: number | null;
+  revisedNonveg: number | null;
+  revisedAt: string | null;
   actual: number | null;
   actualVeg: number | null;
   actualNonveg: number | null;
@@ -22,6 +27,10 @@ export const EMPTY_NUMBERS: FunctionNumbers = {
   predictedVeg: null,
   predictedNonveg: null,
   predictedAt: null,
+  revised: null,
+  revisedVeg: null,
+  revisedNonveg: null,
+  revisedAt: null,
   actual: null,
   actualVeg: null,
   actualNonveg: null,
@@ -39,6 +48,14 @@ export function toCaterer(baseline: number | null, predicted: number | null): nu
   if (baseline === null) return predicted;
   if (predicted === null) return baseline;
   return Math.max(baseline, predicted);
+}
+
+/**
+ * What the caterer has now: the higher of the baseline and the latest frozen
+ * tool number (the revision if there is one, else the first freeze).
+ */
+export function latestToCaterer(n: Pick<FunctionNumbers, "baseline" | "predicted" | "revised">): number | null {
+  return toCaterer(n.baseline, n.revised ?? n.predicted);
 }
 
 export type Verdict = "tool" | "baseline" | "tie" | null;
