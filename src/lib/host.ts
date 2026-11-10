@@ -130,7 +130,7 @@ export async function listMyEvents(client: SupabaseClient): Promise<MyEvent[]> {
         slug: h.events.slug,
         name: { en: h.events.name_en, mr: h.events.name_mr },
         side: h.side,
-        role: h.role === "owner" ? "owner" : "co_owner",
+        role: (h.role === "owner" ? "owner" : "co_owner") as MyEvent["role"],
         firstStartsAt: starts[0] ?? null,
       };
     })
