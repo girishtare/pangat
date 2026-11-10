@@ -298,7 +298,7 @@ function HowItWorks() {
       <ol className="grid gap-3.5 md:gap-6 lg:grid-cols-3">
         {STEPS.map((step, i) => (
           <li key={step.title} className="flex gap-3.5 rounded-[18px] border border-sand bg-card-e p-5 md:block md:rounded-[20px] md:p-7">
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-3 self-start">
               <span
                 aria-hidden="true"
                 className={`${display} flex h-10 w-10 items-center justify-center rounded-full bg-maroon text-xl text-white md:h-11 md:w-11 md:text-[22px]`}
