@@ -1,21 +1,34 @@
 import Link from "next/link";
-import { ChefHat, Lock, Scale, Trophy } from "lucide-react";
+import { ChefHat, Lock } from "lucide-react";
 import { forecast } from "@/lib/forecast";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
-import { closer, EMPTY_NUMBERS, latestToCaterer, splitByConfirmed, toCaterer } from "@/lib/pilot";
+import { closer, EMPTY_NUMBERS, latestToCaterer, toCaterer, type FunctionNumbers } from "@/lib/pilot";
 import { loadNumbers } from "@/lib/store/admin";
 import { supabaseStore } from "@/lib/store/supabase";
+import { shortStamp } from "@/lib/when";
 import { Alert, EmptyState, PageHeader, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { ActualForm, BaselineForm, FreezeButton } from "./NumbersForms";
 
 export const dynamic = "force-dynamic";
 
+// The UI says "family's guess"; code, database and tests keep "baseline".
+
 const when = (iso: string) =>
   new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(iso));
 const show = (n: number | null) => (n === null ? "—" : n.toLocaleString("en-IN"));
-const split = (veg: number | null, nonveg: number | null) => (veg === null ? null : `${veg} veg · ${nonveg} non-veg`);
+const pair = (veg: number | null, nonveg: number | null) => (veg === null ? "—" : `${show(veg)} · ${show(nonveg)}`);
+
+/** "12 too many", "34 too few" or "exactly right". */
+function missLabel(value: number, actual: number): string {
+  const d = value - actual;
+  return d > 0 ? `${d.toLocaleString("en-IN")} too many` : d < 0 ? `${(-d).toLocaleString("en-IN")} too few` : "exactly right";
+}
+
+const th = "px-2.5 py-3";
+const tdNum = "px-2.5 py-3";
+const tableBox = "overflow-x-auto rounded-[14px] border border-line";
 
 export default async function CatererNumbers({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -26,7 +39,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
   if (!host.canManage) {
     return (
       <EventShell host={host} current="numbers">
-        <PageHeader icon={ChefHat} title="Caterer numbers" />
+        <PageHeader large title="Caterer numbers" />
         <Alert tone="info">Only the event&apos;s owner records the caterer numbers.</Alert>
       </EventShell>
     );
@@ -38,7 +51,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
   const rows = host.functions.map((fn) => {
     const live = forecast(data?.facts.filter((x) => x.functionId === fn.id) ?? [], rates);
     const n = numbers.get(fn.id) ?? EMPTY_NUMBERS;
-    return { fn, live, liveSplit: splitByConfirmed(live.expected, live.veg, live.nonveg), n };
+    return { fn, live, n };
   });
   const frozenAt = rows.map((r) => r.n.predictedAt).find(Boolean) ?? null;
   const revisedAt = rows.map((r) => r.n.revisedAt).find(Boolean) ?? null;
@@ -56,7 +69,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
   if (host.functions.length === 0) {
     return (
       <EventShell host={host} current="numbers">
-        <PageHeader icon={ChefHat} title="Caterer numbers" />
+        <PageHeader large title="Caterer numbers" />
         <EmptyState icon={ChefHat} title="No functions yet">
           Add the event&apos;s functions in{" "}
           <Link href={`/host/e/${slug}/settings`} className="font-semibold text-kumkum underline">
@@ -68,62 +81,77 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
     );
   }
 
+  const verdictCard = anyActual ? (
+    <VerdictCard rows={rows} toolWins={toolWins} baselineWins={baselineWins} judged={verdicts.length} frozenAt={frozenAt} />
+  ) : (
+    <section className="card p-5 sm:p-6">
+      <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">4 · Which number was closer?</p>
+      <p className="mt-1">Fill in the counts on the day to see which number was closer.</p>
+    </section>
+  );
+
   return (
     <EventShell host={host} current="numbers">
-      <PageHeader
-        icon={ChefHat}
-        title="Caterer numbers"
-        subtitle="The family's baseline, the tool's frozen numbers, what goes to the caterer, and which came closer on the day."
-      />
+      <PageHeader large title="Caterer numbers" subtitle="Did Pangat beat the family's own guess? Only you, as the owner, see this page." />
 
-      <div className="space-y-6">
-        <Section n={1} title="The family's baseline" subtitle="What you would have ordered without Pangat. Write it down before replies come in and don't change it afterwards: the pilot is judged against it.">
+      <div className="space-y-[18px]">
+        {anyActual && verdictCard}
+
+        <Section
+          n={1}
+          title="Family's own guess"
+          subtitle="What the family would have ordered without Pangat. Write the family's guess down before replies come in and don't change it afterwards: the pilot is judged against it."
+        >
           <BaselineForm slug={slug} functions={fnList} values={Object.fromEntries(rows.map((r) => [r.fn.id, r.n.baseline]))} />
         </Section>
 
         <Section
           n={2}
-          title="The tool's number, and what goes to the caterer"
-          subtitle={
-            <>
-              Freeze when the caterer needs the first count{dueOn ? ` (${dueOn})` : ""}: the pilot is judged on that freeze. If the caterer
-              accepts changes later{finalOn ? ` (until ${finalOn})` : ""}, freeze a revised count then. The higher of the baseline and the
-              latest frozen number goes to the caterer.
-              {!dueOn && " Set the caterer's dates in Event settings to see them here."}
-            </>
-          }
+          title="Pangat's number"
+          subtitle="The caterer gets the higher of the family's guess and Pangat's frozen number."
+          actions={<FrozenPill label={frozenAt ? `Frozen on ${shortStamp(frozenAt)}` : "Not frozen yet"} />}
         >
-          <div className="hidden lg:block">
-            <table className="table-p">
+          {/* Laptop: the table. Phone: one card per function, so "To the caterer" never scrolls out of sight. */}
+          <div className={`${tableBox} hidden lg:block`}>
+            <table className="w-full min-w-[720px] border-collapse text-center text-base">
               <thead>
-                <tr>
-                  <th>Function</th>
-                  <th className="text-right">Baseline</th>
-                  <th className="text-right">Tool now</th>
-                  <th className="text-right">First count (judged)</th>
-                  <th className="text-right">Revised</th>
-                  <th className="bg-haldi! text-right text-ink">To the caterer</th>
+                <tr className="bg-paper-deep">
+                  <th scope="col" className="px-4 py-3 text-left">
+                    Function
+                  </th>
+                  <th scope="col" className={th}>
+                    Family&apos;s guess
+                  </th>
+                  <th scope="col" className={th}>
+                    Pangat now
+                  </th>
+                  <th scope="col" className={th}>
+                    Pangat frozen
+                  </th>
+                  <th scope="col" className={th}>
+                    Veg · non-veg
+                  </th>
+                  <th scope="col" className="bg-sand px-4 py-3 text-kumkum">
+                    To the caterer
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ fn, live, liveSplit, n }) => (
-                  <tr key={fn.id}>
-                    <td className="font-semibold">{fn.name.en}</td>
-                    <td className="text-right">{show(n.baseline)}</td>
-                    <td className="text-right">
-                      {show(live.expected)}
-                      {liveSplit && <div className="text-xs text-ink-soft">{split(liveSplit.veg, liveSplit.nonveg)}</div>}
-                    </td>
-                    <td className="text-right">
+                {rows.map(({ fn, live, n }) => (
+                  <tr key={fn.id} className="border-t border-line">
+                    <th scope="row" className="px-4 py-3 text-left">
+                      {fn.name.en}
+                    </th>
+                    <td className={tdNum}>{show(n.baseline)}</td>
+                    <td className={`${tdNum} text-ink-soft`}>{show(live.expected)}</td>
+                    <td className={`${tdNum} font-bold`}>
                       {show(n.predicted)}
-                      {n.predictedVeg !== null && <div className="text-xs text-ink-soft">{split(n.predictedVeg, n.predictedNonveg)}</div>}
-                      {n.predicted !== null && <div className="text-xs text-ink-soft">caterer then: {show(toCaterer(n.baseline, n.predicted))}</div>}
+                      {n.revised !== null && n.predicted !== null && (
+                        <div className="text-xs font-normal text-ink-soft">caterer then: {show(toCaterer(n.baseline, n.predicted))}</div>
+                      )}
                     </td>
-                    <td className="text-right">
-                      {show(n.revised)}
-                      {n.revisedVeg !== null && <div className="text-xs text-ink-soft">{split(n.revisedVeg, n.revisedNonveg)}</div>}
-                    </td>
-                    <td className="bg-haldi-soft/70 text-right font-display text-2xl font-bold text-kumkum">{show(latestToCaterer(n))}</td>
+                    <td className={tdNum}>{pair(n.predictedVeg, n.predictedNonveg)}</td>
+                    <td className="bg-sand-soft px-4 py-3 font-display text-[1.375rem] text-kumkum">{show(latestToCaterer(n))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -131,41 +159,92 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
           </div>
           <ul className="space-y-3 lg:hidden">
             {rows.map(({ fn, live, n }) => (
-              <li key={fn.id} className="overflow-hidden rounded-xl border border-line">
-                <div className="flex items-center justify-between gap-3 bg-haldi-soft/70 px-4 py-3">
-                  <span className="font-display text-lg font-bold">{fn.name.en}</span>
+              <li key={fn.id} className="overflow-hidden rounded-[14px] border border-line">
+                <div className="flex items-center justify-between gap-3 bg-sand-soft px-4 py-3">
+                  <span className="font-bold">{fn.name.en}</span>
                   <span className="text-right">
-                    <span className="block text-xs font-semibold text-haldi-deep">To the caterer</span>
-                    <span className="font-display text-3xl font-bold text-kumkum">{show(latestToCaterer(n))}</span>
+                    <span className="block text-xs font-bold text-kumkum">To the caterer</span>
+                    <span className="font-display text-3xl text-kumkum">{show(latestToCaterer(n))}</span>
                   </span>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-1 px-4 py-3 text-sm">
-                  <dt className="text-ink-soft">Baseline</dt>
+                  <dt className="text-ink-soft">Family&apos;s guess</dt>
                   <dd className="text-right font-semibold">{show(n.baseline)}</dd>
-                  <dt className="text-ink-soft">Tool now</dt>
-                  <dd className="text-right font-semibold">{show(live.expected)}</dd>
-                  <dt className="text-ink-soft">First count (judged)</dt>
-                  <dd className="text-right font-semibold">{show(n.predicted)}</dd>
-                  <dt className="text-ink-soft">Revised</dt>
-                  <dd className="text-right font-semibold">{show(n.revised)}</dd>
-                  {(n.revisedVeg ?? n.predictedVeg) !== null && (
+                  <dt className="text-ink-soft">Pangat now</dt>
+                  <dd className="text-right">{show(live.expected)}</dd>
+                  <dt className="text-ink-soft">Pangat frozen</dt>
+                  <dd className="text-right font-bold">{show(n.predicted)}</dd>
+                  <dt className="text-ink-soft">Veg · non-veg</dt>
+                  <dd className="text-right">{pair(n.predictedVeg, n.predictedNonveg)}</dd>
+                  {n.revised !== null && (
                     <>
-                      <dt className="text-ink-soft">Veg / non-veg</dt>
-                      <dd className="text-right">
-                        {n.revisedVeg !== null ? split(n.revisedVeg, n.revisedNonveg) : split(n.predictedVeg, n.predictedNonveg)}
-                      </dd>
+                      <dt className="text-ink-soft">Revised</dt>
+                      <dd className="text-right font-bold">{show(n.revised)}</dd>
+                      <dt className="text-ink-soft">Caterer then</dt>
+                      <dd className="text-right">{show(toCaterer(n.baseline, n.predicted))}</dd>
                     </>
                   )}
                 </dl>
               </li>
             ))}
           </ul>
+          <p className="mt-2.5 text-sm text-ink-soft">
+            &quot;Pangat now&quot; keeps changing as late replies come in; the comparison uses the frozen number. Veg · non-veg is Pangat&apos;s frozen
+            split.
+          </p>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border border-line p-4">
-              <p className="flex items-center gap-2 font-semibold">
+          {revisedAt && (
+            <div className="mt-6">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-display text-xl text-kumkum">Revised count</h3>
+                <FrozenPill label={`Frozen on ${shortStamp(revisedAt)}`} />
+              </div>
+              <div className={`${tableBox} hidden lg:block`}>
+                <table className="w-full min-w-[600px] border-collapse text-center text-base">
+                  <thead>
+                    <tr className="bg-paper-deep">
+                      <th scope="col" className="px-4 py-3 text-left">
+                        Function
+                      </th>
+                      <th scope="col" className={th}>
+                        Pangat revised
+                      </th>
+                      <th scope="col" className={th}>
+                        Veg · non-veg
+                      </th>
+                      <th scope="col" className={th}>
+                        Caterer then (first count)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map(({ fn, n }) => (
+                      <tr key={fn.id} className="border-t border-line">
+                        <th scope="row" className="px-4 py-3 text-left">
+                          {fn.name.en}
+                        </th>
+                        <td className={`${tdNum} font-bold`}>{show(n.revised)}</td>
+                        <td className={tdNum}>{pair(n.revisedVeg, n.revisedNonveg)}</td>
+                        <td className={tdNum}>{show(toCaterer(n.baseline, n.predicted))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2.5 text-sm text-ink-soft">
+                &quot;To the caterer&quot; above uses the revision. The pilot is still judged on the first count.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-[14px] border border-line p-4">
+              <p className="flex items-center gap-2 font-bold">
                 <Lock className="h-4 w-4 text-kumkum" aria-hidden="true" />
                 First count
+              </p>
+              <p className="hint">
+                Freeze when the caterer needs the first count{dueOn ? ` (${dueOn})` : ""}: the pilot is judged on this freeze.
               </p>
               <p className="hint mb-3">{frozenAt ? `Frozen ${when(frozenAt)}.` : `Not frozen yet${dueOn ? `; due ${dueOn}` : ""}.`}</p>
               <FreezeButton
@@ -173,14 +252,15 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
                 kind="first"
                 frozenBefore={!!frozenAt}
                 label={frozenAt ? "Freeze the first count again" : "Freeze the first count"}
-                confirmText={`Freeze the tool's numbers for the caterer's first count${dueOn ? ` (due ${dueOn})` : ""}? The pilot is judged on these.`}
+                confirmText={`Freeze Pangat's numbers for the caterer's first count${dueOn ? ` (due ${dueOn})` : ""}? The pilot is judged on these.`}
               />
             </div>
-            <div className="rounded-xl border border-line p-4">
-              <p className="flex items-center gap-2 font-semibold">
+            <div className="rounded-[14px] border border-line p-4">
+              <p className="flex items-center gap-2 font-bold">
                 <Lock className="h-4 w-4 text-haldi-deep" aria-hidden="true" />
                 Revised count
               </p>
+              <p className="hint">If the caterer accepts changes later{finalOn ? ` (until ${finalOn})` : ""}, freeze a revised count then.</p>
               {frozenAt ? (
                 <>
                   <p className="hint mb-3">{revisedAt ? `Frozen ${when(revisedAt)}.` : `Optional${finalOn ? `, until ${finalOn}` : ""}.`}</p>
@@ -202,9 +282,14 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
               )}
             </div>
           </div>
+          {!dueOn && <p className="hint mt-3">Set the caterer&apos;s dates in Event settings to see them here.</p>}
         </Section>
 
-        <Section n={3} title="Actual count on the day" subtitle="People who actually ate, per function. Veg and non-veg if the caterer can tell you; the total is enough otherwise.">
+        <Section
+          n={3}
+          title="Counted on the day"
+          subtitle="How many actually came to each function. Veg and non-veg if the caterer can tell you; the total is enough otherwise."
+        >
           <ActualForm
             slug={slug}
             functions={fnList}
@@ -212,78 +297,116 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
           />
         </Section>
 
-        <Section n={4} title="Which number was closer?" subtitle="The family's baseline against the tool's first count, function by function.">
-          {!anyActual ? (
-            <EmptyState icon={Scale} title="Waiting for the actual counts">
-              Enter the counts from the day in section 3 and the comparison appears here.
-            </EmptyState>
-          ) : (
-            <>
-              {verdicts.length > 0 && (
-                <div className={`mb-4 flex items-center gap-3 rounded-xl px-4 py-3 ${toolWins > baselineWins ? "bg-leaf-soft text-leaf" : "bg-paper-deep text-ink"}`}>
-                  <Trophy className="h-7 w-7 shrink-0" aria-hidden="true" />
-                  <p className="font-display text-xl font-bold">
-                    {toolWins > baselineWins ? "Pangat was closer" : baselineWins > toolWins ? "The family's baseline was closer" : "Level so far"}
-                    <span className="block font-sans text-sm font-semibold">
-                      Pangat closer in {toolWins} of {verdicts.length} function{verdicts.length === 1 ? "" : "s"}
-                    </span>
-                  </p>
-                </div>
-              )}
-              <div className="hidden lg:block">
-                <table className="table-p">
-                  <thead>
-                    <tr>
-                      <th>Function</th>
-                      <th className="text-right">Actual</th>
-                      <th className="text-right">Baseline off by</th>
-                      <th className="text-right">Tool off by (first count)</th>
-                      <th className="text-right">Revised off by</th>
-                      <th>Closer</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map(({ fn, n }) => {
-                      const v = closer(n);
-                      return (
-                        <tr key={fn.id}>
-                          <td className="font-semibold">{fn.name.en}</td>
-                          <td className="text-right">{show(n.actual)}</td>
-                          <td className="text-right">{n.baseline !== null && n.actual !== null ? Math.abs(n.baseline - n.actual) : "—"}</td>
-                          <td className="text-right">{n.predicted !== null && n.actual !== null ? Math.abs(n.predicted - n.actual) : "—"}</td>
-                          <td className="text-right">{n.revised !== null && n.actual !== null ? Math.abs(n.revised - n.actual) : "—"}</td>
-                          <td>
-                            <Verdict v={v} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <ul className="space-y-2 lg:hidden">
-                {rows.map(({ fn, n }) => (
-                  <li key={fn.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line px-4 py-3 text-sm">
-                    <span className="font-semibold">{fn.name.en}</span>
-                    <span className="text-ink-soft">
-                      Actual {show(n.actual)} · baseline off by {n.baseline !== null && n.actual !== null ? Math.abs(n.baseline - n.actual) : "—"} ·
-                      tool off by {n.predicted !== null && n.actual !== null ? Math.abs(n.predicted - n.actual) : "—"}
-                    </span>
-                    <Verdict v={closer(n)} />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </Section>
+        {!anyActual && verdictCard}
       </div>
     </EventShell>
   );
 }
 
-function Verdict({ v }: { v: ReturnType<typeof closer> }) {
-  if (v === "tool") return <span className="badge badge-yes">Pangat ✓</span>;
-  if (v === "baseline") return <span className="badge badge-partly">Family&apos;s baseline</span>;
-  if (v === "tie") return <span className="badge badge-no">Tie</span>;
-  return <span className="text-ink-soft">—</span>;
+function FrozenPill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-haldi bg-haldi-soft px-3.5 py-1.5 text-[0.9375rem] font-bold">
+      <Lock className="h-4 w-4 text-haldi-deep" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+/** Which number came closer, per function. Uses the existing verdict rule (closer) on the first frozen count. */
+function VerdictCard({
+  rows,
+  toolWins,
+  baselineWins,
+  judged,
+  frozenAt,
+}: {
+  rows: { fn: { id: string; name: { en: string } }; n: FunctionNumbers }[];
+  toolWins: number;
+  baselineWins: number;
+  judged: number;
+  frozenAt: string | null;
+}) {
+  const counted = rows.filter((r) => r.n.actual !== null);
+  const misses = counted.flatMap(({ n }) =>
+    [n.baseline, n.predicted].filter((v): v is number => v !== null).map((v) => Math.abs(v - (n.actual as number))),
+  );
+  const maxMiss = Math.max(1, ...misses);
+  const judgedRows = rows.filter((r) => closer(r.n) !== null);
+  const familyOff = judgedRows.reduce((s, { n }) => s + Math.abs((n.baseline as number) - (n.actual as number)), 0);
+  const pangatOff = judgedRows.reduce((s, { n }) => s + Math.abs((n.predicted as number) - (n.actual as number)), 0);
+  const fns = (k: number) => `${k} function${k === 1 ? "" : "s"}`;
+  const headline =
+    judged === 0
+      ? "Not enough numbers to compare yet."
+      : toolWins > baselineWins
+        ? `Pangat was closer for ${toolWins} of ${fns(judged)}.`
+        : baselineWins > toolWins
+          ? `The family's guess was closer for ${baselineWins} of ${fns(judged)}.`
+          : toolWins === 0
+            ? "Both numbers were equally close."
+            : `Level: each was closer for ${toolWins} of ${fns(judged)}.`;
+
+  return (
+    <section className="rounded-[22px] border-2 border-kumkum bg-card px-5 py-6 sm:px-7">
+      <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">4 · Which number was closer?</p>
+      <h2 className="mt-1 font-display text-[1.75rem] leading-[1.2] text-kumkum sm:text-4xl">{headline}</h2>
+      {judged > 0 ? (
+        <p className="mt-1.5 text-lg">
+          Across all functions, the family&apos;s guess was off by <strong>{familyOff.toLocaleString("en-IN")}</strong> people; Pangat was off by{" "}
+          <strong>{pangatOff.toLocaleString("en-IN")}</strong>.
+        </p>
+      ) : (
+        <p className="mt-1.5 text-lg">Fill in the family&apos;s guess and freeze Pangat&apos;s number to compare them with the counts.</p>
+      )}
+
+      <div className="mt-[22px] grid gap-[22px]">
+        {counted.map(({ fn, n }) => {
+          const actual = n.actual as number;
+          const v = closer(n);
+          const lines = [
+            { label: "Family's guess", value: n.baseline, bar: "bg-sand-deep" },
+            { label: "Pangat", value: n.predicted, bar: "bg-kumkum" },
+          ];
+          return (
+            <div key={fn.id}>
+              <div className="flex flex-wrap items-baseline justify-between gap-2.5">
+                <h3 className="font-display text-2xl">
+                  {fn.name.en} <span className="font-sans text-base text-ink-soft">· {actual.toLocaleString("en-IN")} came</span>
+                </h3>
+                {v === "tool" && <span className="rounded-full bg-kumkum px-3 py-0.5 text-sm font-bold text-white">✓ Pangat was closer</span>}
+                {v === "baseline" && <span className="rounded-full bg-sand px-3 py-0.5 text-sm font-bold text-kumkum-dark">Family&apos;s guess was closer</span>}
+                {v === "tie" && <span className="rounded-full bg-paper-deep px-3 py-0.5 text-sm font-bold text-ink">Equally close</span>}
+              </div>
+              <div className="mt-2 grid gap-y-1.5 text-[0.9375rem]">
+                {lines.map((l) => (
+                  <div
+                    key={l.label}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 sm:grid-cols-[150px_minmax(0,1fr)_100px]"
+                  >
+                    <span>
+                      {l.label} {show(l.value)}
+                    </span>
+                    <span className="col-span-2 row-start-2 h-4 sm:col-span-1 sm:row-start-auto" aria-hidden="true">
+                      {l.value !== null && (
+                        <span
+                          className={`block h-4 rounded ${l.bar}`}
+                          style={{ width: `${(Math.abs(l.value - actual) / maxMiss) * 100}%`, minWidth: l.value === actual ? 0 : 4 }}
+                        />
+                      )}
+                    </span>
+                    <span className="text-right font-bold sm:text-left">{l.value === null ? "—" : missLabel(l.value, actual)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="mt-[18px] text-[0.9375rem] text-ink-soft">
+        Shorter bar = closer to the real count.
+        {frozenAt ? ` Pangat's number here is the one frozen on ${formatDay(frozenAt, "en")}.` : ""}
+      </p>
+    </section>
+  );
 }

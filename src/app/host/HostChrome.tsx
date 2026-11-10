@@ -1,16 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ArrowLeft, CalendarDays, LogOut, ShieldAlert } from "lucide-react";
+import { LogOut, ShieldAlert } from "lucide-react";
 import type { HostContext, HostGate } from "@/lib/host";
-import { formatDay } from "@/lib/i18n";
 import { scopeLabel } from "@/lib/sides";
-import { Divider, Wordmark } from "../ui/kit";
+import { shortDay } from "@/lib/when";
+import { Mark, Wordmark } from "../ui/kit";
 import MobileNav from "../ui/MobileNav";
 import { NavIcon, type NavItem, type NavKey } from "../ui/navIcons";
 import { signOut } from "./actions";
 
-export function SignOutButton({ compact = false }: { compact?: boolean }) {
+export function SignOutButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "link" }) {
+  if (variant === "link") {
+    return (
+      <form action={signOut}>
+        <button type="submit" className="inline-flex min-h-11 items-center font-bold text-kumkum underline underline-offset-4 hover:text-kumkum-dark">
+          Sign out
+        </button>
+      </form>
+    );
+  }
   return (
     <form action={signOut}>
       <button type="submit" className={`btn btn-quiet ${compact ? "btn-sm" : ""}`}>
@@ -40,45 +49,46 @@ function navItems(host: HostContext, current: NavKey): NavItem[] {
     .map((i) => ({ key: i.key, href: i.href, label: i.label, icon: i.key, active: i.key === current }));
 }
 
+/** "You are the owner", or the co-owner's side, for the rail's event card. */
+function roleLine(host: HostContext): string {
+  return host.role === "owner" ? "You are the owner" : `Co-owner · ${host.side ? scopeLabel(host.side) : ""}`;
+}
+
 /**
- * Every page of one event: a compact rail on laptops, a top bar with a menu on
+ * Every page of one event: a rail on laptops, a top bar with a menu on
  * phones. Both are hidden when printing (slips).
  */
 export function EventShell({ host, current, children }: { host: HostContext; current: NavKey; children: ReactNode }) {
   const items = navItems(host, current);
   const first = host.functions[0]?.startsAt;
-  const date = first ? formatDay(first, "en") : null;
+  const date = first ? shortDay(first) : null;
   const who = `${host.email} · ${roleLabel(host)}`;
 
   return (
     <div className="lg:grid lg:min-h-screen lg:grid-cols-[16.5rem_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-screen flex-col overflow-y-auto border-r border-line bg-paper-deep/60 px-4 py-6 lg:flex print:hidden">
-        <Link href="/host?all=1" className="px-2" aria-label="Pangat: all events">
-          <Wordmark small />
+      <aside className="sticky top-0 hidden h-screen flex-col overflow-y-auto border-r border-line bg-card px-4 py-6 lg:flex print:hidden">
+        <Link href="/host?all=1" className="flex items-center gap-2 self-start px-2 font-display text-2xl leading-none text-kumkum" aria-label="Pangat: all events">
+          <Mark className="h-[26px] w-[26px]" />
+          Pangat
         </Link>
-        <div className="mt-5 rounded-2xl border border-line bg-card px-3 py-3">
-          <p className="wrap-names font-display text-base font-bold leading-snug text-kumkum">{host.event.name.en}</p>
+        <div className="mx-2 mt-[22px] rounded-[14px] bg-sand p-3.5">
+          <p className="wrap-names font-display text-xl leading-[1.3] text-kumkum">{host.event.name.en}</p>
           {host.event.name.mr && (
-            <p lang="mr" className="wrap-names text-sm text-ink">
+            <p lang="mr" className="wrap-names text-[0.9375rem] text-ink-soft">
               {host.event.name.mr}
             </p>
           )}
-          {date && (
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-soft">
-              <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
-              {date}
-            </p>
-          )}
+          <p className="mt-1 text-sm text-ink-soft">{[date, roleLine(host)].filter(Boolean).join(" · ")}</p>
         </div>
-        <nav aria-label="Event" className="mt-5">
-          <ul className="space-y-1">
+        <nav aria-label="Event" className="mt-[18px]">
+          <ul className="grid gap-1">
             {items.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   aria-current={item.active ? "page" : undefined}
-                  className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-[0.9375rem] font-semibold transition-colors ${
-                    item.active ? "bg-kumkum text-white shadow-sm" : "text-ink hover:bg-card"
+                  className={`flex min-h-12 items-center gap-3 rounded-xl px-3.5 transition-colors ${
+                    item.active ? "bg-kumkum font-bold text-white" : "font-semibold text-ink hover:bg-paper"
                   }`}
                 >
                   <NavIcon name={item.icon} />
@@ -88,23 +98,22 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
             ))}
           </ul>
         </nav>
-        <div className="mt-auto pt-6">
-          <Divider className="mb-4" />
-          <p className="px-2 text-xs text-ink-soft [overflow-wrap:anywhere]">{host.email}</p>
-          <p className="px-2 text-xs font-semibold text-ink">{roleLabel(host)}</p>
-          <div className="mt-2 flex flex-wrap items-center">
-            <Link href="/host?all=1" className="btn btn-quiet btn-sm">
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        <div className="mx-2 mt-[22px] border-t border-line pt-3.5 text-[0.9375rem] text-ink-soft">
+          <p className="[overflow-wrap:anywhere]">
+            {host.email} · {roleLabel(host)}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4">
+            <Link href="/host?all=1" className="inline-flex min-h-11 items-center font-bold text-kumkum underline underline-offset-4 hover:text-kumkum-dark">
               All events
             </Link>
-            <SignOutButton compact />
+            <SignOutButton variant="link" />
           </div>
         </div>
       </aside>
 
       <MobileNav eventName={host.event.name.en} eventDate={date} items={items} who={who} signOut={<SignOutButton compact />} />
 
-      <main id="main" className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:py-8 print:p-0">
+      <main id="main" className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:pb-14 lg:pt-8 print:p-0">
         <div className="mx-auto max-w-[72rem] print:max-w-none">{children}</div>
       </main>
     </div>
@@ -125,7 +134,7 @@ export function GateMessage({ gate, title }: { gate: Exclude<HostGate, { ok: tru
       <Wordmark small />
       <div className="card mt-6 p-6">
         <ShieldAlert className="h-8 w-8 text-haldi-deep" aria-hidden="true" />
-        <h1 className="mt-2 font-display text-2xl font-bold text-kumkum">{title}</h1>
+        <h1 className="mt-2 font-display text-2xl text-kumkum">{title}</h1>
         <p className="mt-2 text-ink">{text}</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link className="btn btn-secondary" href="/host?all=1">

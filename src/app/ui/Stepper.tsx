@@ -37,7 +37,7 @@ export default function Stepper({
   const icon = guest || big ? "h-6 w-6" : "h-5 w-5";
   const number = guest
     ? "min-w-8 text-center font-heading-e text-[28px] font-normal leading-none tabular-nums"
-    : `min-w-[3ch] text-center font-display font-bold tabular-nums ${big ? "text-4xl" : "text-2xl"}`;
+    : `min-w-[3ch] text-center font-display tabular-nums ${big ? "text-4xl" : "text-2xl"}`;
   return (
     <div role="group" aria-label={label}>
       {name && <input type="hidden" name={name} value={value} />}

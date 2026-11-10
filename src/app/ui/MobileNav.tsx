@@ -26,36 +26,36 @@ export default function MobileNav({
   const active = items.find((i) => i.active);
 
   return (
-    <div className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur lg:hidden print:hidden">
-      <div className="flex items-center gap-3 px-4 py-2">
+    <div className="sticky top-0 z-30 border-b border-line bg-card lg:hidden print:hidden">
+      <div className="flex items-center gap-3 px-4 py-2.5">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="event-menu"
-          className="btn btn-secondary btn-sm shrink-0 px-3"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border-2 border-kumkum bg-card px-3 text-base font-bold text-kumkum hover:bg-kumkum-soft"
         >
           {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           <span>{open ? "Close" : "Menu"}</span>
         </button>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display text-lg font-bold leading-tight text-kumkum">{eventName}</div>
-          <div className="truncate text-xs text-ink-soft">
+          <div className="truncate font-display text-xl leading-[1.25] text-kumkum">{eventName}</div>
+          <div className="truncate text-[0.8125rem] text-ink-soft">
             {active?.label}
             {eventDate ? ` · ${eventDate}` : ""}
           </div>
         </div>
       </div>
       {open && (
-        <nav id="event-menu" aria-label="Event" className="border-t border-line bg-paper px-4 pb-4 pt-2 shadow-lg">
+        <nav id="event-menu" aria-label="Event" className="border-t border-line bg-card px-4 pb-4 pt-2 shadow-lg">
           <ul className="space-y-1">
             {items.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   aria-current={item.active ? "page" : undefined}
-                  className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-base font-semibold ${
-                    item.active ? "bg-kumkum text-white" : "text-ink hover:bg-paper-deep"
+                  className={`flex min-h-12 items-center gap-3 rounded-xl px-3.5 text-base ${
+                    item.active ? "bg-kumkum font-bold text-white" : "font-semibold text-ink hover:bg-paper"
                   }`}
                 >
                   <NavIcon name={item.icon} />

@@ -39,7 +39,7 @@ export function EventForm(props: {
       </div>
 
       <fieldset className="grid gap-4 md:grid-cols-3">
-        <legend className="mb-2 font-display text-lg font-bold text-ink">Dates</legend>
+        <legend className="mb-2 font-display text-lg text-ink">Dates</legend>
         <label className="block">
           <span className="label">Guests can reply until</span>
           <input name="cutoff" type="datetime-local" required defaultValue={props.cutoff} className="input" />
@@ -55,7 +55,7 @@ export function EventForm(props: {
       </fieldset>
 
       <fieldset className="grid gap-4 md:grid-cols-2">
-        <legend className="mb-2 font-display text-lg font-bold text-ink">Contact numbers on the slips</legend>
+        <legend className="mb-2 font-display text-lg text-ink">Contact numbers on the slips</legend>
         <label className="block">
           <span className="label">Bride&apos;s side</span>
           <input name="contactBride" inputMode="tel" defaultValue={props.contactBride ?? ""} className="input" placeholder="98765 43210" />
@@ -68,7 +68,7 @@ export function EventForm(props: {
       </fieldset>
 
       <fieldset className="grid gap-4 md:grid-cols-2">
-        <legend className="mb-2 font-display text-lg font-bold text-ink">Expected headcount rates</legend>
+        <legend className="mb-2 font-display text-lg text-ink">Expected headcount rates</legend>
         <label className="block">
           <span className="label">People who said yes and turn up (%)</span>
           <input name="yesShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.yesShowRate * 100)} className="input" />
@@ -142,7 +142,7 @@ export function FunctionEditor(props: {
   return (
     <article className="overflow-hidden rounded-xl border border-line bg-card">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-paper-deep/70 px-4 py-3">
-        <h3 className="font-display text-lg font-bold text-kumkum">
+        <h3 className="font-display text-lg text-kumkum">
           {props.nameEn}
           {props.nameMr && (
             <span lang="mr" className="ml-2 text-base font-semibold text-ink-soft">
@@ -193,7 +193,7 @@ export function NewFunctionForm({ slug, households }: { slug: string; households
   }, [state]);
   return (
     <form ref={form} action={action} className="space-y-4 rounded-xl border-2 border-dashed border-haldi bg-haldi-soft/20 p-4">
-      <h3 className="flex items-center gap-2 font-display text-lg font-bold text-kumkum">
+      <h3 className="flex items-center gap-2 font-display text-lg text-kumkum">
         <Plus className="h-5 w-5" aria-hidden="true" />
         Add a function
       </h3>
@@ -244,7 +244,7 @@ export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boo
         }}
       >
         <div className="flex items-center justify-between gap-3 border-b border-line bg-paper-deep/70 px-5 py-4">
-          <h3 id="invite-title" className="font-display text-xl font-bold text-kumkum">
+          <h3 id="invite-title" className="font-display text-xl text-kumkum">
             Invite a co-owner
           </h3>
           <button type="button" onClick={() => dialog.current?.close()} className="btn btn-quiet btn-sm" aria-label="Close">

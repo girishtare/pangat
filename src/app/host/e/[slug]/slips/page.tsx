@@ -23,10 +23,10 @@ const PER_SHEET = 8; // 2 x 4 on A4: each slip about 97 x 70 mm
 const PRINT_CSS = `
 @page { size: A4; margin: 8mm; }
 .sheet { width: 194mm; height: 281mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); background: white; }
-.slip { border: 0.3mm dashed #9a8f86; padding: 3.5mm; overflow: hidden; color: #2b1d16; }
-.slip-inner { height: 100%; border: 0.35mm solid #e3a008; border-radius: 2.5mm; padding: 2.5mm 3mm; display: flex; flex-direction: column; }
+.slip { border: 0.3mm dashed #9a8f86; padding: 3.5mm; overflow: hidden; color: #2e1a1c; }
+.slip-inner { height: 100%; border: 0.35mm solid #b59a64; border-radius: 2.5mm; padding: 2.5mm 3mm; display: flex; flex-direction: column; }
 @media screen {
-  .sheet { margin: 0 auto 8mm; box-shadow: 0 2px 10px rgba(43,29,22,.18); }
+  .sheet { margin: 0 auto 8mm; box-shadow: 0 2px 10px rgba(46,26,28,.18); }
   @media (max-width: 1023px) { .sheet { zoom: 0.9; } }
   @media (max-width: 760px) { .sheet { zoom: 0.68; } }
   @media (max-width: 560px) { .sheet { zoom: 0.5; } }
@@ -63,7 +63,7 @@ function Slip({
             {eventName}
           </span>
         </div>
-        <div lang={g.nameMr ? "mr" : undefined} className="wrap-names mt-1 font-display font-bold" style={{ fontSize: "13.5pt", lineHeight: 1.2 }}>
+        <div lang={g.nameMr ? "mr" : undefined} className="wrap-names mt-1 font-display" style={{ fontSize: "13.5pt", lineHeight: 1.2 }}>
           {g.nameMr || g.nameEn}
         </div>
         {g.nameMr && (

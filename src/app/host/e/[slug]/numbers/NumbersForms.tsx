@@ -5,7 +5,7 @@ import { Lock, Save } from "lucide-react";
 import { Alert } from "../../../../ui/kit";
 import { freezePredicted, freezeRevised, saveActuals, saveBaselines, type FormState } from "./actions";
 
-const num = "input text-right font-display text-2xl font-bold tabular-nums";
+const num = "input min-h-[52px] text-[1.375rem] tabular-nums";
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -21,21 +21,18 @@ export function BaselineForm({ slug, functions, values }: { slug: string; functi
   const [state, action, pending] = useActionState(saveBaselines.bind(null, slug), null);
   return (
     <form action={action} className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3.5">
         {functions.map((f) => (
-          <label key={f.id} className="block rounded-xl border border-line bg-haldi-soft/40 p-4">
-            <span className="label">{f.name}</span>
-            <span className="flex items-center gap-2">
-              <input name={`baseline_${f.id}`} inputMode="numeric" defaultValue={values[f.id] ?? ""} className={num} />
-              <span className="text-sm text-ink-soft">people</span>
-            </span>
+          <label key={f.id} className="block">
+            <span className="mb-1.5 block font-bold">{f.name}</span>
+            <input name={`baseline_${f.id}`} inputMode="numeric" defaultValue={values[f.id] ?? ""} className={num} />
           </label>
         ))}
       </div>
       <Message state={state} />
       <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
         <Save className="h-5 w-5" aria-hidden="true" />
-        {pending ? "Saving…" : "Save baseline"}
+        {pending ? "Saving…" : "Save the family's guess"}
       </button>
     </form>
   );
@@ -82,44 +79,34 @@ export function ActualForm({
   values: Record<string, { actual: number | null; veg: number | null; nonveg: number | null }>;
 }) {
   const [state, action, pending] = useActionState(saveActuals.bind(null, slug), null);
-  const small = "input text-right text-lg font-semibold tabular-nums";
+  const box = "input mt-1 min-h-12 px-2 text-[1.1875rem] tabular-nums";
   return (
     <form action={action} className="space-y-4">
-      <div className="hidden grid-cols-[minmax(0,1fr)_repeat(3,8.5rem)] gap-3 px-1 text-sm font-semibold text-ink-soft md:grid">
-        <span>Function</span>
-        <span className="text-right">Total</span>
-        <span className="text-right">Veg</span>
-        <span className="text-right">Non-veg</span>
-      </div>
-      <ul className="space-y-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
         {functions.map((f) => (
-          <li key={f.id} className="grid grid-cols-3 gap-3 rounded-xl border border-line p-3 md:grid-cols-[minmax(0,1fr)_repeat(3,8.5rem)] md:items-center md:border-0 md:p-0">
-            <span className="col-span-3 font-semibold md:col-span-1">{f.name}</span>
-            <label className="block">
-              <span className="hint mb-1 block md:sr-only">Total</span>
-              <input name={`actual_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.actual ?? ""} className={small} aria-label={`${f.name} actual total`} />
-            </label>
-            <label className="block">
-              <span className="hint mb-1 block md:sr-only">Veg</span>
-              <input name={`actualVeg_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.veg ?? ""} className={small} aria-label={`${f.name} actual veg`} />
-            </label>
-            <label className="block">
-              <span className="hint mb-1 block md:sr-only">Non-veg</span>
-              <input
-                name={`actualNonveg_${f.id}`}
-                inputMode="numeric"
-                defaultValue={values[f.id]?.nonveg ?? ""}
-                className={small}
-                aria-label={`${f.name} actual non-veg`}
-              />
-            </label>
-          </li>
+          <fieldset key={f.id} className="min-w-0 rounded-[14px] border border-line px-3.5 pb-3.5 pt-2">
+            <legend className="px-1.5 font-bold">{f.name}</legend>
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              <label className="block min-w-0">
+                Total
+                <input name={`actual_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.actual ?? ""} className={`${box} font-bold`} />
+              </label>
+              <label className="block min-w-0">
+                Veg
+                <input name={`actualVeg_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.veg ?? ""} className={box} />
+              </label>
+              <label className="block min-w-0">
+                Non-veg
+                <input name={`actualNonveg_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.nonveg ?? ""} className={box} />
+              </label>
+            </div>
+          </fieldset>
         ))}
-      </ul>
+      </div>
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full px-7 text-lg sm:w-auto">
         <Save className="h-5 w-5" aria-hidden="true" />
-        {pending ? "Saving…" : "Save actual counts"}
+        {pending ? "Saving…" : "Save counts"}
       </button>
     </form>
   );

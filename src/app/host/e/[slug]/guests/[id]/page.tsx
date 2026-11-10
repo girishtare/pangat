@@ -43,7 +43,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
 
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-l-4 border-haldi pl-4">
         <div className="min-w-0">
-          <h1 className="wrap-names font-display text-3xl font-bold text-kumkum sm:text-4xl">{hh.nameEn}</h1>
+          <h1 className="wrap-names font-display text-3xl text-kumkum sm:text-4xl">{hh.nameEn}</h1>
           {hh.nameMr && (
             <p lang="mr" className="wrap-names mt-1 font-display text-xl text-ink">
               {hh.nameMr}

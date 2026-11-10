@@ -106,7 +106,7 @@ export default async function GuestList({
                 <UserPlus className="h-6 w-6" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-display text-lg font-bold text-kumkum">Add one household</span>
+                <span className="block font-display text-lg text-kumkum">Add one household</span>
                 <span className="hint block">A late addition, with the same checks as an import.</span>
               </span>
               <ChevronRight className="h-5 w-5 text-ink-soft transition-transform group-open:rotate-90" aria-hidden="true" />
@@ -121,7 +121,7 @@ export default async function GuestList({
                 <FileSpreadsheet className="h-6 w-6" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-display text-lg font-bold text-kumkum">Import from Excel</span>
+                <span className="block font-display text-lg text-kumkum">Import from Excel</span>
                 <span className="hint block">Fill the template, upload it, check, then add.</span>
               </span>
               <ChevronRight className="h-5 w-5 text-ink-soft transition-transform group-open:rotate-90" aria-hidden="true" />
@@ -139,7 +139,7 @@ export default async function GuestList({
 
       <section className="mt-8" aria-labelledby="households">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 id="households" className="font-display text-2xl font-bold text-kumkum">
+          <h2 id="households" className="font-display text-2xl text-kumkum">
             Households
           </h2>
         </div>
@@ -227,7 +227,7 @@ export default async function GuestList({
                   <Link href={link(g.id)} className="card block p-4 hover:border-kumkum">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="wrap-names font-display text-lg font-bold text-kumkum">{g.nameEn}</p>
+                        <p className="wrap-names font-display text-lg text-kumkum">{g.nameEn}</p>
                         {g.nameMr && (
                           <p lang="mr" className="wrap-names">
                             {g.nameMr}

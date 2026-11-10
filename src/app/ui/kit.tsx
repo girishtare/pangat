@@ -2,21 +2,14 @@ import type { ReactNode } from "react";
 import { CircleCheck, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import type { Side } from "@/lib/types";
 
-/* Small, restrained wedding details: a marigold and a divider. */
+/* Small, restrained wedding details: the mark and a divider. */
 
+/** The app's small flower. Same as Mark (six maroon petals, blue centre); kept under its old name for existing callers. */
 export function Marigold({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
-      {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
-        <ellipse key={a} cx="12" cy="6.2" rx="2.6" ry="4.2" fill="#e3a008" transform={`rotate(${a} 12 12)`} />
-      ))}
-      <circle cx="12" cy="12" r="3.4" fill="#c2410c" />
-      <circle cx="12" cy="12" r="1.5" fill="#8c1c13" />
-    </svg>
-  );
+  return <Mark className={className} />;
 }
 
-/** Landing-page mark (palette E): six maroon petals, sky-blue centre. */
+/** The Pangat mark: six maroon petals, dusty-blue centre. */
 export function Mark({ className = "h-8 w-8" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
@@ -33,9 +26,9 @@ export function Mark({ className = "h-8 w-8" }: { className?: string }) {
 export function Divider({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-3 ${className}`} aria-hidden="true">
-      <span className="h-px flex-1 bg-linear-to-r from-transparent to-haldi/70" />
+      <span className="h-px flex-1 bg-linear-to-r from-transparent to-line" />
       <Marigold className="h-4 w-4" />
-      <span className="h-px flex-1 bg-linear-to-l from-transparent to-haldi/70" />
+      <span className="h-px flex-1 bg-linear-to-l from-transparent to-line" />
     </div>
   );
 }
@@ -44,7 +37,7 @@ export function Wordmark({ small = false }: { small?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2">
       <Marigold className={small ? "h-6 w-6" : "h-8 w-8"} />
-      <span className={`font-display font-bold leading-none text-kumkum ${small ? "text-2xl" : "text-3xl"}`}>Pangat</span>
+      <span className={`font-display leading-none text-kumkum ${small ? "text-2xl" : "text-3xl"}`}>Pangat</span>
     </span>
   );
 }
@@ -64,17 +57,20 @@ export function PageHeader({
   title,
   subtitle,
   actions,
+  large = false,
 }: {
   icon?: LucideIcon;
   title: string;
   subtitle?: ReactNode;
   actions?: ReactNode;
+  /** The Dashboard and Caterer numbers look: 40 px title, no divider. */
+  large?: boolean;
 }) {
   return (
-    <header className="mb-6">
+    <header className={large ? "mb-5 lg:mb-6" : "mb-6"}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="flex items-center gap-3 font-display text-3xl font-bold text-kumkum sm:text-4xl">
+          <h1 className={`flex items-center gap-3 font-display leading-[1.2] text-kumkum ${large ? "text-[1.875rem] lg:text-[2.5rem]" : "text-3xl sm:text-4xl"}`}>
             {Icon && <Icon className="h-8 w-8 shrink-0 text-haldi-deep" aria-hidden="true" />}
             <span className="min-w-0">{title}</span>
           </h1>
@@ -82,7 +78,7 @@ export function PageHeader({
         </div>
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
       </div>
-      <Divider className="mt-4 max-w-md" />
+      {!large && <Divider className="mt-4 max-w-md" />}
     </header>
   );
 }
@@ -113,7 +109,7 @@ export function Section({
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           {n !== undefined && (
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-lg font-bold text-white">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-lg text-white">
               {n}
             </span>
           )}
@@ -123,7 +119,7 @@ export function Section({
             </span>
           )}
           <div className="min-w-0">
-            <h2 className="font-display text-xl font-bold text-kumkum sm:text-2xl">{title}</h2>
+            <h2 className="font-display text-xl text-kumkum sm:text-2xl">{title}</h2>
             {subtitle && <div className="mt-0.5 text-sm text-ink-soft">{subtitle}</div>}
           </div>
         </div>
@@ -158,7 +154,7 @@ export function Stat({
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="font-display text-2xl font-bold leading-tight text-ink sm:text-3xl">{value}</div>
+        <div className="font-display text-2xl leading-tight text-ink sm:text-3xl">{value}</div>
         <div className="text-xs font-semibold text-ink-soft sm:text-sm">{label}</div>
         {sub && <div className="text-xs text-ink-soft">{sub}</div>}
         {progress && (
@@ -212,7 +208,7 @@ export function EmptyState({ icon: Icon, title, children }: { icon: LucideIcon; 
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-haldi-soft text-haldi-deep">
         <Icon className="h-7 w-7" aria-hidden="true" />
       </span>
-      <p className="mt-3 font-display text-lg font-bold text-ink">{title}</p>
+      <p className="mt-3 font-display text-lg text-ink">{title}</p>
       {children && <div className="mt-1 max-w-md text-ink-soft">{children}</div>}
     </div>
   );

@@ -52,7 +52,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
     <fieldset className="rounded-xl border border-line bg-card">
       <legend className="sr-only">{f.name}</legend>
       <div className="rounded-t-xl border-b border-line bg-paper-deep/70 px-4 py-2">
-        <p className="font-display text-lg font-bold text-kumkum">{f.name}</p>
+        <p className="font-display text-lg text-kumkum">{f.name}</p>
         <p className="text-sm text-ink-soft">{f.when}</p>
       </div>
       <div className="space-y-4 p-4">

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Host · Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&amp;family=Mukta:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5efe1}
+a{color:#790d16}a:hover{color:#5c0a11}
+</style>
+</helmet>
+<div style="background: #f5efe1; color: #2e1a1c; font-family: Mukta, 'Noto Sans Devanagari', system-ui, sans-serif; font-size: 17px; line-height: 1.55; display: flex; flex-wrap: wrap; align-items: flex-start; min-width: 0">
+
+  <!-- RAIL -->
+  <aside style="flex: 1 1 260px; max-width: 100%; box-sizing: border-box; padding: 24px 16px; border-right: 1px solid #e5d3af; background: #fffcf5; align-self: stretch">
+    <div style="display: flex; align-items: center; gap: 8px; color: #790d16; font-family: 'Rozha One', serif; font-size: 24px; line-height: 1; padding: 0 8px">
+      <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><g fill="#790d16"><ellipse cx="12" cy="6.2" rx="2.4" ry="4"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(60 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(120 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(180 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(240 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(300 12 12)"></ellipse></g><circle cx="12" cy="12" r="2.6" fill="#aec4d4"></circle></svg>
+      Pangat
+    </div>
+    <div style="margin: 22px 8px 0; padding: 14px; border-radius: 14px; background: #e5d3af">
+      <div style="font-family: 'Rozha One', serif; font-size: 20px; line-height: 1.3; color: #790d16">Priya &amp; Rohan's wedding</div>
+      <div lang="mr" style="font-size: 15px; color: #5e4446">प्रिया &amp; रोहन यांचा विवाह</div>
+      <div style="font-size: 14px; color: #5e4446; margin-top: 4px">Sun 28 Dec · You are the owner</div>
+    </div>
+    <nav aria-label="Event" style="margin-top: 18px">
+      <ul style="margin: 0; padding: 0; list-style: none; display: grid; gap: 4px">
+        <li><a href="#dashboard" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; background: #790d16; color: #ffffff; font-weight: 700; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>Dashboard</a></li>
+        <li><a href="#guests" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: #2e1a1c; font-weight: 600; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21v-1a6 6 0 0 1 12 0v1"></path><path d="M16 4a4 4 0 0 1 0 8"></path><path d="M22 21v-1a6 6 0 0 0-4-5.7"></path></svg>Guest list</a></li>
+        <li><a href="#slips" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: #2e1a1c; font-weight: 600; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4z"></path><path d="M13 7v12" stroke-dasharray="2 2"></path></svg>Slips</a></li>
+        <li><a href="#whatsapp" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: #2e1a1c; font-weight: 600; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.5 8.5 0 1 1 21 11.5z"></path></svg>WhatsApp</a></li>
+        <li><a href="#numbers" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: #2e1a1c; font-weight: 600; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 13.9V20h12v-6.1"></path><path d="M6 14a4 4 0 0 1-.6-7.9 5 5 0 0 1 9.4-1.6A4.5 4.5 0 0 1 18 14z"></path><path d="M6 17h12"></path></svg>Caterer numbers</a></li>
+        <li><a href="#settings" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: #2e1a1c; font-weight: 600; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>Event settings</a></li>
+      </ul>
+    </nav>
+    <div style="margin: 22px 8px 0; padding-top: 14px; border-top: 1px solid #e5d3af; font-size: 15px; color: #5e4446">
+      Girish Tare · Owner
+      <div style="margin-top: 8px; display: flex; gap: 16px"><a href="#all" style="font-weight: 700">All events</a><a href="#signout" style="font-weight: 700">Sign out</a></div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 32px 40px 56px; max-width: 1180px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div>
+        <h1 style="margin: 0; font-family: 'Rozha One', serif; font-weight: 400; font-size: 40px; line-height: 1.2; color: #790d16">How many are coming</h1>
+        <p style="margin: 4px 0 0; color: #5e4446">Updated just now · replies close on 13 December</p>
+      </div>
+      <div role="tablist" aria-label="Side" style="display: inline-flex; padding: 4px; border-radius: 14px; background: #ebe1cb; gap: 4px">
+        <button type="button" role="tab" aria-selected="true" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #fffcf5; color: #790d16; font: inherit; font-weight: 700; box-shadow: 0 1px 3px rgba(46, 26, 28, 0.15)">Both sides</button>
+        <button type="button" role="tab" aria-selected="false" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: transparent; color: #2e1a1c; font: inherit; font-weight: 600">Bride's side</button>
+        <button type="button" role="tab" aria-selected="false" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: transparent; color: #2e1a1c; font: inherit; font-weight: 600">Groom's side</button>
+      </div>
+    </div>
+
+    <div role="status" style="margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 14px 18px; border-radius: 14px; background: #dfe8ef; border: 1px solid #aec4d4">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f6b80" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8h.01"></path><path d="M11 12h1v5h1"></path></svg>
+      <span style="flex: 1 1 280px"><strong>2 people</strong> opened a link that wasn't theirs and are waiting for their own.</span>
+      <a href="#guests" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #2e1a1c; color: #2e1a1c; background: #fffcf5; font-weight: 700; text-decoration: none">Send their links</a>
+    </div>
+
+    <!-- FUNCTION CARDS -->
+    <div style="margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 18px">
+
+      <section style="background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 22px">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline"><h2 style="margin: 0; font-family: 'Rozha One', serif; font-weight: 400; font-size: 26px; color: #2e1a1c">Haldi</h2><span style="font-size: 14px; color: #5e4446">Sat 27 Dec · 10 am</span></div>
+        <div style="margin-top: 10px; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5e4446">Expected</div>
+        <div style="font-family: 'Rozha One', serif; font-size: 64px; line-height: 1; color: #790d16">245</div>
+        <div style="margin-top: 8px; font-size: 16px">Confirmed <strong>214</strong> · veg 188 · non-veg 26</div>
+        <div style="margin-top: 16px; height: 12px; border-radius: 99px; background: #ebe1cb; display: flex; overflow: hidden" aria-hidden="true"><span style="width: 57%; background: #790d16"></span><span style="width: 10%; background: #aec4d4"></span></div>
+        <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: #5e4446"><span><strong style="color: #790d16">102</strong> yes</span><span><strong style="color: #4f6b80">18</strong> no</span><span><strong style="color: #2e1a1c">60</strong> waiting</span><span>· 67% of 180 replied</span></div>
+      </section>
+
+      <section style="background: #fffcf5; border: 2px solid #790d16; border-radius: 20px; padding: 22px">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline"><h2 style="margin: 0; font-family: 'Rozha One', serif; font-weight: 400; font-size: 26px; color: #2e1a1c">Wedding</h2><span style="font-size: 14px; color: #5e4446">Sun 28 Dec · 11:30 am</span></div>
+        <div style="margin-top: 10px; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5e4446">Expected</div>
+        <div style="font-family: 'Rozha One', serif; font-size: 64px; line-height: 1; color: #790d16">644</div>
+        <div style="margin-top: 8px; font-size: 16px">Confirmed <strong>598</strong> · veg 451 · non-veg 147</div>
+        <div style="margin-top: 16px; height: 12px; border-radius: 99px; background: #ebe1cb; display: flex; overflow: hidden" aria-hidden="true"><span style="width: 65%; background: #790d16"></span><span style="width: 6%; background: #aec4d4"></span></div>
+        <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: #5e4446"><span><strong style="color: #790d16">268</strong> yes</span><span><strong style="color: #4f6b80">24</strong> no</span><span><strong style="color: #2e1a1c">120</strong> waiting</span><span>· 71% of 412 replied</span></div>
+      </section>
+
+      <section style="background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 22px">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: baseline"><h2 style="margin: 0; font-family: 'Rozha One', serif; font-weight: 400; font-size: 26px; color: #2e1a1c">Reception</h2><span style="font-size: 14px; color: #5e4446">Sun 28 Dec · 7 pm</span></div>
+        <div style="margin-top: 10px; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #5e4446">Expected</div>
+        <div style="font-family: 'Rozha One', serif; font-size: 64px; line-height: 1; color: #790d16">529</div>
+        <div style="margin-top: 8px; font-size: 16px">Confirmed <strong>470</strong> · veg 330 · non-veg 140</div>
+        <div style="margin-top: 16px; height: 12px; border-radius: 99px; background: #ebe1cb; display: flex; overflow: hidden" aria-hidden="true"><span style="width: 56%; background: #790d16"></span><span style="width: 12%; background: #aec4d4"></span></div>
+        <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: #5e4446"><span><strong style="color: #790d16">214</strong> yes</span><span><strong style="color: #4f6b80">46</strong> no</span><span><strong style="color: #2e1a1c">120</strong> waiting</span><span>· 68% of 380 replied</span></div>
+      </section>
+    </div>
+
+    <p style="margin: 16px 0 0; font-size: 15px; color: #5e4446">Bar: <span style="color: #790d16; font-weight: 700">■ said yes</span> · <span style="color: #4f6b80; font-weight: 700">■ said no</span> · <span style="font-weight: 700">□ not replied yet</span> (households).</p>
+
+    <!-- HOW EXPECTED WORKS -->
+    <div style="margin-top: 22px; padding: 18px 20px; border-radius: 16px; background: #e5d3af">
+      <h2 style="margin: 0 0 4px; font-size: 18px; font-weight: 700">How "Expected" is worked out</h2>
+      <p style="margin: 0; font-size: 16px">Confirmed people × <strong>90%</strong> (some who say yes don't come) + households not replied yet × <strong>2.2</strong> people on average × <strong>40%</strong>. You can change both percentages in <a href="#settings" style="font-weight: 700">Event settings</a>.</p>
+    </div>
+
+    <!-- FULL TABLE -->
+    <h2 style="margin: 36px 0 12px; font-family: 'Rozha One', serif; font-weight: 400; font-size: 26px; color: #790d16">All the numbers</h2>
+    <div style="overflow-x: auto; border: 1px solid #e5d3af; border-radius: 16px; background: #fffcf5">
+      <table style="width: 100%; min-width: 820px; border-collapse: collapse; font-size: 16px">
+        <thead>
+          <tr style="background: #ebe1cb; text-align: center">
+            <th scope="col" style="text-align: left; padding: 12px 16px">Function</th>
+            <th scope="col" style="padding: 12px 10px">Invited</th>
+            <th scope="col" style="padding: 12px 10px">Yes</th>
+            <th scope="col" style="padding: 12px 10px">No</th>
+            <th scope="col" style="padding: 12px 10px">Waiting</th>
+            <th scope="col" style="padding: 12px 10px">Replied</th>
+            <th scope="col" style="padding: 12px 10px">Confirmed</th>
+            <th scope="col" style="padding: 12px 10px">Veg</th>
+            <th scope="col" style="padding: 12px 10px">Non-veg</th>
+            <th scope="col" style="padding: 12px 16px; background: #e5d3af; color: #790d16">Expected</th>
+          </tr>
+        </thead>
+        <tbody style="text-align: center">
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 12px 16px">Haldi</th><td style="padding: 12px 10px">180</td><td style="padding: 12px 10px">102</td><td style="padding: 12px 10px">18</td><td style="padding: 12px 10px">60</td><td style="padding: 12px 10px">67%</td><td style="padding: 12px 10px">214</td><td style="padding: 12px 10px">188</td><td style="padding: 12px 10px">26</td><td style="padding: 12px 16px; background: #f2e8d2; font-family: 'Rozha One', serif; font-size: 22px; color: #790d16">245</td></tr>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 12px 16px">Wedding</th><td style="padding: 12px 10px">412</td><td style="padding: 12px 10px">268</td><td style="padding: 12px 10px">24</td><td style="padding: 12px 10px">120</td><td style="padding: 12px 10px">71%</td><td style="padding: 12px 10px">598</td><td style="padding: 12px 10px">451</td><td style="padding: 12px 10px">147</td><td style="padding: 12px 16px; background: #f2e8d2; font-family: 'Rozha One', serif; font-size: 22px; color: #790d16">644</td></tr>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 12px 16px">Reception</th><td style="padding: 12px 10px">380</td><td style="padding: 12px 10px">214</td><td style="padding: 12px 10px">46</td><td style="padding: 12px 10px">120</td><td style="padding: 12px 10px">68%</td><td style="padding: 12px 10px">470</td><td style="padding: 12px 10px">330</td><td style="padding: 12px 10px">140</td><td style="padding: 12px 16px; background: #f2e8d2; font-family: 'Rozha One', serif; font-size: 22px; color: #790d16">529</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin: 10px 0 0; font-size: 14px; color: #5e4446">Invited, yes, no and waiting count households (one card each). Confirmed, veg and non-veg count people.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -33,7 +33,7 @@ export async function saveBaselines(slug: string, _prev: FormState, fd: FormData
     rows.push({ functionId: f.id, baseline: v.value, baseline_set_at: v.value === null ? null : now });
   }
   await saveNumbers(rows, who.host.userId);
-  return done("Baseline saved.");
+  return done("Family's guess saved.");
 }
 
 /** The tool's expected headcount and veg split per function, over both sides, as of now. */
@@ -69,7 +69,7 @@ export async function freezePredicted(slug: string, _prev: FormState): Promise<F
     })),
     who.host.userId,
   );
-  return done("The tool's numbers are frozen. These are the ones the pilot is judged on.");
+  return done("Pangat's numbers are frozen. These are the ones the pilot is judged on.");
 }
 
 /** Freezes a revised number for the caterer, after the first count. Doesn't change the pilot verdict. */
@@ -122,5 +122,5 @@ export async function saveActuals(slug: string, _prev: FormState, fd: FormData):
     });
   }
   await saveNumbers(rows, who.host.userId);
-  return done("Actual counts saved.");
+  return done("Counts saved.");
 }

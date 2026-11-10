@@ -1,225 +1,178 @@
-import { CalendarDays, Clock, MapPin, Users, Utensils } from "lucide-react";
+import Link from "next/link";
 import { forecast, type Forecast } from "@/lib/forecast";
-import { formatWhen } from "@/lib/i18n";
-import { factsFor, scopeLabel, scopesFor, type Scope } from "@/lib/sides";
-import type { DashboardData, FunctionInfo, InviteFact, Side } from "@/lib/types";
-import { Section, Stat } from "../ui/kit";
+import { factsFor, type Scope } from "@/lib/sides";
+import type { DashboardData, FunctionInfo } from "@/lib/types";
+import { shortWhen } from "@/lib/when";
 
 const n = (v: number) => v.toLocaleString("en-IN");
 const pct = (v: number) => `${Math.round(v * 100)}%`;
+const oneDecimal = (v: number) => v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
 
-function householdTotals(facts: InviteFact[]) {
-  const byHousehold = new Map<string, { answered: number; invited: number }>();
-  for (const f of facts) {
-    const h = byHousehold.get(f.householdId) ?? { answered: 0, invited: 0 };
-    h.invited++;
-    if (f.status !== "pending") h.answered++;
-    byHousehold.set(f.householdId, h);
-  }
-  const all = [...byHousehold.values()];
-  return { households: all.length, replied: all.filter((h) => h.answered > 0).length };
-}
-
-/** Headcounts: totals, one card per function, and (for the owner) each side. */
-export default function Dashboard({ data, hostSide }: { data: DashboardData; hostSide: Side | null }) {
+/**
+ * Headcounts for one scope (both sides, or one side): a card per function,
+ * how Expected is worked out, and (on laptops) every number in one table.
+ * The scope has already been checked against what this host may see.
+ */
+export default function Dashboard({
+  data,
+  scope,
+  settingsHref,
+}: {
+  data: DashboardData;
+  scope: Scope;
+  /** Event settings, for the owner; null for co-owners (they can't open it). */
+  settingsHref: string | null;
+}) {
   const rates = { yesShowRate: data.event.yesShowRate, pendingShowRate: data.event.pendingShowRate };
-  const scopes = scopesFor(hostSide, data.facts);
-  const primary: Scope = scopes[0];
-  const facts = factsFor(primary, data.facts);
-  const totals = householdTotals(facts);
-  const pending = totals.households - totals.replied;
-  const replyRate = totals.households ? totals.replied / totals.households : 0;
+  const facts = factsFor(scope, data.facts);
   const per = data.functions.map((fn) => ({ fn, f: forecast(facts.filter((x) => x.functionId === fn.id), rates) }));
-  const sides = scopes.slice(1) as Side[];
+
+  // The average the forecast uses for silent households: people per "yes" reply.
+  const yes = facts.filter((x) => x.status === "yes");
+  const avgHeads = yes.length ? yes.reduce((s, x) => s + x.heads, 0) / yes.length : 2;
+
+  const footnote = "Invited, yes, no and waiting count households (one card each). Confirmed, veg and non-veg count people.";
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Stat icon={Users} value={n(totals.households)} label={primary === "both" ? "Households invited" : `Households · ${scopeLabel(primary)}`} />
-        <Stat
-          icon={Users}
-          value={n(totals.replied)}
-          label="Replied"
-          sub={`${pct(replyRate)} of households`}
-          tone="good"
-          progress={{ value: replyRate * 100 }}
-        />
-        <Stat
-          icon={Clock}
-          value={n(pending)}
-          label="Waiting for a reply"
-          sub={totals.households ? `${pct(pending / totals.households)} of households` : undefined}
-          tone={pending > 0 ? "warn" : "default"}
-          progress={{ value: totals.households ? (pending / totals.households) * 100 : 0, tone: "warn" }}
-        />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div>
+      <div className="grid gap-3.5 lg:grid-cols-[repeat(auto-fit,minmax(270px,1fr))] lg:gap-[18px]">
         {per.map(({ fn, f }) => (
           <FunctionCard key={fn.id} fn={fn} f={f} />
         ))}
       </div>
 
-      {sides.length > 1 && (
-        <Section icon={Users} title="By side" subtitle="The same numbers for each side.">
-          <SideTable functions={data.functions} facts={data.facts} sides={sides} rates={rates} />
-        </Section>
-      )}
-
-      <p className="hint">
-        <b>Expected</b> = confirmed people × {pct(rates.yesShowRate)} + households still to reply × average people per household × {pct(rates.pendingShowRate)}.
-        The percentages are set in Event settings.
+      <p className="mt-4 hidden text-[0.9375rem] text-ink-soft lg:block">
+        Bar: <span className="font-bold text-kumkum">■ said yes</span> · <span className="font-bold text-haldi-deep">■ said no</span> ·{" "}
+        <span className="font-bold text-ink">□ not replied yet</span> (households).
       </p>
+      <p className="mt-4 text-[0.9375rem] text-ink-soft lg:hidden">{footnote}</p>
+
+      <div className="mt-4 rounded-2xl bg-sand px-5 py-[18px] lg:mt-[22px]">
+        <h2 className="mb-1 text-lg font-bold">How &quot;Expected&quot; is worked out</h2>
+        <p className="text-base">
+          Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + households not replied yet ×{" "}
+          <strong>{oneDecimal(avgHeads)}</strong> people on average × <strong>{pct(rates.pendingShowRate)}</strong>.{" "}
+          {settingsHref ? (
+            <>
+              You can change both percentages in{" "}
+              <Link href={settingsHref} className="font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
+                Event settings
+              </Link>
+              .
+            </>
+          ) : (
+            "The event's owner can change both percentages."
+          )}
+        </p>
+        <p className="mt-1 text-sm text-ink-soft">
+          The average is people per &quot;yes&quot; so far{yes.length ? "" : " (2 until the first yes comes in)"}; each function uses its own.
+        </p>
+      </div>
+
+      <div className="hidden lg:block">
+        <h2 className="mb-3 mt-9 font-display text-[1.625rem] text-kumkum">All the numbers</h2>
+        <div className="overflow-x-auto rounded-2xl border border-line bg-card">
+          <table className="w-full min-w-[820px] border-collapse text-base">
+            <thead>
+              <tr className="bg-paper-deep text-center">
+                <th scope="col" className="px-4 py-3 text-left">
+                  Function
+                </th>
+                {["Invited", "Yes", "No", "Waiting", "Replied", "Confirmed", "Veg", "Non-veg"].map((h) => (
+                  <th key={h} scope="col" className="px-2.5 py-3">
+                    {h}
+                  </th>
+                ))}
+                <th scope="col" className="bg-sand px-4 py-3 text-kumkum">
+                  Expected
+                </th>
+              </tr>
+            </thead>
+            <tbody className="text-center">
+              {per.map(({ fn, f }) => (
+                <tr key={fn.id} className="border-t border-line">
+                  <th scope="row" className="px-4 py-3 text-left">
+                    {fn.name.en}
+                  </th>
+                  <td className="px-2.5 py-3">{n(f.invitedHouseholds)}</td>
+                  <td className="px-2.5 py-3">{n(f.yesHouseholds)}</td>
+                  <td className="px-2.5 py-3">{n(f.noHouseholds)}</td>
+                  <td className="px-2.5 py-3">{n(f.pendingHouseholds)}</td>
+                  <td className="px-2.5 py-3">{pct(f.responseRate)}</td>
+                  <td className="px-2.5 py-3">{n(f.confirmedHeads)}</td>
+                  <td className="px-2.5 py-3">{fn.catered ? n(f.veg) : "—"}</td>
+                  <td className="px-2.5 py-3">{fn.catered ? n(f.nonveg) : "—"}</td>
+                  <td className="bg-sand-soft px-4 py-3 font-display text-[1.375rem] text-kumkum">{n(f.expected)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2.5 text-sm text-ink-soft">{footnote}</p>
+      </div>
     </div>
   );
 }
 
 function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
+  const share = (v: number) => (f.invitedHouseholds ? `${(v / f.invitedHouseholds) * 100}%` : "0%");
   return (
-    <article className="card overflow-hidden">
-      <div className="border-b border-line bg-paper-deep/70 px-4 py-3">
-        <h3 className="font-display text-xl font-bold text-kumkum">
-          {fn.name.en}
-          {fn.name.mr && (
-            <span lang="mr" className="ml-2 text-base font-semibold text-ink-soft">
-              {fn.name.mr}
-            </span>
-          )}
-        </h3>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-ink-soft">
-          <span className="inline-flex items-center gap-1">
-            <CalendarDays className="h-4 w-4" aria-hidden="true" />
-            {formatWhen(fn.startsAt, "en")}
+    <section className="rounded-[18px] border border-line bg-card p-[18px] lg:rounded-[20px] lg:p-[22px]">
+      <div className="flex items-baseline justify-between gap-2.5">
+        <h2 className="wrap-names min-w-0 font-display text-2xl text-ink lg:text-[1.625rem]">{fn.name.en}</h2>
+        <span className="shrink-0 text-sm text-ink-soft">{shortWhen(fn.startsAt)}</span>
+      </div>
+
+      <div className="mt-1.5 flex items-end justify-between gap-2.5 lg:mt-2.5 lg:block">
+        <div>
+          <div className="text-[0.8125rem] font-bold uppercase tracking-[0.08em] text-ink-soft lg:text-sm">Expected</div>
+          <div className="font-display text-[3.5rem] leading-none text-kumkum lg:text-[4rem]">{n(f.expected)}</div>
+        </div>
+        <div className="text-right text-[0.9375rem] lg:mt-2 lg:text-left lg:text-base">
+          Confirmed <strong>{n(f.confirmedHeads)}</strong>
+          <br className="lg:hidden" />
+          <span className="text-ink-soft lg:text-ink">
+            <span className="hidden lg:inline"> · </span>
+            {fn.catered ? `veg ${n(f.veg)} · non-veg ${n(f.nonveg)}` : "no food served"}
           </span>
-          {fn.venue && (
-            <span className="inline-flex items-start gap-1" title={fn.venue}>
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="line-clamp-2">{fn.venue}</span>
-            </span>
-          )}
-        </p>
-      </div>
-      <div className="p-4">
-        <div className="flex items-end justify-between gap-3 rounded-xl bg-haldi-soft/70 px-4 py-3">
-          <div>
-            <div className="text-sm font-semibold text-haldi-deep">Expected</div>
-            <div className="font-display text-5xl font-bold leading-none text-kumkum">{n(f.expected)}</div>
-          </div>
-          <div className="text-right text-sm text-ink-soft">
-            {n(f.confirmedHeads)} confirmed
-            <br />
-            people
-          </div>
         </div>
-        <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-          <Mini label="Coming" value={f.yesHouseholds} tone="text-leaf" />
-          <Mini label="Not coming" value={f.noHouseholds} tone="text-ink-soft" />
-          <Mini label="Pending" value={f.pendingHouseholds} tone="text-haldi-deep" />
-        </dl>
-        <div className="mt-3">
-          <div className="flex justify-between text-xs text-ink-soft">
-            <span>{n(f.invitedHouseholds)} households invited</span>
-            <span>{pct(f.responseRate)} replied</span>
-          </div>
-          <div className="mt-1 h-2 overflow-hidden rounded-full bg-paper-deep">
-            <div className="h-full rounded-full bg-leaf" style={{ width: `${f.responseRate * 100}%` }} />
-          </div>
-        </div>
-        {fn.catered ? (
-          <p className="mt-3 flex items-center gap-2 text-sm">
-            <Utensils className="h-4 w-4 text-haldi-deep" aria-hidden="true" />
-            <span>
-              <b>{n(f.veg)}</b> veg · <b>{n(f.nonveg)}</b> non-veg confirmed
-            </span>
-          </p>
-        ) : (
-          <p className="mt-3 text-sm text-ink-soft">No food served at this function.</p>
-        )}
       </div>
-    </article>
+
+      <div className="mt-3.5 flex h-3 overflow-hidden rounded-full bg-paper-deep lg:mt-4" aria-hidden="true">
+        <span className="bg-kumkum" style={{ width: share(f.yesHouseholds) }} />
+        <span className="bg-haldi" style={{ width: share(f.noHouseholds) }} />
+      </div>
+
+      {/* Phone: four counts in a row. Laptop: one line (the table below has the rest). */}
+      <dl className="mt-2.5 grid grid-cols-4 gap-1 text-center text-sm lg:hidden">
+        <Count label="Yes" value={n(f.yesHouseholds)} tone="text-kumkum" />
+        <Count label="No" value={n(f.noHouseholds)} tone="text-haldi-deep" />
+        <Count label="Waiting" value={n(f.pendingHouseholds)} tone="text-ink" />
+        <Count label="Replied" value={pct(f.responseRate)} tone="text-ink" />
+      </dl>
+      <p className="mt-2 hidden flex-wrap gap-x-3.5 gap-y-1 text-sm text-ink-soft lg:flex">
+        <span>
+          <strong className="text-kumkum">{n(f.yesHouseholds)}</strong> yes
+        </span>
+        <span>
+          <strong className="text-haldi-deep">{n(f.noHouseholds)}</strong> no
+        </span>
+        <span>
+          <strong className="text-ink">{n(f.pendingHouseholds)}</strong> waiting
+        </span>
+        <span>
+          · {pct(f.responseRate)} of {n(f.invitedHouseholds)} replied
+        </span>
+      </p>
+    </section>
   );
 }
 
-function Mini({ label, value, tone }: { label: string; value: number; tone: string }) {
+function Count({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <div className="rounded-lg border border-line bg-card px-1 py-2">
-      <dd className={`font-display text-2xl font-bold ${tone}`}>{n(value)}</dd>
-      <dt className="text-xs text-ink-soft">{label}</dt>
+    <div>
+      <dt className="text-ink-soft">{label}</dt>
+      <dd className={`text-lg font-bold ${tone}`}>{value}</dd>
     </div>
-  );
-}
-
-function SideTable({
-  functions,
-  facts,
-  sides,
-  rates,
-}: {
-  functions: FunctionInfo[];
-  facts: InviteFact[];
-  sides: Side[];
-  rates: { yesShowRate: number; pendingShowRate: number };
-}) {
-  const rows = functions.map((fn) => ({
-    fn,
-    bySide: sides.map((s) => ({ side: s, f: forecast(factsFor(s, facts).filter((x) => x.functionId === fn.id), rates) })),
-  }));
-  return (
-    <>
-      <div className="hidden lg:block">
-        <table className="table-p">
-          <thead>
-            <tr>
-              <th>Function</th>
-              {sides.map((s) => (
-                <th key={s} colSpan={3} className="text-center">
-                  {scopeLabel(s)}
-                </th>
-              ))}
-            </tr>
-            <tr>
-              <th />
-              {sides.map((s) => [
-                <th key={`${s}r`}>Replied</th>,
-                <th key={`${s}c`}>Confirmed</th>,
-                <th key={`${s}e`}>Expected</th>,
-              ])}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ fn, bySide }) => (
-              <tr key={fn.id}>
-                <td className="font-semibold">{fn.name.en}</td>
-                {bySide.map(({ side, f }) => [
-                  <td key={`${side}r`}>{pct(f.responseRate)}</td>,
-                  <td key={`${side}c`}>{n(f.confirmedHeads)}</td>,
-                  <td key={`${side}e`} className="font-display text-lg font-bold text-kumkum">
-                    {n(f.expected)}
-                  </td>,
-                ])}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <ul className="space-y-3 lg:hidden">
-        {rows.map(({ fn, bySide }) => (
-          <li key={fn.id} className="rounded-xl border border-line p-3">
-            <p className="font-semibold">{fn.name.en}</p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {bySide.map(({ side, f }) => (
-                <div key={side} className="rounded-lg bg-paper-deep/60 p-2">
-                  <p className="text-xs font-semibold text-ink-soft">{scopeLabel(side)}</p>
-                  <p className="font-display text-2xl font-bold text-kumkum">{n(f.expected)}</p>
-                  <p className="text-xs text-ink-soft">
-                    expected · {n(f.confirmedHeads)} confirmed · {pct(f.responseRate)} replied
-                  </p>
-                </div>
-              ))}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </>
   );
 }
