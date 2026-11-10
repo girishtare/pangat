@@ -25,6 +25,6 @@ export async function submitReply(input: unknown): Promise<SubmitResult> {
     return { ok: false, error: "failed" };
   }
   revalidatePath(`/r/${parsed.data.token}`);
-  revalidatePath("/host");
+  revalidatePath("/host", "layout");
   return { ok: true };
 }

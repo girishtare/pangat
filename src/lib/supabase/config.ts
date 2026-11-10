@@ -20,7 +20,3 @@ export function supabaseConfig(): SupabaseConfig | null {
   return { url, serviceRoleKey, publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || null };
 }
 
-/** Event the host dashboard shows. */
-export function eventSlug(): string {
-  return process.env.PANGAT_EVENT_SLUG || "demo-wedding";
-}
