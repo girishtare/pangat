@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseConfig } from "../supabase/config";
+import type { FunctionNumbers } from "../pilot";
 import type { Side } from "../types";
 
 // Writes for event setup and host management. Service role: every caller must
@@ -179,4 +180,167 @@ export async function addHost(
 export async function removeHost(eventId: string, userId: string): Promise<void> {
   const { error } = await admin().from("hosts").delete().eq("event_id", eventId).eq("user_id", userId);
   if (error) throw new Error(`remove host failed: ${error.message}`);
+}
+
+/* ---------- Pilot record ---------- */
+
+
+export async function loadNumbers(functionIds: string[]): Promise<Map<string, FunctionNumbers>> {
+  const out = new Map<string, FunctionNumbers>();
+  if (functionIds.length === 0) return out;
+  const { data, error } = await admin().from("function_numbers").select("*").in("function_id", functionIds);
+  if (error) throw new Error(`numbers lookup failed: ${error.message}`);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  for (const r of (data ?? []) as any[]) {
+    out.set(r.function_id, {
+      baseline: r.baseline,
+      predicted: r.predicted,
+      predictedVeg: r.predicted_veg,
+      predictedNonveg: r.predicted_nonveg,
+      predictedAt: r.predicted_at,
+      actual: r.actual,
+      actualVeg: r.actual_veg,
+      actualNonveg: r.actual_nonveg,
+    });
+  }
+  return out;
+}
+
+/** Upserts some columns of function_numbers for functions the caller has already checked belong to the event. */
+export async function saveNumbers(rows: ({ functionId: string } & Record<string, number | string | null>)[], userId: string): Promise<void> {
+  if (rows.length === 0) return;
+  const now = new Date().toISOString();
+  const payload = rows.map(({ functionId, ...cols }) => ({ function_id: functionId, ...cols, updated_by: userId, updated_at: now }));
+  const { error } = await admin().from("function_numbers").upsert(payload, { onConflict: "function_id" });
+  if (error) throw new Error(`saving numbers failed: ${error.message}`);
+}
+
+/* ---------- One household ---------- */
+
+export interface HouseholdDetail {
+  id: string;
+  eventId: string;
+  side: Side;
+  nameEn: string;
+  nameMr: string | null;
+  mobile: string | null;
+  shortCode: string;
+  token: string;
+  softCap: number | null;
+  functionIds: string[];
+  responses: {
+    functionId: string;
+    status: "yes" | "no";
+    heads: number;
+    veg: number;
+    nonveg: number;
+    arrivalSlot: string | null;
+    source: string;
+    updatedAt: string;
+  }[];
+}
+
+export async function loadHousehold(eventId: string, householdId: string): Promise<HouseholdDetail | null> {
+  const { data, error } = await admin()
+    .from("households")
+    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, invites(function_id), responses(*)")
+    .eq("id", householdId)
+    .eq("event_id", eventId)
+    .maybeSingle();
+  if (error) throw new Error(`household lookup failed: ${error.message}`);
+  if (!data) return null;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const r = data as any;
+  return {
+    id: r.id,
+    eventId: r.event_id,
+    side: r.side,
+    nameEn: r.name_en,
+    nameMr: r.name_mr,
+    mobile: r.mobile,
+    shortCode: r.short_code,
+    token: r.token,
+    softCap: r.soft_cap,
+    functionIds: (r.invites ?? []).map((i: any) => i.function_id),
+    responses: (r.responses ?? []).map((x: any) => ({
+      functionId: x.function_id,
+      status: x.status,
+      heads: x.heads,
+      veg: x.veg,
+      nonveg: x.nonveg,
+      arrivalSlot: x.arrival_slot,
+      source: x.source,
+      updatedAt: x.updated_at,
+    })),
+  };
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
+export async function findHouseholdByCode(eventId: string, code: string): Promise<string | null> {
+  const { data, error } = await admin()
+    .from("households")
+    .select("id")
+    .eq("event_id", eventId)
+    .eq("short_code", code.trim().toUpperCase())
+    .maybeSingle();
+  if (error) throw new Error(`code lookup failed: ${error.message}`);
+  return data?.id ?? null;
+}
+
+export async function updateHousehold(
+  eventId: string,
+  householdId: string,
+  fields: { side: Side; nameEn: string; nameMr: string | null; mobile: string | null; softCap: number | null },
+  functionIds: string[],
+): Promise<void> {
+  const db = admin();
+  const { error } = await db
+    .from("households")
+    .update({ side: fields.side, name_en: fields.nameEn, name_mr: fields.nameMr, mobile: fields.mobile, soft_cap: fields.softCap })
+    .eq("id", householdId)
+    .eq("event_id", eventId);
+  if (error) throw new Error(`update household failed: ${error.message}`);
+
+  const { data: current, error: invErr } = await db.from("invites").select("function_id").eq("household_id", householdId);
+  if (invErr) throw new Error(`invites lookup failed: ${invErr.message}`);
+  const have = new Set((current ?? []).map((i) => i.function_id as string));
+  const want = new Set(functionIds);
+  const add = functionIds.filter((id) => !have.has(id)).map((function_id) => ({ household_id: householdId, function_id }));
+  const drop = [...have].filter((id) => !want.has(id));
+  if (add.length) {
+    const { error: e } = await db.from("invites").insert(add);
+    if (e) throw new Error(`adding invites failed: ${e.message}`);
+  }
+  if (drop.length) {
+    const { error: e } = await db.from("invites").delete().eq("household_id", householdId).in("function_id", drop);
+    if (e) throw new Error(`removing invites failed: ${e.message}`);
+  }
+}
+
+export async function deleteHousehold(eventId: string, householdId: string): Promise<void> {
+  const { error } = await admin().from("households").delete().eq("id", householdId).eq("event_id", eventId);
+  if (error) throw new Error(`delete household failed: ${error.message}`);
+}
+
+/** Replies recorded by a host (phone call, in person): source on_behalf, signed with the host's id. */
+export async function saveOnBehalf(
+  householdId: string,
+  answers: { functionId: string; status: "yes" | "no"; heads: number; veg: number; nonveg: number; arrivalSlot: string | null }[],
+  hostUserId: string,
+): Promise<void> {
+  const updated_at = new Date().toISOString();
+  const rows = answers.map((a) => ({
+    household_id: householdId,
+    function_id: a.functionId,
+    status: a.status,
+    heads: a.heads,
+    veg: a.veg,
+    nonveg: a.nonveg,
+    arrival_slot: a.arrivalSlot,
+    source: "on_behalf",
+    updated_by: hostUserId,
+    updated_at,
+  }));
+  const { error } = await admin().from("responses").upsert(rows, { onConflict: "household_id,function_id" });
+  if (error) throw new Error(`saving reply failed: ${error.message}`);
 }

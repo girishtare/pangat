@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { hostGate } from "@/lib/host";
 import { listGuests } from "@/lib/store/supabase";
 import { EventHeader, GateMessage } from "../../../HostChrome";
@@ -6,8 +7,15 @@ import ImportForm from "./ImportForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function GuestList({ params }: { params: Promise<{ slug: string }> }) {
+export default async function GuestList({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { slug } = await params;
+  const q = ((await searchParams).q ?? "").trim().slice(0, 60);
   const gate = await hostGate(slug);
   if (!gate.ok) return <GateMessage gate={gate} title="Guest list" />;
 
@@ -16,6 +24,17 @@ export default async function GuestList({ params }: { params: Promise<{ slug: st
   const fnName = new Map(host.functions.map((f) => [f.id, f.name.en]));
   const noMobile = guests.filter((g) => !g.mobile).length;
   const noMarathi = guests.filter((g) => !g.nameMr).length;
+  const qLower = q.toLowerCase();
+  const qDigits = q.replace(/D/g, "");
+  const shown = q
+    ? guests.filter(
+        (g) =>
+          g.nameEn.toLowerCase().includes(qLower) ||
+          (g.nameMr ?? "").includes(q) ||
+          g.shortCode === q.toUpperCase() ||
+          (qDigits.length >= 4 && (g.mobile ?? "").includes(qDigits)),
+      )
+    : guests;
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
@@ -49,9 +68,30 @@ export default async function GuestList({ params }: { params: Promise<{ slug: st
       )}
 
       <section className="mt-8">
-        <h2 className="text-xl font-semibold">Households</h2>
-        {guests.length === 0 ? (
-          <p className="mt-2">No households yet.</p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-xl font-semibold">Households</h2>
+          <form className="flex gap-2" action={`/host/e/${slug}/guests`}>
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Name, mobile or code"
+              aria-label="Find a household"
+              className="rounded-xl border-2 border-haldi/60 bg-white px-3 py-2"
+            />
+            <button type="submit" className="rounded-xl border-2 border-kumkum px-4 py-2 font-semibold text-kumkum">
+              Find
+            </button>
+            {q && (
+              <Link href={`/host/e/${slug}/guests`} className="self-center text-sm text-kumkum underline">
+                Clear
+              </Link>
+            )}
+          </form>
+        </div>
+        <p className="mt-1 text-sm">Open a household to record a reply taken by phone, change its details, or delete it.</p>
+        {q && <p className="mt-2 text-sm">{shown.length} of {guests.length} households match &quot;{q}&quot;.</p>}
+        {shown.length === 0 ? (
+          <p className="mt-2">{q ? "No household matches." : "No households yet."}</p>
         ) : (
           <div className="mt-2 overflow-x-auto rounded-xl border border-haldi/60 bg-white">
             <table className="w-full text-left text-sm">
@@ -65,19 +105,17 @@ export default async function GuestList({ params }: { params: Promise<{ slug: st
                 </tr>
               </thead>
               <tbody>
-                {guests.map((g) => (
+                {shown.map((g) => (
                   <tr key={g.id} className="border-t border-haldi/30 align-top">
                     <td className="px-3 py-2">
-                      <div className="font-semibold">{g.nameEn}</div>
+                      <Link href={`/host/e/${slug}/guests/${g.id}`} className="font-semibold text-kumkum underline">
+                        {g.nameEn}
+                      </Link>
                       {g.nameMr && <div>{g.nameMr}</div>}
                     </td>
                     <td className="px-3 py-2">{g.side === "bride" ? "Bride" : "Groom"}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{g.mobile ?? "—"}</td>
-                    <td className="px-3 py-2 font-mono">
-                      <a className="text-kumkum underline" href={`/r/${g.token}`} target="_blank" rel="noreferrer">
-                        {g.shortCode}
-                      </a>
-                    </td>
+                    <td className="px-3 py-2 font-mono">{g.shortCode}</td>
                     <td className="px-3 py-2">{g.functionIds.map((id) => fnName.get(id) ?? "?").join(", ")}</td>
                     <td className="px-3 py-2">
                       {g.replied.length === 0 ? "—" : g.replied.length === g.functionIds.length ? "Yes" : "Partly"}

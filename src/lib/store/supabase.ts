@@ -155,6 +155,7 @@ export async function loadHostAccess(client: SupabaseClient, eventSlug: string):
 /* ---------- Guest list (stage 2.2) ---------- */
 
 export interface HouseholdKey {
+  id: string;
   side: Side;
   nameEn: string;
   mobile: string | null;
@@ -169,11 +170,11 @@ export interface HouseholdKey {
 export async function loadHouseholdKeys(eventId: string): Promise<HouseholdKey[]> {
   const { data, error } = await db()
     .from("households")
-    .select("side, name_en, mobile, short_code")
+    .select("id, side, name_en, mobile, short_code")
     .eq("event_id", eventId)
     .range(0, 9999);
   if (error) throw new Error(`household keys lookup failed: ${error.message}`);
-  return (data ?? []).map((r: any) => ({ side: r.side, nameEn: r.name_en, mobile: r.mobile, shortCode: r.short_code }));
+  return (data ?? []).map((r: any) => ({ id: r.id, side: r.side, nameEn: r.name_en, mobile: r.mobile, shortCode: r.short_code }));
 }
 
 export interface NewHousehold {
