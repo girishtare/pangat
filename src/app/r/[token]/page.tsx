@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
+import { Link2Off } from "lucide-react";
 import { getStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { isPlausibleToken } from "@/lib/token";
+import { Divider, Wordmark } from "../../ui/kit";
 import GuestFlow from "./GuestFlow";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +21,16 @@ export default async function GuestPage({
 
   if (!view) {
     return (
-      <main className="mx-auto max-w-md px-5 py-16 text-center text-lg">
-        <p>{t("mr", "notFound")}</p>
-        <p className="mt-4">{t("en", "notFound")}</p>
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center px-4 py-12 text-center">
+        <Wordmark small />
+        <div className="card mt-8 w-full p-6">
+          <Link2Off className="mx-auto h-10 w-10 text-haldi-deep" aria-hidden="true" />
+          <p lang="mr" className="mt-3 text-lg">
+            {t("mr", "notFound")}
+          </p>
+          <Divider className="my-4" />
+          <p className="text-lg">{t("en", "notFound")}</p>
+        </div>
       </main>
     );
   }

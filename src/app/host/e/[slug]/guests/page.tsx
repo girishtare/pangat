@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronRight, FileSpreadsheet, Languages, PhoneOff, Search, Settings, UserPlus, Users } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { householdWhatsApp } from "@/lib/hostMessages";
 import { formatWhen } from "@/lib/i18n";
@@ -7,7 +8,8 @@ import { displayPhone } from "@/lib/outreach";
 import { publicBaseUrl } from "@/lib/site";
 import { listPendingLookups } from "@/lib/store/admin";
 import { listGuests } from "@/lib/store/supabase";
-import { EventHeader, GateMessage } from "../../../HostChrome";
+import { Alert, EmptyState, PageHeader, ReplyBadge, SideBadge, Stat } from "../../../../ui/kit";
+import { EventShell, GateMessage } from "../../../HostChrome";
 import AddHouseholdForm from "./AddHouseholdForm";
 import ImportForm from "./ImportForm";
 import LookupQueue, { type LookupItem } from "./LookupQueue";
@@ -55,7 +57,7 @@ export default async function GuestList({
   const noMobile = guests.filter((g) => !g.mobile).length;
   const noMarathi = guests.filter((g) => !g.nameMr).length;
   const qLower = q.toLowerCase();
-  const qDigits = q.replace(/D/g, "");
+  const qDigits = q.replace(/\D/g, "");
   const shown = q
     ? guests.filter(
         (g) =>
@@ -65,100 +67,205 @@ export default async function GuestList({
           (qDigits.length >= 4 && (g.mobile ?? "").includes(qDigits)),
       )
     : guests;
+  const link = (id: string) => `/host/e/${slug}/guests/${id}`;
+  const invitedTo = (ids: string[]) => ids.map((id) => fnName.get(id) ?? "?").join(" · ");
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-10">
-      <EventHeader host={host} current="guests" />
-      <LookupQueue slug={slug} items={lookupItems} />
-      <p className="mt-4 text-sm">
-        {guests.length} households
-        {noMobile > 0 && ` · ${noMobile} without a mobile`}
-        {noMarathi > 0 && ` · ${noMarathi} without a Marathi name`}
-      </p>
+    <EventShell host={host} current="guests">
+      <PageHeader icon={Users} title="Guest list" subtitle="One household per printed card. Open a household to record a reply taken by phone." />
+
+      <div className="grid grid-cols-3 gap-3">
+        <Stat icon={Users} value={guests.length.toLocaleString("en-IN")} label="Households" />
+        <Stat icon={PhoneOff} value={noMobile} label="No mobile" tone={noMobile ? "warn" : "default"} />
+        <Stat icon={Languages} value={noMarathi} label="No Marathi name" tone={noMarathi ? "warn" : "default"} />
+      </div>
+
+      <div id="wrong-link" className="scroll-mt-24">
+        <LookupQueue slug={slug} items={lookupItems} />
+      </div>
 
       {host.functions.length === 0 ? (
-        <p className="mt-6 rounded-xl bg-kumkum/10 px-4 py-3 text-kumkum">
-          Add the event&apos;s functions in Event settings before adding guests.
-        </p>
+        <div className="mt-6">
+          <Alert tone="warn">
+            Add the event&apos;s functions in{" "}
+            {host.canManage ? (
+              <Link href={`/host/e/${slug}/settings`} className="font-semibold underline">
+                Event settings
+              </Link>
+            ) : (
+              "Event settings (the owner can do this)"
+            )}{" "}
+            before adding guests.
+          </Alert>
+        </div>
       ) : (
-        <section className="mt-6 grid gap-6 md:grid-cols-2">
-          <div className="rounded-xl border border-haldi/60 bg-white p-4">
-            <h2 className="text-xl font-semibold">Add one household</h2>
-            <p className="mt-1 text-sm">For a late addition. The same checks as an import.</p>
-            <AddHouseholdForm slug={slug} hostSide={host.side} functions={host.functions.map((f) => ({ id: f.id, name: f.name.en }))} />
-          </div>
-          <div className="rounded-xl border border-haldi/60 bg-white p-4">
-            <h2 className="text-xl font-semibold">Import from Excel</h2>
-            <p className="mt-1 text-sm">
-              Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Functions (blank = all), Cap. Households already on
-              the list are skipped, so the same file can be uploaded again after adding rows.
-            </p>
-            <ImportForm slug={slug} />
-          </div>
-        </section>
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <details className="card group p-0" open={guests.length === 0}>
+            <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-kumkum text-white">
+                <UserPlus className="h-6 w-6" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-lg font-bold text-kumkum">Add one household</span>
+                <span className="hint block">A late addition, with the same checks as an import.</span>
+              </span>
+              <ChevronRight className="h-5 w-5 text-ink-soft transition-transform group-open:rotate-90" aria-hidden="true" />
+            </summary>
+            <div className="border-t border-line px-4 pb-4">
+              <AddHouseholdForm slug={slug} hostSide={host.side} functions={host.functions.map((f) => ({ id: f.id, name: f.name.en }))} />
+            </div>
+          </details>
+          <details className="card group p-0" open={guests.length === 0}>
+            <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-haldi text-ink">
+                <FileSpreadsheet className="h-6 w-6" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-lg font-bold text-kumkum">Import from Excel</span>
+                <span className="hint block">Fill the template, upload it, check, then add.</span>
+              </span>
+              <ChevronRight className="h-5 w-5 text-ink-soft transition-transform group-open:rotate-90" aria-hidden="true" />
+            </summary>
+            <div className="border-t border-line px-4 pb-4">
+              <p className="hint mt-3">
+                Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Functions (blank = all), Cap. Households already on
+                the list are skipped, so the same file can be uploaded again after adding rows.
+              </p>
+              <ImportForm slug={slug} />
+            </div>
+          </details>
+        </div>
       )}
 
-      <section className="mt-8">
+      <section className="mt-8" aria-labelledby="households">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-xl font-semibold">Households</h2>
-          <form className="flex gap-2" action={`/host/e/${slug}/guests`}>
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Name, mobile or code"
-              aria-label="Find a household"
-              className="rounded-xl border-2 border-haldi/60 bg-white px-3 py-2"
-            />
-            <button type="submit" className="rounded-xl border-2 border-kumkum px-4 py-2 font-semibold text-kumkum">
-              Find
-            </button>
-            {q && (
-              <Link href={`/host/e/${slug}/guests`} className="self-center text-sm text-kumkum underline">
-                Clear
-              </Link>
-            )}
-          </form>
+          <h2 id="households" className="font-display text-2xl font-bold text-kumkum">
+            Households
+          </h2>
         </div>
-        <p className="mt-1 text-sm">Open a household to record a reply taken by phone, change its details, or delete it.</p>
-        {q && <p className="mt-2 text-sm">{shown.length} of {guests.length} households match &quot;{q}&quot;.</p>}
+        <form className="mt-3 flex gap-2" action={`/host/e/${slug}/guests`} role="search">
+          <label className="relative min-w-0 flex-1">
+            <span className="sr-only">Find a household by name, mobile or code</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
+            <input name="q" defaultValue={q} placeholder="Search by name, mobile or code" className="input pl-10" />
+          </label>
+          <button type="submit" className="btn btn-secondary shrink-0">
+            Find
+          </button>
+        </form>
+        {q && (
+          <p className="mt-2 text-sm">
+            {shown.length} of {guests.length} households match &quot;{q}&quot;.{" "}
+            <Link href={`/host/e/${slug}/guests`} className="font-semibold text-kumkum underline">
+              Show all
+            </Link>
+          </p>
+        )}
+
         {shown.length === 0 ? (
-          <p className="mt-2">{q ? "No household matches." : "No households yet."}</p>
-        ) : (
-          <div className="mt-2 overflow-x-auto rounded-xl border border-haldi/60 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-haldi/20">
-                <tr>
-                  {["Household", "Side", "Mobile", "Code", "Invited to", "Replied", "Cap"].map((h) => (
-                    <th key={h} className="px-3 py-2 font-semibold">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {shown.map((g) => (
-                  <tr key={g.id} className="border-t border-haldi/30 align-top">
-                    <td className="px-3 py-2">
-                      <Link href={`/host/e/${slug}/guests/${g.id}`} className="font-semibold text-kumkum underline">
-                        {g.nameEn}
-                      </Link>
-                      {g.nameMr && <div>{g.nameMr}</div>}
-                    </td>
-                    <td className="px-3 py-2">{g.side === "bride" ? "Bride" : "Groom"}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{g.mobile ?? "—"}</td>
-                    <td className="px-3 py-2 font-mono">{g.shortCode}</td>
-                    <td className="px-3 py-2">{g.functionIds.map((id) => fnName.get(id) ?? "?").join(", ")}</td>
-                    <td className="px-3 py-2">
-                      {g.replied.length === 0 ? "—" : g.replied.length === g.functionIds.length ? "Yes" : "Partly"}
-                    </td>
-                    <td className="px-3 py-2">{g.softCap ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-4">
+            {q ? (
+              <EmptyState icon={Search} title="No household matches">
+                Try part of the name, the last digits of the mobile, or the six-letter code.
+              </EmptyState>
+            ) : host.functions.length === 0 ? (
+              <EmptyState icon={Settings} title="No households yet" />
+            ) : (
+              <EmptyState icon={Users} title="No households yet">
+                Add one above, or import the whole list from Excel.
+              </EmptyState>
+            )}
           </div>
+        ) : (
+          <>
+            <div className="card mt-4 hidden overflow-hidden lg:block">
+              <table className="table-p">
+                <thead>
+                  <tr>
+                    <th>Household</th>
+                    <th>Side</th>
+                    <th>Mobile</th>
+                    <th>Code</th>
+                    <th>Invited to</th>
+                    <th>Replied</th>
+                    <th className="text-right">Cap</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((g) => (
+                    <tr key={g.id}>
+                      <td className="max-w-[18rem]">
+                        <Link href={link(g.id)} className="wrap-names font-semibold text-kumkum underline-offset-2 hover:underline">
+                          {g.nameEn}
+                        </Link>
+                        {g.nameMr && (
+                          <div lang="mr" className="wrap-names text-sm">
+                            {g.nameMr}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <SideBadge side={g.side} />
+                      </td>
+                      <td className="whitespace-nowrap">
+                        {g.mobile ? displayPhone(g.mobile) : <span className="badge badge-partly">No mobile</span>}
+                      </td>
+                      <td className="font-mono tracking-wider">{g.shortCode}</td>
+                      <td className="text-sm">{invitedTo(g.functionIds)}</td>
+                      <td>
+                        <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
+                      </td>
+                      <td className="text-right">{g.softCap ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ul className="mt-4 space-y-3 lg:hidden">
+              {shown.map((g) => (
+                <li key={g.id}>
+                  <Link href={link(g.id)} className="card block p-4 hover:border-kumkum">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="wrap-names font-display text-lg font-bold text-kumkum">{g.nameEn}</p>
+                        {g.nameMr && (
+                          <p lang="mr" className="wrap-names">
+                            {g.nameMr}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-ink-soft" aria-hidden="true" />
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <SideBadge side={g.side} />
+                      <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
+                      {!g.mobile && <span className="badge badge-partly">No mobile</span>}
+                    </div>
+                    <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                      {g.mobile && (
+                        <>
+                          <dt className="text-ink-soft">Mobile</dt>
+                          <dd className="text-right font-semibold">{displayPhone(g.mobile)}</dd>
+                        </>
+                      )}
+                      <dt className="text-ink-soft">Code</dt>
+                      <dd className="text-right font-mono font-semibold tracking-wider">{g.shortCode}</dd>
+                      <dt className="text-ink-soft">Invited to</dt>
+                      <dd className="text-right">{invitedTo(g.functionIds)}</dd>
+                      {g.softCap !== null && (
+                        <>
+                          <dt className="text-ink-soft">Cap</dt>
+                          <dd className="text-right">{g.softCap}</dd>
+                        </>
+                      )}
+                    </dl>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
-    </main>
+    </EventShell>
   );
 }

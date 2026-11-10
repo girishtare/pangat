@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronLeft, ClipboardList, Hash, MessageSquareText, Phone, PhoneOff, Printer } from "lucide-react";
 import { hostGate } from "@/lib/host";
-import { formatWhen } from "@/lib/i18n";
+import { formatDay, formatWhen } from "@/lib/i18n";
+import { displayPhone } from "@/lib/outreach";
 import { loadHousehold } from "@/lib/store/admin";
-import { EventHeader, GateMessage } from "../../../../HostChrome";
+import { Alert, Section, SideBadge } from "../../../../../ui/kit";
+import { EventShell, GateMessage } from "../../../../HostChrome";
 import { CopyLink, DeleteHousehold, DetailsForm, ReplyForm } from "./HouseholdForms";
 
 export const dynamic = "force-dynamic";
@@ -27,40 +30,71 @@ export default async function Household({ params }: { params: Promise<{ slug: st
   const invited = host.functions.filter((f) => hh.functionIds.includes(f.id));
   const latest = hh.responses.map((r) => r.updatedAt).sort().at(-1);
   const latestSource = hh.responses.find((r) => r.updatedAt === latest)?.source;
+  const closed = Date.now() > new Date(host.event.cutoffAt).getTime();
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-10">
-      <EventHeader host={host} current="guests" />
-      <Link className="mt-6 inline-block text-sm text-kumkum underline" href={`/host/e/${slug}/guests`}>
-        ← Guest list
-      </Link>
+    <EventShell host={host} current="guests">
+      <nav aria-label="Breadcrumb" className="mb-4">
+        <Link href={`/host/e/${slug}/guests`} className="btn btn-quiet btn-sm -ml-2">
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          Guest list
+        </Link>
+      </nav>
 
-      <section className="mt-3">
-        <h2 className="text-2xl font-bold">{hh.nameEn}</h2>
-        {hh.nameMr && <p className="text-lg">{hh.nameMr}</p>}
-        <p className="mt-1 text-sm">
-          {hh.side === "bride" ? "Bride's side" : "Groom's side"} · {hh.mobile ?? "no mobile"} · code{" "}
-          <span className="font-mono font-semibold">{hh.shortCode}</span>
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-l-4 border-haldi pl-4">
+        <div className="min-w-0">
+          <h1 className="wrap-names font-display text-3xl font-bold text-kumkum sm:text-4xl">{hh.nameEn}</h1>
+          {hh.nameMr && (
+            <p lang="mr" className="wrap-names mt-1 font-display text-xl text-ink">
+              {hh.nameMr}
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <SideBadge side={hh.side} />
+            {hh.mobile ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-0.5 font-semibold ring-1 ring-line">
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                {displayPhone(hh.mobile)}
+              </span>
+            ) : (
+              <span className="badge badge-partly">
+                <PhoneOff className="h-3.5 w-3.5" aria-hidden="true" />
+                No mobile
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-0.5 font-mono font-semibold tracking-wider ring-1 ring-line">
+              <Hash className="h-4 w-4" aria-hidden="true" />
+              {hh.shortCode}
+            </span>
+          </div>
+        </div>
+        <div className="flex w-full flex-col gap-2 sm:w-auto">
           <CopyLink path={`/r/${hh.token}`} />
-          <Link href={`/host/e/${slug}/slips?ids=${hh.id}`} className="text-sm text-kumkum underline">
+          <Link href={`/host/e/${slug}/slips?ids=${hh.id}`} className="btn btn-secondary">
+            <Printer className="h-5 w-5" aria-hidden="true" />
             Print this slip
           </Link>
         </div>
-      </section>
+      </header>
 
-      <section className="mt-8 rounded-xl border border-haldi/60 bg-white p-4">
-        <h3 className="text-xl font-semibold">Reply</h3>
-        <p className="mt-1 text-sm">
-          {latest
-            ? `Last reply ${SOURCE[latestSource ?? ""] ?? ""}, ${formatWhen(latest, "en")}.`
-            : "No reply yet."}{" "}
-          Use this when they reply by phone or in person. It is saved as entered by a host, and works after the guests&apos; cut-off.
-        </p>
-        <div className="mt-3">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <Section
+          icon={MessageSquareText}
+          title="Reply"
+          subtitle={
+            latest ? `Last reply ${SOURCE[latestSource ?? ""] ?? ""}, ${formatWhen(latest, "en")}.` : "No reply yet."
+          }
+        >
+          <p className="hint mb-4">Use this when they reply by phone or in person. It is saved as entered by a host.</p>
+          {closed && (
+            <div className="mb-4">
+              <Alert tone="info">
+                Guests could reply until {formatDay(host.event.cutoffAt, "en")}. You can still record or change their reply here.
+              </Alert>
+            </div>
+          )}
           {invited.length === 0 ? (
-            <p>They are not invited to any function.</p>
+            <Alert tone="warn">They are not invited to any function. Tick one under Details and invitations.</Alert>
           ) : (
             <ReplyForm
               slug={slug}
@@ -69,19 +103,17 @@ export default async function Household({ params }: { params: Promise<{ slug: st
                 const r = hh.responses.find((x) => x.functionId === f.id);
                 return {
                   id: f.id,
-                  name: `${f.name.en} · ${formatWhen(f.startsAt, "en")}`,
+                  name: f.name.en,
+                  when: formatWhen(f.startsAt, "en"),
                   catered: f.catered,
                   current: r ? { status: r.status, heads: r.heads, veg: r.veg, arrivalSlot: r.arrivalSlot } : null,
                 };
               })}
             />
           )}
-        </div>
-      </section>
+        </Section>
 
-      <section className="mt-8 rounded-xl border border-haldi/60 bg-white p-4">
-        <h3 className="text-xl font-semibold">Details and invitations</h3>
-        <div className="mt-3">
+        <Section icon={ClipboardList} title="Details and invitations">
           <DetailsForm
             slug={slug}
             id={hh.id}
@@ -98,12 +130,12 @@ export default async function Household({ params }: { params: Promise<{ slug: st
               replied: hh.responses.some((r) => r.functionId === f.id),
             }))}
           />
-        </div>
-      </section>
+        </Section>
+      </div>
 
-      <section className="mt-8">
+      <div className="mt-8 border-t border-line pt-6">
         <DeleteHousehold slug={slug} id={hh.id} name={hh.nameEn} replied={hh.responses.length > 0} />
-      </section>
-    </main>
+      </div>
+    </EventShell>
   );
 }
