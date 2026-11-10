@@ -71,7 +71,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 
 ## Stage 2 (next), in suggested order
 
-1. Host sign-in (Supabase Auth) and RLS policies so each host sees only their side. Then enable `/host` outside demo mode. **Code written 10 Nov (migration 0002, `/host/login`, `src/proxy.ts`); RLS tested in SQL; sign-in not yet run live.**
+1. Host sign-in (Supabase Auth) and RLS policies so each host sees only their side. Then enable `/host` outside demo mode. **Code written 10 Nov (migration 0002, `/host/login`, `src/proxy.ts`); RLS tested in SQL; owner signed in on the live site and saw the both-sides dashboard. Done.**
 2. Guest list import from a sheet, add a late household, token and short-code generation (`src/lib/token.ts`).
 3. Mark on behalf (source `on_behalf`, `updated_by` = host).
 4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi.
@@ -99,7 +99,8 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - Seen in testing: the English/Marathi choice is not remembered on reload (page reverts to Marathi); Marathi view mixes Devanagari dates with Latin digits and "AM/PM" in headcounts and times.
 - Supabase project `pangat` (ref `sibsiwicyoawdysgqeft`, Mumbai, free plan) created 10 Nov; migrations 0001 to 0003 and the demo-wedding seed applied; security advisor clean. RLS tested in SQL with throwaway users (rolled back): bride host sees 4 households/10 invites, groom host 4/9, both-sides host 8/19, signed-in non-host 0; anon read and host writes are refused.
 - Live on Vercel against Supabase (10 Nov): home page shows no demo box; `/host` redirects to `/host/login`; a guest reply via `/r/demo-family-6?s=q` saved to `responses` with source `qr`, correct heads/veg/arrival, and one `response_history` row per function.
-- Not yet run live: an actual host sign-in and the per-side dashboard (needs the owner to sign in; account girish.s.tare@gmail.com is linked to both sides of `demo-wedding`).
+- Host sign-in confirmed live (10 Nov): owner's account, linked to both sides of `demo-wedding`, signed in and saw "Both sides". A one-side host on the live site has not been tried; RLS for one side was tested in SQL.
+- The seed re-run on 10 Nov deleted the event and, by cascade, all host links. `supabase/seed/demo_wedding.sql` now saves and restores host links.
 - Free Supabase projects pause after a week without activity; a pause would break guest links.
 - Marathi strings in `src/lib/i18n.ts` are a first draft and need a native reader.
 
