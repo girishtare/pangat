@@ -17,5 +17,4 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - name: Build (Next.js + Cloudflare Workers bundle)
-        run: npm run build
+      - run: npm run build

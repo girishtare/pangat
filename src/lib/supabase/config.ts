@@ -1,6 +1,6 @@
 /**
  * Supabase settings, read at request time from the host's environment
- * (Cloudflare: Worker → Settings → Variables and Secrets).
+ * (Vercel: Project → Settings → Environment Variables).
  *
  * None of these use the NEXT_PUBLIC_ prefix: no browser code talks to
  * Supabase, and NEXT_PUBLIC_ values are baked in at build time.
