@@ -18,7 +18,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <h1 className="font-display text-3xl text-kumkum">{data?.event.name.en ?? "Demo"}</h1>
         <p className="mt-1 mb-6 text-ink-soft">Demo data. Sign-in, the guest list and event settings need a database.</p>
-        {data && <Dashboard data={data} hostSide={null} />}
+        {data && <Dashboard data={data} scope="both" settingsHref={null} />}
       </main>
     );
   }
