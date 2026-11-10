@@ -1,12 +1,18 @@
+import { CalendarDays, Flower2, Settings, Users } from "lucide-react";
 import { isoToIstInput } from "@/lib/events";
 import { hostGate } from "@/lib/host";
 import { scopeLabel } from "@/lib/sides";
 import { dashboardViewStats, functionUsage, listHosts, MAX_CO_OWNERS_PER_SIDE } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
-import { EventHeader, GateMessage } from "../../../HostChrome";
+import { Alert, PageHeader, Section } from "../../../../ui/kit";
+import { EventShell, GateMessage } from "../../../HostChrome";
 import { AddHostForm, EventForm, FunctionEditor, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
 
 export const dynamic = "force-dynamic";
+
+const dateTime = (iso: string) =>
+  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(iso));
+const dateOnly = (iso: string) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(iso));
 
 export default async function EventSettings({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -16,10 +22,10 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
 
   if (!host.canManage) {
     return (
-      <main className="mx-auto max-w-3xl px-5 py-10">
-        <EventHeader host={host} current="settings" />
-        <p className="mt-6">Only the event&apos;s owner can change the event. Ask them if something needs changing.</p>
-      </main>
+      <EventShell host={host} current="settings">
+        <PageHeader icon={Settings} title="Event settings" />
+        <Alert tone="info">Only the event&apos;s owner can change the event. Ask them if something needs changing.</Alert>
+      </EventShell>
     );
   }
 
@@ -33,14 +39,31 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     bride: hosts.filter((h) => h.role === "co_owner" && h.side === "bride").length,
     groom: hosts.filter((h) => h.role === "co_owner" && h.side === "groom").length,
   };
+  const role = (h: (typeof hosts)[number]) =>
+    h.role === "owner" ? <span className="badge badge-partly">Owner</span> : <span className={`badge ${h.side === "groom" ? "badge-groom" : "badge-bride"}`}>Co-owner · {h.side ? scopeLabel(h.side) : ""}</span>;
+  const viewText = (userId: string) => {
+    const v = views.get(userId);
+    return v ? `${v.count}, last ${dateOnly(v.last)}` : "None";
+  };
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-10">
-      <EventHeader host={host} current="settings" />
+    <EventShell host={host} current="settings">
+      <PageHeader icon={Settings} title="Event settings" />
 
-      <section className="mt-8">
-        <h2 className="text-2xl font-semibold">Event details</h2>
-        <div className="mt-3 rounded-xl border border-haldi/60 bg-white p-4">
+      <nav aria-label="Settings sections" className="card sticky top-16 z-20 mb-6 flex gap-1 overflow-x-auto p-1 lg:top-4">
+        {[
+          ["#details", "Event details"],
+          ["#functions", "Functions"],
+          ["#people", "Owner and co-owners"],
+        ].map(([href, label]) => (
+          <a key={href} href={href} className="flex min-h-11 shrink-0 items-center rounded-xl px-4 font-semibold text-kumkum hover:bg-paper-deep">
+            {label}
+          </a>
+        ))}
+      </nav>
+
+      <div className="space-y-8">
+        <Section id="details" icon={CalendarDays} title="Event details" subtitle="Names, when replies close, the caterer's dates, contact numbers and the expected-headcount rates.">
           <EventForm
             slug={slug}
             nameEn={host.event.name.en}
@@ -53,86 +76,100 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             catererDueOn={host.event.catererDueOn}
             catererFinalOn={host.event.catererFinalOn}
           />
-        </div>
-      </section>
+        </Section>
 
-      <section className="mt-10">
-        <h2 className="text-2xl font-semibold">Functions</h2>
-        <p className="mt-1 text-sm">Each function gets its own headcount. Guests see them in date order. Times are Indian Standard Time.</p>
-        <div className="mt-3 space-y-4">
-          {host.functions.map((f, i) => (
-            <FunctionEditor
-              key={f.id}
-              slug={slug}
-              id={f.id}
-              nameEn={f.name.en}
-              nameMr={f.name.mr}
-              startsAt={isoToIstInput(f.startsAt)}
-              venue={f.venue}
-              mapUrl={f.mapUrl}
-              catered={f.catered}
-              invites={usage[i].invites}
-              replies={usage[i].replies}
-            />
-          ))}
-          <NewFunctionForm slug={slug} households={households.length} />
-        </div>
-      </section>
+        <Section id="functions" icon={Flower2} title="Functions" subtitle="Each function gets its own headcount. Guests see them in date order. Times are Indian Standard Time.">
+          <div className="grid gap-4 xl:grid-cols-2">
+            {host.functions.map((f, i) => (
+              <FunctionEditor
+                key={f.id}
+                slug={slug}
+                id={f.id}
+                nameEn={f.name.en}
+                nameMr={f.name.mr}
+                startsAt={isoToIstInput(f.startsAt)}
+                venue={f.venue}
+                mapUrl={f.mapUrl}
+                catered={f.catered}
+                invites={usage[i].invites}
+                replies={usage[i].replies}
+              />
+            ))}
+            <NewFunctionForm slug={slug} households={households.length} />
+          </div>
+        </Section>
 
-      <section className="mt-10">
-        <h2 className="text-2xl font-semibold">Owner and co-owners</h2>
-        <p className="mt-1 text-sm">
-          You are the owner: the only one who changes these settings and the caterer numbers. Invite up to {MAX_CO_OWNERS_PER_SIDE} co-owners
-          per side; each sees and works on their own side&apos;s guests only.
-        </p>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-haldi/60 bg-white">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-haldi/20">
-              <tr>
-                {["Email", "Role", "Last signed in", "Dashboard views", ""].map((h) => (
-                  <th key={h} className="px-3 py-2 font-semibold">
-                    {h}
-                  </th>
+        <Section
+          id="people"
+          icon={Users}
+          title="Owner and co-owners"
+          subtitle={`You are the owner: the only one who changes these settings and the caterer numbers. Invite up to ${MAX_CO_OWNERS_PER_SIDE} co-owners per side; each sees their own side's guests only.`}
+        >
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span className="badge badge-bride text-sm">
+              Bride&apos;s side: {coOwners.bride} of {MAX_CO_OWNERS_PER_SIDE}
+            </span>
+            <span className="badge badge-groom text-sm">
+              Groom&apos;s side: {coOwners.groom} of {MAX_CO_OWNERS_PER_SIDE}
+            </span>
+          </div>
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+            <div>
+              <div className="hidden lg:block">
+                <table className="table-p">
+                  <thead>
+                    <tr>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Last signed in</th>
+                      <th>Dashboard views</th>
+                      <th>
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hosts.map((h) => (
+                      <tr key={h.userId}>
+                        <td className="break-all">
+                          {h.email}
+                          {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
+                          {!h.confirmed && <div className="text-xs text-haldi-deep">Invitation not accepted yet</div>}
+                        </td>
+                        <td>{role(h)}</td>
+                        <td className="text-sm">{h.lastSignInAt ? dateTime(h.lastSignInAt) : "Never"}</td>
+                        <td className="text-sm">{viewText(h.userId)}</td>
+                        <td>{h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <ul className="space-y-3 lg:hidden">
+                {hosts.map((h) => (
+                  <li key={h.userId} className="rounded-xl border border-line p-3">
+                    <p className="break-all font-semibold">
+                      {h.email}
+                      {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
+                    </p>
+                    <div className="mt-1">{role(h)}</div>
+                    {!h.confirmed && <p className="mt-1 text-xs text-haldi-deep">Invitation not accepted yet</p>}
+                    <p className="mt-1 text-sm text-ink-soft">
+                      Last signed in: {h.lastSignInAt ? dateTime(h.lastSignInAt) : "never"} · Dashboard views: {viewText(h.userId)}
+                    </p>
+                    {h.role !== "owner" && (
+                      <div className="mt-2">
+                        <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />
+                      </div>
+                    )}
+                  </li>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {hosts.map((h) => (
-                <tr key={h.userId} className="border-t border-haldi/30">
-                  <td className="px-3 py-2">
-                    {h.email}
-                    {h.userId === host.userId && " (you)"}
-                    {!h.confirmed && <div className="text-xs">Invitation not accepted yet</div>}
-                  </td>
-                  <td className="px-3 py-2">{h.role === "owner" ? "Owner" : `Co-owner, ${h.side ? scopeLabel(h.side) : ""}`}</td>
-                  <td className="px-3 py-2">
-                    {h.lastSignInAt
-                      ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(
-                          new Date(h.lastSignInAt),
-                        )
-                      : "Never"}
-                  </td>
-                  <td className="px-3 py-2">
-                    {views.get(h.userId)
-                      ? `${views.get(h.userId)!.count}, last ${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(views.get(h.userId)!.last))}`
-                      : "None"}
-                  </td>
-                  <td className="px-3 py-2">{h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-2 text-sm">
-          Bride&apos;s side: {coOwners.bride} of {MAX_CO_OWNERS_PER_SIDE} · Groom&apos;s side: {coOwners.groom} of {MAX_CO_OWNERS_PER_SIDE}
-        </p>
-        <div className="mt-4">
-          <AddHostForm
-            slug={slug}
-            full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }}
-          />
-        </div>
-      </section>
-    </main>
+              </ul>
+            </div>
+            <AddHostForm slug={slug} full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }} />
+          </div>
+        </Section>
+      </div>
+    </EventShell>
   );
 }

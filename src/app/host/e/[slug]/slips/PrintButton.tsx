@@ -1,8 +1,11 @@
 "use client";
 
+import { Printer } from "lucide-react";
+
 export default function PrintButton({ disabled }: { disabled?: boolean }) {
   return (
-    <button type="button" disabled={disabled} onClick={() => window.print()} className="rounded-xl bg-kumkum px-5 py-3 font-semibold text-white disabled:opacity-50">
+    <button type="button" disabled={disabled} onClick={() => window.print()} className="btn btn-primary w-full">
+      <Printer className="h-5 w-5" aria-hidden="true" />
       Print slips
     </button>
   );
