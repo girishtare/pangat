@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { hostGate } from "@/lib/host";
+import { householdWhatsApp } from "@/lib/hostMessages";
+import { formatWhen } from "@/lib/i18n";
+import { canNameMatch, canSeeLookup } from "@/lib/lookup";
+import { displayPhone } from "@/lib/outreach";
+import { publicBaseUrl } from "@/lib/site";
+import { listPendingLookups } from "@/lib/store/admin";
 import { listGuests } from "@/lib/store/supabase";
 import { EventHeader, GateMessage } from "../../../HostChrome";
 import AddHouseholdForm from "./AddHouseholdForm";
 import ImportForm from "./ImportForm";
+import LookupQueue, { type LookupItem } from "./LookupQueue";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +27,30 @@ export default async function GuestList({
   if (!gate.ok) return <GateMessage gate={gate} title="Guest list" />;
 
   const { host } = gate;
-  const guests = await listGuests(host.client, host.event.id);
+  const [guests, lookups, base] = await Promise.all([
+    listGuests(host.client, host.event.id),
+    listPendingLookups(host.event.id),
+    publicBaseUrl(),
+  ]);
+  const lookupItems: LookupItem[] = lookups
+    .filter((r) => canSeeLookup(host.side, r.opened.side, r.matched?.side ?? null))
+    .map((r) => {
+      const openedVisible = !host.side || r.opened.side === host.side;
+      const match: LookupItem["match"] = !r.matched
+        ? { kind: "none" }
+        : r.matched.id === r.opened.id
+          ? { kind: "same" }
+          : !canNameMatch(host.side, r.matched.side)
+            ? { kind: "hidden" }
+            : { kind: "named", id: r.matched.id, name: r.matched.nameEn, sendHref: householdWhatsApp(host, base, r.matched, "invite") };
+      return {
+        id: r.id,
+        when: formatWhen(r.createdAt, "en"),
+        mobile: displayPhone(r.mobile) ?? r.mobile,
+        opened: openedVisible ? { id: r.opened.id, name: r.opened.nameEn } : { id: null, name: "a household on the other side" },
+        match,
+      };
+    });
   const fnName = new Map(host.functions.map((f) => [f.id, f.name.en]));
   const noMobile = guests.filter((g) => !g.mobile).length;
   const noMarathi = guests.filter((g) => !g.nameMr).length;
@@ -39,6 +69,7 @@ export default async function GuestList({
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
       <EventHeader host={host} current="guests" />
+      <LookupQueue slug={slug} items={lookupItems} />
       <p className="mt-4 text-sm">
         {guests.length} households
         {noMobile > 0 && ` · ${noMobile} without a mobile`}

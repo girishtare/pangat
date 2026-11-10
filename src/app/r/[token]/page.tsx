@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { getStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { isPlausibleToken } from "@/lib/token";
@@ -27,5 +28,7 @@ export default async function GuestPage({
 
   const closed = Date.now() > new Date(view.event.cutoffAt).getTime();
   // QR codes on printed slips carry ?s=q so we can see which channel worked.
-  return <GuestFlow token={token} view={view} closed={closed} source={s === "q" ? "qr" : "link"} />;
+  const saved = (await cookies()).get("pangat_lang")?.value;
+  const initialLang = saved === "en" || saved === "mr" ? saved : undefined;
+  return <GuestFlow token={token} view={view} closed={closed} source={s === "q" ? "qr" : "link"} initialLang={initialLang} />;
 }

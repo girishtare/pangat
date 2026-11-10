@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
-import { DEFAULT_TEXT, displayPhone, fillMessage, guestLink, PLACEHOLDERS, whatsappLink, type MessageKind } from "@/lib/outreach";
+import { householdMessage } from "@/lib/hostMessages";
+import { DEFAULT_TEXT, displayPhone, PLACEHOLDERS, whatsappLink, type MessageKind } from "@/lib/outreach";
 import { publicBaseUrl } from "@/lib/site";
 import { listEffort, listHosts, loadNudges } from "@/lib/store/admin";
 import { listGuests } from "@/lib/store/supabase";
@@ -41,17 +42,7 @@ export default async function WhatsApp({
   const effort = await listEffort(host.event.id, hosts);
 
   const template = host.event.messageText[kind] ?? DEFAULT_TEXT[kind];
-  const dates = { date: formatDay(host.event.cutoffAt, "en"), dateMr: formatDay(host.event.cutoffAt, "mr") };
-  const message = (g: (typeof guests)[number]) =>
-    fillMessage(template, {
-      name: g.nameEn,
-      nameMr: g.nameMr,
-      event: host.event.name.en,
-      eventMr: host.event.name.mr,
-      ...dates,
-      phone: displayPhone(host.event.contactPhone[g.side]),
-      link: guestLink(base, g.token, "link"),
-    });
+  const message = (g: (typeof guests)[number]) => householdMessage(host, base, g, kind);
 
   const pending = (g: (typeof guests)[number]) => g.replied.length < g.functionIds.length;
   const sentKey = (id: string) => (kind === "invite" ? nudges.get(id)?.invite : nudges.get(id)?.reminder) ?? null;
