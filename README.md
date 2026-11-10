@@ -40,7 +40,12 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`.
 ## Connecting Supabase
 
 1. Create a project and run `supabase/migrations/0001_init.sql`.
-2. Copy `.env.example` to `.env.local` and fill in the URL and service-role key.
+2. Set these environment variables on the host (Cloudflare: Worker → Settings → Variables and Secrets):
+   - `NEXT_PUBLIC_SUPABASE_URL`: the project URL.
+   - `SUPABASE_SERVICE_ROLE_KEY`: server-only; store it as a secret.
+   - `PANGAT_EVENT_SLUG`: slug of the event the host dashboard shows (defaults to `demo-wedding`).
+
+   Leave both Supabase variables unset to run in demo mode. There is deliberately no `.env.example`: Cloudflare's import form turns every variable in it into a required field, which blocks a demo-mode deploy.
 3. The service-role key is server-only. Never prefix it with `NEXT_PUBLIC_` or commit it.
 
 QR codes on printed slips should point at `/r/<token>?s=q` so replies record which channel was used.
