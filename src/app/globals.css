@@ -1,14 +1,270 @@
 @import "tailwindcss";
 
-@theme {
+/* Pangat design tokens: paper cream, kumkum red, haldi turmeric, ink brown. */
+@theme inline {
   --color-kumkum: #8c1c13;
+  --color-kumkum-dark: #6e140d;
+  --color-kumkum-soft: #f8e6e1;
   --color-haldi: #e3a008;
+  --color-haldi-deep: #8a5a00; /* haldi for text: 6:1 on cream */
+  --color-haldi-soft: #fbeecb;
   --color-paper: #fdf8ef;
+  --color-paper-deep: #f6ecda;
+  --color-card: #fffdf8;
   --color-ink: #2b1d16;
-  --font-sans: "Noto Sans", "Noto Sans Devanagari", "Nirmala UI", system-ui, sans-serif;
+  --color-ink-soft: #5c4637;
+  --color-line: #e8d6b5;
+  --color-leaf: #1d6b3f;
+  --color-leaf-soft: #e2f2e7;
+  --color-whatsapp: #128c4a;
+
+  --font-sans: var(--font-noto-sans), var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
+  --font-display: var(--font-noto-serif), var(--font-noto-serif-deva), "Nirmala UI", Georgia, serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+  line-height: 1.55;
+}
+
+/* Devanagari needs a little more room between lines. */
+:lang(mr) {
+  line-height: 1.65;
+}
+
+/* Long names (English or Marathi) wrap instead of pushing the layout sideways. */
+h1,
+h2,
+h3,
+.wrap-names {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-haldi);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .card {
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(43 29 22 / 0.05), 0 4px 16px -8px rgb(140 28 19 / 0.08);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding: 0.625rem 1.125rem;
+    border-radius: 0.75rem;
+    border: 2px solid transparent;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--color-kumkum);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-kumkum-dark);
+  }
+  .btn-secondary {
+    background: var(--color-card);
+    border-color: var(--color-kumkum);
+    color: var(--color-kumkum);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-kumkum-soft);
+  }
+  .btn-haldi {
+    background: var(--color-haldi);
+    color: var(--color-ink);
+  }
+  .btn-haldi:hover:not(:disabled) {
+    background: #cf9106;
+  }
+  .btn-whatsapp {
+    background: var(--color-whatsapp);
+    color: #fff;
+  }
+  .btn-whatsapp:hover:not(:disabled) {
+    background: #0e7a40;
+  }
+  .btn-quiet {
+    background: transparent;
+    color: var(--color-kumkum);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding-inline: 0.5rem;
+  }
+  .btn-sm {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+
+  .input {
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.625rem 0.875rem;
+    border: 2px solid var(--color-line);
+    border-radius: 0.75rem;
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 1rem;
+  }
+  .input:focus {
+    border-color: var(--color-kumkum);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(227 160 8 / 0.35);
+  }
+  textarea.input {
+    min-height: 8rem;
+    line-height: 1.5;
+  }
+  .label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    margin-bottom: 0.375rem;
+    color: var(--color-ink);
+  }
+  .hint {
+    font-size: 0.875rem;
+    color: var(--color-ink-soft);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-bride {
+    background: var(--color-kumkum-soft);
+    color: var(--color-kumkum);
+  }
+  .badge-groom {
+    background: var(--color-haldi-soft);
+    color: var(--color-haldi-deep);
+  }
+  .badge-yes {
+    background: var(--color-leaf-soft);
+    color: var(--color-leaf);
+  }
+  .badge-partly {
+    background: var(--color-haldi-soft);
+    color: var(--color-haldi-deep);
+  }
+  .badge-no {
+    background: #efe8e2;
+    color: var(--color-ink-soft);
+  }
+
+  .alert {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    border-radius: 0.875rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+  }
+  .alert-error {
+    background: var(--color-kumkum-soft);
+    border-color: #efc8c0;
+    color: var(--color-kumkum-dark);
+  }
+  .alert-success {
+    background: var(--color-leaf-soft);
+    border-color: #bfe0ca;
+    color: var(--color-leaf);
+  }
+  .alert-warn {
+    background: var(--color-haldi-soft);
+    border-color: #f1d891;
+    color: #5f3e00;
+  }
+  .alert-info {
+    background: var(--color-paper-deep);
+    border-color: var(--color-line);
+    color: var(--color-ink);
+  }
+
+  .table-p {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .table-p th {
+    background: var(--color-paper-deep);
+    text-align: left;
+    font-weight: 600;
+    padding: 0.625rem 0.75rem;
+    color: var(--color-ink);
+    white-space: nowrap;
+  }
+  .table-p td {
+    padding: 0.625rem 0.75rem;
+    border-top: 1px solid var(--color-line);
+    vertical-align: top;
+  }
+  .table-p tbody tr:hover {
+    background: rgb(251 238 203 / 0.35);
+  }
+
+  /* Choice pills (radio and checkbox look-alikes with big targets). */
+  .choice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3.25rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.875rem;
+    border: 2px solid var(--color-line);
+    background: #fff;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+  }
+  .choice[aria-pressed="true"],
+  .choice:has(input:checked) {
+    border-color: var(--color-kumkum);
+    background: var(--color-kumkum);
+    color: #fff;
+  }
+  .choice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
 }
