@@ -107,7 +107,7 @@ export function Section({
   return (
     <section id={id} className={`${tone === "card" ? "card p-4 sm:p-6" : ""} scroll-mt-24 ${className}`}>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
+        <div className="flex min-w-0 flex-1 basis-60 items-start gap-3">
           {n !== undefined && (
             <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-lg text-white">
               {n}
