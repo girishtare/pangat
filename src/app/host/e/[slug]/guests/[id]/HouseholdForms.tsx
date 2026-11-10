@@ -109,7 +109,7 @@ export function ReplyForm({ slug, id, functions }: { slug: string; id: string; f
   const [state, action, pending] = useActionState(recordReply.bind(null, slug, id), null);
   return (
     <form action={action} className="space-y-4">
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="space-y-4">
         {functions.map((f) => (
           <ReplyRow key={f.id} f={f} />
         ))}

@@ -121,7 +121,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
             side={hh.side}
             nameEn={hh.nameEn}
             nameMr={hh.nameMr}
-            mobile={hh.mobile}
+            mobile={displayPhone(hh.mobile)}
             softCap={hh.softCap}
             functions={host.functions.map((f) => ({
               id: f.id,

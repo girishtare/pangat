@@ -26,7 +26,7 @@ export function BaselineForm({ slug, functions, values }: { slug: string; functi
           <label key={f.id} className="block rounded-xl border border-line bg-haldi-soft/40 p-4">
             <span className="label">{f.name}</span>
             <span className="flex items-center gap-2">
-              <input name={`baseline_${f.id}`} inputMode="numeric" defaultValue={values[f.id] ?? ""} className={num} placeholder="—" />
+              <input name={`baseline_${f.id}`} inputMode="numeric" defaultValue={values[f.id] ?? ""} className={num} />
               <span className="text-sm text-ink-soft">people</span>
             </span>
           </label>
