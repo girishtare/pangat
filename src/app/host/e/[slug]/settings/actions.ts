@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { istInputToIso } from "@/lib/events";
+import { normaliseMobile } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
 import {
   addFunction,
@@ -61,12 +62,17 @@ export async function saveEvent(slug: string, _prev: FormState, fd: FormData): P
   if (!nameEn || nameEn.length > 120) return { ok: false, message: "Enter the event's name (up to 120 characters)." };
   if (!cutoffAt) return { ok: false, message: "Choose when replies close." };
   if (!rates.success) return { ok: false, message: "Show rates must be whole percentages from 0 to 100." };
+  const bride = normaliseMobile(text(fd.get("contactBride")));
+  const groom = normaliseMobile(text(fd.get("contactGroom")));
+  if (!bride.ok || !groom.ok) return { ok: false, message: "A contact number doesn't look like a phone number." };
   await updateEvent(who.host.event.id, {
     nameEn,
     nameMr,
     cutoffAt,
     yesShowRate: rates.data.yes / 100,
     pendingShowRate: rates.data.pending / 100,
+    contactBride: bride.value,
+    contactGroom: groom.value,
   });
   return done("Saved.");
 }

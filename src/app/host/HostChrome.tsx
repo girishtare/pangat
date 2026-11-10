@@ -15,7 +15,7 @@ export function SignOutButton() {
 }
 
 /** Header shared by every page of one event. */
-export function EventHeader({ host, current }: { host: HostContext; current: "dashboard" | "guests" | "numbers" | "settings" }) {
+export function EventHeader({ host, current }: { host: HostContext; current: "dashboard" | "guests" | "slips" | "whatsapp" | "numbers" | "settings" }) {
   const base = `/host/e/${host.event.slug}`;
   const tab = (href: string, label: string, key: typeof current) => (
     <Link
@@ -40,6 +40,8 @@ export function EventHeader({ host, current }: { host: HostContext; current: "da
       <nav className="mt-4 flex flex-wrap items-center gap-2">
         {tab(base, "Dashboard", "dashboard")}
         {tab(`${base}/guests`, "Guest list", "guests")}
+        {tab(`${base}/slips`, "Slips", "slips")}
+        {tab(`${base}/whatsapp`, "WhatsApp", "whatsapp")}
         {host.canManage && tab(`${base}/numbers`, "Caterer numbers", "numbers")}
         {host.canManage && tab(`${base}/settings`, "Event settings", "settings")}
         <SignOutButton />

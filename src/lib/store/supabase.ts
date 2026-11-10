@@ -214,6 +214,7 @@ export interface GuestRow {
   shortCode: string;
   token: string;
   softCap: number | null;
+  createdAt: string;
   functionIds: string[];
   replied: string[]; // function ids with a reply
 }
@@ -237,6 +238,7 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     shortCode: r.short_code,
     token: r.token,
     softCap: r.soft_cap,
+    createdAt: r.created_at,
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     replied: (r.responses ?? []).map((x: any) => x.function_id),
   }));

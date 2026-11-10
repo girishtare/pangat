@@ -42,8 +42,11 @@ export default async function Household({ params }: { params: Promise<{ slug: st
           {hh.side === "bride" ? "Bride's side" : "Groom's side"} · {hh.mobile ?? "no mobile"} · code{" "}
           <span className="font-mono font-semibold">{hh.shortCode}</span>
         </p>
-        <div className="mt-2">
+        <div className="mt-2 flex flex-wrap items-center gap-3">
           <CopyLink path={`/r/${hh.token}`} />
+          <Link href={`/host/e/${slug}/slips?ids=${hh.id}`} className="text-sm text-kumkum underline">
+            Print this slip
+          </Link>
         </div>
       </section>
 

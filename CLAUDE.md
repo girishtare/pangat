@@ -76,9 +76,9 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
    Also (owner's call, 10 Nov: "everything that needs a change should be on page"): events are created on the page with Haldi/Wedding/Reception by default; functions, event details, show rates and hosts are edited on Event settings (hosts of both sides only). Routes are per event: `/host/e/<slug>`. Migration 0005; `PANGAT_EVENT_SLUG` is gone.
    Excel (owner, 10 Nov): per-event template at `/host/e/<slug>/guests/template` (exceljs, writing only) and `.xlsx` upload (read-excel-file, reading untrusted files), both feeding the same check step. Only the "Guests" sheet is imported. Owner confirmed 10 Nov: template dropdowns and upload work in both Excel and Google Sheets.
 3. Mark on behalf (source `on_behalf`, `updated_by` = host). **Built 10 Nov on the household page, with edit/delete household and guest-list search. Pilot record built too: Caterer numbers tab (baseline, freeze on 14 Dec, to caterer, actual, verdict), migration 0006. Still to build for the evidence list: hours/calls chasing log, dashboard-view tracking.**
-4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi.
+4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi. **Built 10 Nov: Slips tab (8 per A4), side contact numbers in Event settings.**
 5. "Not us" mobile lookup and approval queue.
-6. WhatsApp nudge links (`https://wa.me/<number>?text=...`) for pending households.
+6. WhatsApp nudge links (`https://wa.me/<number>?text=...`) for pending households. **Built 10 Nov: WhatsApp tab with invitation and reminder texts (editable), sends recorded in `nudges`; effort log and dashboard-view tracking for the review. Migration 0007.**
 
 ## Technical notes
 
