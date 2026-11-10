@@ -97,8 +97,14 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 
 ## UI
 
-- Redesigned 10 Nov (PRs 10-13) from docs/ui-brief.md and the owner's reference images: tokens and shared classes in src/app/globals.css (paper, kumkum, haldi, ink; .btn, .input, .card, .badge, .alert, .table-p, .choice), fonts Noto Sans/Serif + Devanagari via next/font, shared pieces in src/app/ui (kit.tsx, Stepper, MobileNav), event shell EventShell in src/app/host/HostChrome.tsx (laptop rail, phone menu). Wide tables have a stacked-card version below lg. Reviewed live at 1440x900, 1366x768, 390 and 360 px.
-- Review tip: the browser pane's phone emulation crops screenshots; review phones by loading pages in 390/360 px iframes on a desktop-size pane (same origin, so the sign-in carries over).
+- One palette app-wide since 10 Nov (PRs 14-18, designs in `docs/design/`): maroon, sand, cream, dusty blue. Values live once in `:root` in `src/app/globals.css`; the Tailwind names point at them. Old names kept: `kumkum` = maroon, `haldi` = dusty blue `#aec4d4` (fills, bars, borders only, never text), `haldi-deep` `#4f6b80` (blue for text and icons), `paper` = cream, `line` = sand. Plus `sand`, `sand-soft`, `sand-deep`. Landing and guest pages use aliases of the same values (`maroon`, `cream`, `sky`, `sky-ink`, `ink-e`, `card-e`). Leaf and WhatsApp greens unchanged. Focus ring `3px solid #4f6b80`.
+- Fonts: Rozha One (display, weight 400 only, 20 px and up) and Mukta (text, body 17 px), loaded once in `src/app/fonts.ts` on `<html>`. Never put `font-bold` on `font-display`; `.font-display` turns off synthetic bold.
+- Shared classes in globals.css: .btn, .input, .card, .badge, .alert, .table-p, .choice. Shared pieces in `src/app/ui` (kit.tsx: Mark, PageHeader with `large`, Section, Alert…; Stepper with a `guest` variant; MobileNav). Event shell: EventShell in `src/app/host/HostChrome.tsx` (laptop rail with sand event card, phone Menu bar). Host dates via `src/lib/when.ts` ("Sun 28 Dec · 11:30 am").
+- Dashboard: owner switches Both / Bride's / Groom's with `?side=` (server-rendered; co-owners get only their side). Caterer numbers: the UI says "family's guess", code and database keep `baseline`; verdict card first once counts exist.
+- Tables: laptops get the table in an `overflow-x-auto` box (Function column left, the rest centred); phones get stacked cards where the key number must stay visible.
+- Reviewed live at 1440x900, 1366x768, 390 and 360 px; no sideways scroll on any page at 360. Slip sheet still 194 x 281 mm, 8 per A4.
+- Review tip: the browser pane's emulation crops screenshots. Load pages in same-origin iframes on the pane (390 and 360 px side by side, or 1440 px scaled with CSS transform) so the sign-in carries over; shift the iframe with translateY to see further down.
+- Review data: to test on the live site without touching the real event, re-run the sample wedding (`supabase/seed/demo_wedding.sql`), add the owner's account as its `owner` host, review, then delete the `demo-wedding` event (and its lookup requests). Done this way for PRs 16-18.
 
 ## Verification status (updated 10 November 2026)
 
