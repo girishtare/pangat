@@ -36,7 +36,7 @@ Three numbers: **baseline** (what the family would have ordered anyway), **predi
 
 ## Decided
 
-- 10 Nov: **open sign-up** for commercial use. Google and email/password now; phone OTP later (needs an SMS provider and DLT registration). Email: the owner's Gmail via SMTP for the pilot (no domain yet); Resend once a domain is bought. Each event has one **owner** (its creator) and up to **3 co-owners per side**; co-owners work on their side only. Event kinds: wedding only for now (`events.kind`). Setup steps: `docs/auth-setup.md`. Before charging: Vercel Pro (Hobby is non-commercial).
+- 10 Nov: **open sign-up** for commercial use. Google and email/password now; phone OTP later (needs an SMS provider and DLT registration). Email: the owner's Gmail via SMTP for the pilot (no domain yet); Resend once a domain is bought. Each event has one **owner** (its creator) and up to **3 co-owners per side**; co-owners work on their side only. Event kinds: wedding only for now (`events.kind`). Setup steps: `docs/auth-setup.md`. Verified live 10 Nov: Google sign-in links to the existing email account; a co-owner invitation (groom side) was accepted and the invitee signed in. Supabase Site URL must be the production URL, or email links point at localhost. Not yet tried: self sign-up by email, password reset. Before charging: Vercel Pro (Hobby is non-commercial).
 
 - If the tool's number and the parents' number disagree on 14 December, **the higher of the two goes to the caterer**. So this wedding cannot show a saving; it is a measurement run. Record both numbers and the actual count, and judge the tool on accuracy only.
 
