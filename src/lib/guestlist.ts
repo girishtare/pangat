@@ -276,3 +276,29 @@ export function checkSheet(input: {
   for (const r of rows) counts[r.status]++;
   return { problem: null, rows, counts };
 }
+
+/* ---------- Excel files ---------- */
+
+/** Name of the sheet in our template that holds the guests. Other sheets are instructions. */
+export const TEMPLATE_SHEET = "Guests";
+
+type CellValue = string | number | boolean | Date | null | undefined;
+
+/** Picks the "Guests" sheet if there is one, otherwise the first sheet. */
+export function pickSheet<T extends { sheet: string; data: CellValue[][] }>(sheets: T[]): T | null {
+  return sheets.find((s) => s.sheet.trim().toLowerCase() === TEMPLATE_SHEET.toLowerCase()) ?? sheets[0] ?? null;
+}
+
+function cellText(v: CellValue): string {
+  if (v === null || v === undefined) return "";
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? "" : v.toISOString().slice(0, 10);
+  // Excel often stores a mobile number as a number: 9876543210, never 9.87654321E9.
+  if (typeof v === "number") return Number.isInteger(v) ? v.toFixed(0) : String(v);
+  if (typeof v === "boolean") return v ? "yes" : "no";
+  return String(v);
+}
+
+/** Rows from a spreadsheet → tab-separated text, the same shape as a paste. */
+export function rowsToText(rows: CellValue[][]): string {
+  return rows.map((r) => r.map((c) => cellText(c).replace(/[\t\r\n]+/g, " ").trim()).join("\t")).join("\n");
+}

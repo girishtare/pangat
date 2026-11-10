@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { checkSheet, type SheetCheck } from "@/lib/guestlist";
+import readExcelFile from "read-excel-file/node";
+import { checkSheet, pickSheet, rowsToText, type SheetCheck } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
 import { insertHouseholds, loadHouseholdKeys, type NewHousehold } from "@/lib/store/supabase";
 import { newShortCode, newToken } from "@/lib/token";
@@ -68,6 +69,32 @@ export async function saveImport(slug: string, text: string): Promise<SaveResult
     skipped: check.counts.exists,
     codes: rows.map((r) => ({ name: r.nameEn, shortCode: r.shortCode })),
   };
+}
+
+export type ReadResult = { ok: true; text: string; sheet: string } | { ok: false; error: string };
+
+const MAX_UPLOAD_BYTES = 900_000;
+
+/** Reads an uploaded Excel file into the same text as a paste. Writes nothing. */
+export async function readSpreadsheet(slug: string, formData: FormData): Promise<ReadResult> {
+  const who = await signedInHost(slug);
+  if ("error" in who) return { ok: false, error: who.error };
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Choose a file first." };
+  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, error: "That file is too large. Keep it under 900 KB (about 5,000 rows)." };
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".xls")) return { ok: false, error: 'That is an old Excel file (.xls). In Excel choose File → Save As → "Excel Workbook (.xlsx)", then upload that.' };
+  if (!name.endsWith(".xlsx")) return { ok: false, error: "Choose an Excel file (.xlsx) or a CSV file." };
+
+  try {
+    const sheets = await readExcelFile(Buffer.from(await file.arrayBuffer()));
+    const sheet = pickSheet(sheets as unknown as { sheet: string; data: (string | number | boolean | Date | null)[][] }[]);
+    if (!sheet) return { ok: false, error: "That file has no sheets." };
+    return { ok: true, text: rowsToText(sheet.data), sheet: sheet.sheet };
+  } catch (err) {
+    console.error("readSpreadsheet failed", err);
+    return { ok: false, error: "Couldn't read that file. Open it in Excel, save it as an Excel Workbook (.xlsx), and try again." };
+  }
 }
 
 export type AddState = SaveResult | null;
