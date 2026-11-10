@@ -1,4 +1,4 @@
-# Sign-up setup (Supabase, Google, Resend)
+# Sign-up setup (Supabase, Google, email)
 
 Pangat's code for sign-up is in place; these settings live outside the code
 and must be done once, by the owner. Project: Supabase `pangat`
@@ -14,21 +14,34 @@ Authentication → URL Configuration:
 - **Site URL**: `https://pangat-tau.vercel.app`
 - **Redirect URLs**: add `https://pangat-tau.vercel.app/**`
 
-## 2. Email sending through Resend
+## 2. Email sending: Gmail for now
 
 Supabase's own mailer only reaches members of your Supabase team, about two
-emails an hour. Real users need a sending service.
+emails an hour. For the pilot, send through your own Gmail account (decided
+10 Nov; no domain needed). Emails will come from your Gmail address.
 
-1. Create an account at resend.com.
-2. Domains → Add domain. This needs a domain you own (for example
-   `pangat.in`); add the DNS records Resend shows, at your domain registrar.
-   Without your own domain, Resend only delivers to your own address.
-3. API Keys → Create API key (sending access).
-4. Supabase → Authentication → Emails → SMTP Settings → enable custom SMTP:
-   - Host `smtp.resend.com`, port `465`
-   - Username `resend`, password: the API key
-   - Sender email: e.g. `noreply@<your domain>`, sender name `Pangat`
-5. Authentication → Rate Limits: raise "emails sent per hour" (e.g. 100).
+1. Google Account → Security → turn on **2-Step Verification** (required for
+   the next step).
+2. Google Account → search "App passwords" (myaccount.google.com/apppasswords)
+   → create one named "Pangat". Google shows a 16-character password once:
+   copy it. Treat it like a password; don't paste it anywhere else.
+3. Supabase → Authentication → Emails → SMTP Settings → enable custom SMTP:
+   - Sender email: your Gmail address
+   - Sender name: `Pangat`
+   - Host `smtp.gmail.com`, port `465`
+   - Username: your Gmail address
+   - Password: the 16-character app password
+4. Authentication → Rate Limits: "emails sent per hour" to about 30.
+
+Limits: Gmail allows roughly 500 emails a day from a personal account and may
+pause sending that looks like bulk mail. Plenty for one wedding's hosts; not
+for a product.
+
+**Later, for commercial launch:** buy a domain, then switch to Resend
+(resend.com → add and verify the domain → API key → SMTP host
+`smtp.resend.com`, port 465, username `resend`, password = API key, sender
+`noreply@<domain>`). Also set `PANGAT_PUBLIC_URL` and the Supabase Site URL
+to the domain. Buy it before slips are printed if the QR codes should show it.
 
 ## 3. Email templates (links that work on phones)
 
