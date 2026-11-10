@@ -1,15 +1,11 @@
 import Link from "next/link";
-import { Mukta, Rozha_One } from "next/font/google";
 import { isDemo } from "@/lib/store";
 import { DEMO_TOKENS } from "@/lib/store/demo";
+import { paletteEFonts } from "./fonts";
 import { Mark } from "./ui/kit";
 
-// Landing page only: the host and guest screens keep Noto for now.
-const rozha = Rozha_One({ weight: "400", subsets: ["latin"], display: "swap" });
-const mukta = Mukta({ weight: ["400", "600", "700"], subsets: ["latin"], display: "swap" });
-
 // Rozha has one weight; font-normal stops the browser faking bold. Use it at 20 px and above only.
-const display = `${rozha.className} font-normal`;
+const display = "font-heading-e font-normal";
 const wrap = "mx-auto max-w-[1200px] px-4 md:px-6";
 
 const btn = "inline-flex items-center justify-center rounded-xl border-2 font-bold no-underline transition-colors";
@@ -38,7 +34,7 @@ function Tick({ tone }: { tone: "maroon" | "sky" }) {
 export default function Home() {
   const demo = isDemo();
   return (
-    <div className={`${mukta.className} min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`}>
+    <div className={`${paletteEFonts} font-body-e min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`}>
       <Header demo={demo} />
       <main>
         <Hero demo={demo} />

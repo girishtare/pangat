@@ -40,6 +40,8 @@ const strings = {
     error: "Something went wrong. Please try again.",
     notFound: "This link isn't valid. Please check the invitation or call the family.",
     map: "Map",
+    quickNoSignup: "It takes a minute · No sign-up needed",
+    changeBy: "You can change this until {date}",
   },
   mr: {
     switchLang: "English",
@@ -78,6 +80,8 @@ const strings = {
     error: "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा.",
     notFound: "ही लिंक वैध नाही. कृपया निमंत्रण तपासा किंवा कुटुंबाशी संपर्क साधा.",
     map: "नकाशा",
+    quickNoSignup: "उत्तर द्यायला एक मिनिट लागेल · नोंदणीची गरज नाही",
+    changeBy: "{date}पर्यंत आपण उत्तर बदलू शकता",
   },
 } as const;
 
