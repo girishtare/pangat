@@ -11,6 +11,8 @@ export default function Stepper({
   onChange,
   name,
   size = "md",
+  lessLabel = "one less",
+  moreLabel = "one more",
 }: {
   label: string;
   value: number;
@@ -19,6 +21,8 @@ export default function Stepper({
   onChange: (v: number) => void;
   name?: string;
   size?: "md" | "lg";
+  lessLabel?: string;
+  moreLabel?: string;
 }) {
   const big = size === "lg";
   const btn = `flex shrink-0 items-center justify-center rounded-full border-2 border-kumkum bg-card text-kumkum disabled:border-line disabled:text-ink-soft ${
@@ -28,13 +32,13 @@ export default function Stepper({
     <div role="group" aria-label={label}>
       {name && <input type="hidden" name={name} value={value} />}
       <div className="flex items-center gap-3">
-        <button type="button" className={btn} onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min} aria-label={`${label}: one less`}>
+        <button type="button" className={btn} onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min} aria-label={`${label}: ${lessLabel}`}>
           <Minus className={big ? "h-6 w-6" : "h-5 w-5"} aria-hidden="true" />
         </button>
         <output aria-live="polite" className={`min-w-[3ch] text-center font-display font-bold tabular-nums ${big ? "text-4xl" : "text-2xl"}`}>
           {value}
         </output>
-        <button type="button" className={btn} onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} aria-label={`${label}: one more`}>
+        <button type="button" className={btn} onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} aria-label={`${label}: ${moreLabel}`}>
           <Plus className={big ? "h-6 w-6" : "h-5 w-5"} aria-hidden="true" />
         </button>
       </div>
