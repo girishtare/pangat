@@ -2,7 +2,7 @@
 
 Know who is really coming. Guests reply through a personal link or QR code; the host sees a headcount per function.
 
-Stage 1 of the v1 spec plus stage 2 item 1 (host sign-in), 10 November 2026. Live at https://pangat-tau.vercel.app (Vercel project `pangat`, functions in Mumbai `bom1`, next to the Supabase database), deployed on every push to `main`. It runs against Supabase with the sample wedding loaded. Project context for Claude Code is in `CLAUDE.md`.
+Pangat v1 (all of stage 2) plus open sign-up, 10 November 2026. Live at https://pangat-tau.vercel.app (Vercel project `pangat`, functions in Mumbai `bom1`, next to the Supabase database), deployed on every push to `main`. It runs against Supabase; the sample wedding was removed from the live database on 10 Nov (`supabase/seed/demo_wedding.sql` recreates it for testing). Project context for Claude Code is in `CLAUDE.md`.
 
 ## Run it
 

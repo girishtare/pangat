@@ -62,8 +62,8 @@ The owner will decide after 3 January whether the product is sold on savings or 
 1. ~~Which functions get their own headcount, and which are catered?~~ Answered 10 Nov: hosts set this per event on the page (each function has its own headcount and a "food served" flag).
 2. Is the groom's side in the tool with its own login, or do they hand over one number?
 3. ~~Does each card map to one household, and is there a soft cap on heads per card?~~ Answered 10 Nov: one card = one household, with an optional soft cap (Cap column). The cap is stored but not yet enforced on the guest form.
-4. How far can the caterer's count move after 15 December, and at what cost?
-5. Is the menu all-vegetarian? If so, drop the diet question.
+4. ~~How far can the caterer's count move after 15 December, and at what cost?~~ Answered 10 Nov: the caterer accepts changes until **24 December**. The pilot is still judged on the tool's number frozen on 14 December; a later update to the caterer (up to 24 Dec) is extra, and should be recorded separately if used.
+5. ~~Is the menu all-vegetarian? If so, drop the diet question.~~ Answered 10 Nov: both veg and non-veg are served, so the vegetarian question stays.
 
 ## v1 scope
 
@@ -103,7 +103,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - Seen in testing: the English/Marathi choice is not remembered on reload (page reverts to Marathi); Marathi view mixes Devanagari dates with Latin digits and "AM/PM" in headcounts and times.
 - Supabase project `pangat` (ref `sibsiwicyoawdysgqeft`, Mumbai, free plan) created 10 Nov; migrations 0001 to 0003 and the demo-wedding seed applied; security advisor clean. RLS tested in SQL with throwaway users (rolled back): bride host sees 4 households/10 invites, groom host 4/9, both-sides host 8/19, signed-in non-host 0; anon read and host writes are refused.
 - Live on Vercel against Supabase (10 Nov): home page shows no demo box; `/host` redirects to `/host/login`; a guest reply via `/r/demo-family-6?s=q` saved to `responses` with source `qr`, correct heads/veg/arrival, and one `response_history` row per function.
-- Host sign-in confirmed live (10 Nov): owner's account, linked to both sides of `demo-wedding`, signed in and saw "Both sides". A one-side host on the live site has not been tried; RLS for one side was tested in SQL.
+- Host sign-in confirmed live (10 Nov): owner's account signed in and saw "Both sides". The sample event `demo-wedding` was deleted from the live database on 10 Nov at the owner's request; the seed file stays for testing. A one-side host on the live site has not been tried; RLS for one side was tested in SQL.
 - The seed re-run on 10 Nov deleted the event and, by cascade, all host links. `supabase/seed/demo_wedding.sql` now saves and restores host links.
 - Free Supabase projects pause after a week without activity; a pause would break guest links.
 - Marathi strings in `src/lib/i18n.ts` are a first draft and need a native reader.
