@@ -72,7 +72,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 ## Stage 2 (next), in suggested order
 
 1. Host sign-in (Supabase Auth) and RLS policies so each host sees only their side. Then enable `/host` outside demo mode. **Code written 10 Nov (migration 0002, `/host/login`, `src/proxy.ts`); RLS tested in SQL; owner signed in on the live site and saw the both-sides dashboard. Done.**
-2. Guest list import from a sheet, add a late household, token and short-code generation (`src/lib/token.ts`).
+2. Guest list import from a sheet, add a late household, token and short-code generation (`src/lib/token.ts`). **Code written 10 Nov: `/host/guests`, `src/lib/guestlist.ts`, migration 0004 (atomic `import_households`, service role only). Import function tested in SQL; the page not yet used live.**
 3. Mark on behalf (source `on_behalf`, `updated_by` = host).
 4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi.
 5. "Not us" mobile lookup and approval queue.

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { forecast } from "@/lib/forecast";
 import { factsFor, scopeLabel, scopesFor } from "@/lib/sides";
@@ -74,7 +75,14 @@ export default async function HostDashboard() {
             {who ? `Signed in as ${who} · ${hostSide ? scopeLabel(hostSide) : "Both sides"}` : "Demo data"}
           </p>
         </div>
-        {who && <SignOutButton />}
+        {who && (
+          <div className="flex items-start gap-3">
+            <Link href="/host/guests" className="mt-4 rounded-full bg-kumkum px-4 py-2 text-base text-white">
+              Guest list
+            </Link>
+            <SignOutButton />
+          </div>
+        )}
       </div>
       <p className="mt-3 text-sm">
         Expected = confirmed × {rates.yesShowRate} + pending households × average heads × {rates.pendingShowRate}.

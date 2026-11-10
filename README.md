@@ -19,13 +19,14 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
 - Guest flow at `/r/<token>`: "is this you?", reply per function (coming, headcount, vegetarian count, arrival), summary, change until the cut-off. Marathi and English.
 - Host dashboard at `/host`: replies and expected headcount per function, split by side for hosts of both sides. With Supabase connected it needs sign-in at `/host/login` (email and password) and shows only the host's side, enforced by row-level security (`supabase/migrations/0002_host_access.sql`). In demo mode it is open.
-- Forecast, validation and token logic in `src/lib`, with tests in `tests`.
+- Guest list at `/host/guests` (signed-in hosts): paste rows from Google Sheets or Excel (or CSV), check them, then add. One row per household; header row with **Name** (required), Marathi name, Side, Mobile, Functions (blank = all), Cap. Mobiles are normalised to +91…; duplicates inside the paste and households already in the list are caught; a one-side host can only add to their side. "Add one household" uses the same checks. Each new household gets a token and a six-character short code.
+- Forecast, validation, token and guest-list logic in `src/lib`, with tests in `tests`.
 - Database schema in `supabase/migrations/0001_init.sql`.
 - Supabase data layer in `src/lib/store/supabase.ts`.
 
 ## Not built yet
 
-- Guest list import, late additions, mark on behalf.
+- Mark on behalf.
 - Printable slips with QR codes and short codes.
 - "Not us" mobile-number lookup and approval queue.
 - WhatsApp nudge links.
@@ -37,7 +38,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
 ## Connecting Supabase
 
-1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql` and `0003_advisor_fixes.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
+1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`, `0003_advisor_fixes.sql` and `0004_import_households.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
 2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
 3. Set these in Vercel (Project → Settings → Environment Variables, Production), then redeploy:
    - `SUPABASE_URL`: the project URL.

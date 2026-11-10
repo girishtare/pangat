@@ -151,3 +151,92 @@ export async function loadHostAccess(client: SupabaseClient, eventSlug: string):
   if (error) throw new Error(`host lookup failed: ${error.message}`);
   return data ? { side: (data as any).side ?? null } : null;
 }
+
+/* ---------- Guest list (stage 2.2) ---------- */
+
+export interface HouseholdKey {
+  side: Side;
+  nameEn: string;
+  mobile: string | null;
+  shortCode: string;
+}
+
+/**
+ * Every household of the event, both sides, for duplicate checks and short-code
+ * uniqueness. Service role: a one-side host must not miss a clash with the
+ * other side. Callers show only "also on the other side", never the details.
+ */
+export async function loadHouseholdKeys(eventId: string): Promise<HouseholdKey[]> {
+  const { data, error } = await db()
+    .from("households")
+    .select("side, name_en, mobile, short_code")
+    .eq("event_id", eventId)
+    .range(0, 9999);
+  if (error) throw new Error(`household keys lookup failed: ${error.message}`);
+  return (data ?? []).map((r: any) => ({ side: r.side, nameEn: r.name_en, mobile: r.mobile, shortCode: r.short_code }));
+}
+
+export interface NewHousehold {
+  side: Side;
+  nameEn: string;
+  nameMr: string | null;
+  mobile: string | null;
+  softCap: number | null;
+  functionIds: string[];
+  token: string;
+  shortCode: string;
+}
+
+/** Inserts households and their invites in one transaction (see migration 0004). */
+export async function insertHouseholds(eventId: string, rows: NewHousehold[]): Promise<number> {
+  const payload = rows.map((r) => ({
+    side: r.side,
+    name_en: r.nameEn,
+    name_mr: r.nameMr,
+    mobile: r.mobile,
+    token: r.token,
+    short_code: r.shortCode,
+    soft_cap: r.softCap,
+    function_ids: r.functionIds,
+  }));
+  const { data, error } = await db().rpc("import_households", { p_event: eventId, p_households: payload });
+  if (error) throw new Error(`import failed: ${error.message}`);
+  return Number(data);
+}
+
+export interface GuestRow {
+  id: string;
+  side: Side;
+  nameEn: string;
+  nameMr: string | null;
+  mobile: string | null;
+  shortCode: string;
+  token: string;
+  softCap: number | null;
+  functionIds: string[];
+  replied: string[]; // function ids with a reply
+}
+
+/** Households as the signed-in host may see them (RLS: their side only). */
+export async function listGuests(client: SupabaseClient, eventId: string): Promise<GuestRow[]> {
+  const { data, error } = await client
+    .from("households")
+    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, created_at, invites(function_id), responses(function_id)")
+    .eq("event_id", eventId)
+    .order("side")
+    .order("created_at")
+    .range(0, 9999);
+  if (error) throw new Error(`guest list lookup failed: ${error.message}`);
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    side: r.side,
+    nameEn: r.name_en,
+    nameMr: r.name_mr,
+    mobile: r.mobile,
+    shortCode: r.short_code,
+    token: r.token,
+    softCap: r.soft_cap,
+    functionIds: (r.invites ?? []).map((i: any) => i.function_id),
+    replied: (r.responses ?? []).map((x: any) => x.function_id),
+  }));
+}
