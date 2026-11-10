@@ -267,4 +267,12 @@ h3,
     opacity: 0;
     pointer-events: none;
   }
+  .choice:has(input:focus-visible) {
+    outline: 3px solid var(--color-haldi);
+    outline-offset: 2px;
+  }
+  .choice:has(input:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
