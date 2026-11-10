@@ -26,7 +26,8 @@ export interface HostContext {
   email: string;
   /** null = both sides. */
   side: Side | null;
-  /** Hosts of both sides manage the event: details, functions, other hosts. */
+  role: "owner" | "co_owner";
+  /** Only the owner manages the event: details, functions, co-owners, caterer numbers. */
   canManage: boolean;
   event: HostEvent;
   functions: (FunctionRef & { startsAt: string; venue: string | null; mapUrl: string | null; catered: boolean })[];
@@ -82,7 +83,8 @@ export async function hostGate(slug: string): Promise<HostGate> {
       userId: who.userId,
       email: who.email,
       side: access.side,
-      canManage: access.side === null,
+      role: access.role,
+      canManage: access.role === "owner",
       event: {
         id: ev.id,
         slug: ev.slug,
@@ -109,6 +111,7 @@ export interface MyEvent {
   slug: string;
   name: Bilingual;
   side: Side | null;
+  role: "owner" | "co_owner";
   firstStartsAt: string | null;
 }
 
@@ -116,14 +119,20 @@ export interface MyEvent {
 export async function listMyEvents(client: SupabaseClient): Promise<MyEvent[]> {
   const { data, error } = await client
     .from("hosts")
-    .select("side, events(slug, name_en, name_mr, created_at, functions(starts_at))");
+    .select("side, role, events(slug, name_en, name_mr, created_at, functions(starts_at))");
   if (error) throw new Error(`events lookup failed: ${error.message}`);
   /* eslint-disable @typescript-eslint/no-explicit-any */
   return ((data ?? []) as any[])
     .filter((h) => h.events)
     .map((h) => {
       const starts = ((h.events.functions ?? []) as any[]).map((f) => f.starts_at as string).sort();
-      return { slug: h.events.slug, name: { en: h.events.name_en, mr: h.events.name_mr }, side: h.side, firstStartsAt: starts[0] ?? null };
+      return {
+        slug: h.events.slug,
+        name: { en: h.events.name_en, mr: h.events.name_mr },
+        side: h.side,
+        role: (h.role === "owner" ? "owner" : "co_owner") as MyEvent["role"],
+        firstStartsAt: starts[0] ?? null,
+      };
     })
     .sort((a, b) => (a.firstStartsAt ?? "9").localeCompare(b.firstStartsAt ?? "9"));
 }

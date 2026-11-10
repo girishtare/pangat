@@ -4,7 +4,7 @@ import { randomInt } from "node:crypto";
 import { redirect } from "next/navigation";
 import { defaultCutoff, defaultFunctions, istInputToIso, isValidDate, makeSlug } from "@/lib/events";
 import { signedInUser } from "@/lib/host";
-import { createEvent, slugTaken } from "@/lib/store/admin";
+import { createEvent, MAX_OWNED_EVENTS, ownedEventCount, slugTaken } from "@/lib/store/admin";
 
 export type NewEventState = { error: string } | null;
 
@@ -15,6 +15,11 @@ const tail = () => Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.l
 export async function createEventAction(_prev: NewEventState, formData: FormData): Promise<NewEventState> {
   const who = await signedInUser();
   if (!who.ok) return { error: who.reason === "demo" ? "Events can't be created in demo mode." : "Please sign in again." };
+
+  if (text(formData.get("kind")) !== "wedding") return { error: "Choose the kind of event." };
+  if ((await ownedEventCount(who.userId)) >= MAX_OWNED_EVENTS) {
+    return { error: `You already run ${MAX_OWNED_EVENTS} events. Write to us if you need more.` };
+  }
 
   const nameEn = text(formData.get("nameEn"));
   const nameMr = text(formData.get("nameMr")) || null;

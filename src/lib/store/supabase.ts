@@ -143,13 +143,13 @@ export async function loadDashboard(client: SupabaseClient, eventSlug: string): 
   return { event: toEvent(ev), functions: (fnRes.data ?? []).map(toFunction), facts };
 }
 
-export type HostAccess = { side: Side | null } | null;
+export type HostAccess = { side: Side | null; role: "owner" | "co_owner" } | null;
 
 /** The signed-in host's role for this event, or null if they are not a host of it. */
 export async function loadHostAccess(client: SupabaseClient, eventSlug: string): Promise<HostAccess> {
-  const { data, error } = await client.from("hosts").select("side, events!inner(slug)").eq("events.slug", eventSlug).maybeSingle();
+  const { data, error } = await client.from("hosts").select("side, role, events!inner(slug)").eq("events.slug", eventSlug).maybeSingle();
   if (error) throw new Error(`host lookup failed: ${error.message}`);
-  return data ? { side: (data as any).side ?? null } : null;
+  return data ? { side: (data as any).side ?? null, role: (data as any).role === "owner" ? "owner" : "co_owner" } : null;
 }
 
 /* ---------- Guest list (stage 2.2) ---------- */

@@ -1,7 +1,7 @@
 import { isoToIstInput } from "@/lib/events";
 import { hostGate } from "@/lib/host";
 import { scopeLabel } from "@/lib/sides";
-import { dashboardViewStats, functionUsage, listHosts } from "@/lib/store/admin";
+import { dashboardViewStats, functionUsage, listHosts, MAX_CO_OWNERS_PER_SIDE } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
 import { EventHeader, GateMessage } from "../../../HostChrome";
 import { AddHostForm, EventForm, FunctionEditor, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
@@ -18,7 +18,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     return (
       <main className="mx-auto max-w-3xl px-5 py-10">
         <EventHeader host={host} current="settings" />
-        <p className="mt-6">Only hosts of both sides can change the event. Ask one of them if something needs changing.</p>
+        <p className="mt-6">Only the event&apos;s owner can change the event. Ask them if something needs changing.</p>
       </main>
     );
   }
@@ -29,6 +29,10 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     loadHouseholdKeys(host.event.id),
     dashboardViewStats(host.event.id),
   ]);
+  const coOwners = {
+    bride: hosts.filter((h) => h.role === "co_owner" && h.side === "bride").length,
+    groom: hosts.filter((h) => h.role === "co_owner" && h.side === "groom").length,
+  };
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
@@ -74,15 +78,16 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
       </section>
 
       <section className="mt-10">
-        <h2 className="text-2xl font-semibold">Hosts</h2>
+        <h2 className="text-2xl font-semibold">Owner and co-owners</h2>
         <p className="mt-1 text-sm">
-          A one-side host sees and adds guests only for that side. Hosts of both sides see everything and can change these settings.
+          You are the owner: the only one who changes these settings and the caterer numbers. Invite up to {MAX_CO_OWNERS_PER_SIDE} co-owners
+          per side; each sees and works on their own side&apos;s guests only.
         </p>
         <div className="mt-3 overflow-x-auto rounded-xl border border-haldi/60 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="bg-haldi/20">
               <tr>
-                {["Email", "Side", "Last signed in", "Dashboard views", ""].map((h) => (
+                {["Email", "Role", "Last signed in", "Dashboard views", ""].map((h) => (
                   <th key={h} className="px-3 py-2 font-semibold">
                     {h}
                   </th>
@@ -95,8 +100,9 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
                   <td className="px-3 py-2">
                     {h.email}
                     {h.userId === host.userId && " (you)"}
+                    {!h.confirmed && <div className="text-xs">Invitation not accepted yet</div>}
                   </td>
-                  <td className="px-3 py-2">{h.side ? scopeLabel(h.side) : "Both sides"}</td>
+                  <td className="px-3 py-2">{h.role === "owner" ? "Owner" : `Co-owner, ${h.side ? scopeLabel(h.side) : ""}`}</td>
                   <td className="px-3 py-2">
                     {h.lastSignInAt
                       ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(
@@ -109,16 +115,20 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
                       ? `${views.get(h.userId)!.count}, last ${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(views.get(h.userId)!.last))}`
                       : "None"}
                   </td>
-                  <td className="px-3 py-2">
-                    <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />
-                  </td>
+                  <td className="px-3 py-2">{h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <p className="mt-2 text-sm">
+          Bride&apos;s side: {coOwners.bride} of {MAX_CO_OWNERS_PER_SIDE} · Groom&apos;s side: {coOwners.groom} of {MAX_CO_OWNERS_PER_SIDE}
+        </p>
         <div className="mt-4">
-          <AddHostForm slug={slug} />
+          <AddHostForm
+            slug={slug}
+            full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }}
+          />
         </div>
       </section>
     </main>

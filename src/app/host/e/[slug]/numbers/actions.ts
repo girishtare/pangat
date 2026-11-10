@@ -12,7 +12,7 @@ export type FormState = { ok: boolean; message: string } | null;
 async function manager(slug: string): Promise<{ host: HostContext } | { error: string }> {
   const gate = await hostGate(slug);
   if (!gate.ok) return { error: gate.reason === "not_host" ? "You are not a host of this event." : "Please sign in again." };
-  if (!gate.host.canManage) return { error: "Only hosts of both sides can record these numbers." };
+  if (!gate.host.canManage) return { error: "Only the event's owner can record these numbers." };
   return { host: gate.host };
 }
 
