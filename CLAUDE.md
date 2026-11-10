@@ -97,7 +97,9 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - On the live Cloudflare site (demo mode): `/`, `/r/demo-family-1` and `/host` load; a guest reply (demo-family-3) submitted, survived reload, showed on `/host` with correct expected figures, and a changed reply updated the dashboard without double-counting. Unknown tokens show a bilingual "link isn't valid" message.
 - Demo mode on Workers keeps data per isolate, so replies can vanish or not appear on `/host`. Supabase is needed before the dry run.
 - Seen in testing: the English/Marathi choice is not remembered on reload (page reverts to Marathi); Marathi view mixes Devanagari dates with Latin digits and "AM/PM" in headcounts and times.
-- `src/lib/store/supabase.ts`, migrations 0001 and 0002, host sign-in and the edge middleware have not been run against a live Supabase project. Creating the project via the Supabase connector was blocked by the permission check on 10 Nov.
+- Supabase project `pangat` (ref `sibsiwicyoawdysgqeft`, Mumbai, free plan) created 10 Nov; migrations 0001 to 0003 and the demo-wedding seed applied; security advisor clean. RLS tested in SQL with throwaway users (rolled back): bride host sees 4 households/10 invites, groom host 4/9, both-sides host 8/19, signed-in non-host 0; anon read and host writes are refused.
+- Not yet run live: `src/lib/store/supabase.ts` (guest flow), `/host/login`, the edge middleware on Cloudflare. Needs the Cloudflare variables set and a real host account.
+- Free Supabase projects pause after a week without activity; a pause would break guest links.
 - Marathi strings in `src/lib/i18n.ts` are a first draft and need a native reader.
 
 ## Do not

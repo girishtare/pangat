@@ -32,12 +32,12 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build` (Next.js build 
 
 ## Not yet verified
 
-- The Supabase data layer and host sign-in against a live project.
+- Host sign-in and the guest flow on the live site against Supabase. (The access rules themselves were tested in the database on 10 Nov: see CLAUDE.md.)
 - The Marathi wording in `src/lib/i18n.ts`. Have a native reader check it before guests see it.
 
 ## Connecting Supabase
 
-1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding.
+1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql` and `0003_advisor_fixes.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding.
 2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
 3. Set these on the host (Cloudflare: Worker → Settings → Variables and Secrets), then redeploy:
    - `SUPABASE_URL`: the project URL.
