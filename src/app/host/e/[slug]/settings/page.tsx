@@ -1,18 +1,15 @@
-import { CalendarDays, Flower2, Settings, Users } from "lucide-react";
 import { isoToIstInput } from "@/lib/events";
 import { hostGate } from "@/lib/host";
 import { displayPhone } from "@/lib/outreach";
-import { scopeLabel } from "@/lib/sides";
 import { dashboardViewStats, functionUsage, listHosts, MAX_CO_OWNERS_PER_SIDE } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
+import { longStamp, shortWhen } from "@/lib/when";
 import { Alert, PageHeader, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
-import { EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
+import { AddFunctionButton, EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
 
 export const dynamic = "force-dynamic";
 
-const dateTime = (iso: string) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(iso));
 const dateOnly = (iso: string) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(iso));
 
 export default async function EventSettings({ params }: { params: Promise<{ slug: string }> }) {
@@ -24,7 +21,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
   if (!host.canManage) {
     return (
       <EventShell host={host} current="settings">
-        <PageHeader icon={Settings} title="Event settings" />
+        <PageHeader title="Event settings" subtitle="Only the event's owner can change these." />
         <Alert tone="info">Only the event&apos;s owner can change the event. Ask them if something needs changing.</Alert>
       </EventShell>
     );
@@ -41,30 +38,19 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     groom: hosts.filter((h) => h.role === "co_owner" && h.side === "groom").length,
   };
   const role = (h: (typeof hosts)[number]) =>
-    h.role === "owner" ? <span className="badge badge-partly">Owner</span> : <span className={`badge ${h.side === "groom" ? "badge-groom" : "badge-bride"}`}>Co-owner · {h.side ? scopeLabel(h.side) : ""}</span>;
+    h.role === "owner" ? <span className="font-bold">Owner</span> : <span className={`badge ${h.side === "groom" ? "badge-groom" : "badge-bride"}`}>Co-owner · {h.side === "groom" ? "Groom" : "Bride"}</span>;
+  const signedIn = (h: (typeof hosts)[number]) => (!h.confirmed ? "Invited, not signed in yet" : h.lastSignInAt ? longStamp(h.lastSignInAt) : "Never");
   const viewText = (userId: string) => {
     const v = views.get(userId);
-    return v ? `${v.count}, last ${dateOnly(v.last)}` : "None";
+    return v ? `${v.count}, last ${dateOnly(v.last)}` : "0";
   };
 
   return (
     <EventShell host={host} current="settings">
-      <PageHeader icon={Settings} title="Event settings" />
+      <PageHeader title="Event settings" subtitle="Only you, as the owner, can change these." />
 
-      <nav aria-label="Settings sections" className="card sticky top-16 z-20 mb-6 grid grid-cols-3 gap-1 p-1 sm:flex lg:top-4">
-        {[
-          ["#details", "Event details"],
-          ["#functions", "Functions"],
-          ["#people", "Owner and co-owners"],
-        ].map(([href, label]) => (
-          <a key={href} href={href} className="flex min-h-11 items-center justify-center rounded-xl px-2 text-center text-sm font-semibold leading-tight text-kumkum hover:bg-paper-deep sm:px-4 sm:text-base">
-            {label}
-          </a>
-        ))}
-      </nav>
-
-      <div className="space-y-8">
-        <Section id="details" icon={CalendarDays} title="Event details" subtitle="Names, when replies close, the caterer's dates, contact numbers and the expected-headcount rates.">
+      <div className="space-y-5">
+        <Section id="details" title="Event details">
           <EventForm
             slug={slug}
             nameEn={host.event.name.en}
@@ -79,8 +65,13 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
           />
         </Section>
 
-        <Section id="functions" icon={Flower2} title="Functions" subtitle="Each function gets its own headcount. Guests see them in date order. Times are Indian Standard Time.">
-          <div className="grid gap-4 xl:grid-cols-2">
+        <Section
+          id="functions"
+          title="Functions"
+          subtitle="Each function gets its own headcount. Guests see them in date order. Times are Indian Standard Time."
+          actions={<AddFunctionButton />}
+        >
+          <div className="space-y-3">
             {host.functions.map((f, i) => (
               <FunctionEditor
                 key={f.id}
@@ -89,6 +80,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
                 nameEn={f.name.en}
                 nameMr={f.name.mr}
                 startsAt={isoToIstInput(f.startsAt)}
+                when={shortWhen(f.startsAt)}
                 venue={f.venue}
                 mapUrl={f.mapUrl}
                 catered={f.catered}
@@ -102,73 +94,58 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
 
         <Section
           id="people"
-          icon={Users}
           title="Owner and co-owners"
-          subtitle={`You are the owner: the only one who changes these settings and the caterer numbers. Invite up to ${MAX_CO_OWNERS_PER_SIDE} co-owners per side; each sees their own side's guests only.`}
+          subtitle={`Up to ${MAX_CO_OWNERS_PER_SIDE} helpers on each side (bride's side ${coOwners.bride} of ${MAX_CO_OWNERS_PER_SIDE}, groom's side ${coOwners.groom} of ${MAX_CO_OWNERS_PER_SIDE}). A co-owner sees and works on their own side only; only you change these settings and the caterer numbers.`}
           actions={<InviteCoOwner slug={slug} full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }} />}
         >
-          <div className="mb-4 flex flex-wrap gap-2">
-            <span className="badge badge-bride text-sm">
-              Bride&apos;s side: {coOwners.bride} of {MAX_CO_OWNERS_PER_SIDE}
-            </span>
-            <span className="badge badge-groom text-sm">
-              Groom&apos;s side: {coOwners.groom} of {MAX_CO_OWNERS_PER_SIDE}
-            </span>
-          </div>
-          <div>
-            <div>
-              <div className="hidden lg:block">
-                <table className="table-p">
-                  <thead>
-                    <tr>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Last signed in</th>
-                      <th>Dashboard views</th>
-                      <th>
-                        <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hosts.map((h) => (
-                      <tr key={h.userId}>
-                        <td className="min-w-[16rem] [overflow-wrap:anywhere]">
-                          {h.email}
-                          {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
-                          {!h.confirmed && <div className="text-xs text-haldi-deep">Invitation not accepted yet</div>}
-                        </td>
-                        <td>{role(h)}</td>
-                        <td className="text-sm">{h.lastSignInAt ? dateTime(h.lastSignInAt) : "Never"}</td>
-                        <td className="text-sm">{viewText(h.userId)}</td>
-                        <td>{h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <ul className="space-y-3 lg:hidden">
+          <div className="hidden overflow-x-auto rounded-[14px] border border-line lg:block">
+            <table className="table-p min-w-[720px]">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Last signed in</th>
+                  <th>Dashboard visits</th>
+                  <th>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
                 {hosts.map((h) => (
-                  <li key={h.userId} className="rounded-xl border border-line p-3">
-                    <p className="font-semibold [overflow-wrap:anywhere]">
+                  <tr key={h.userId}>
+                    <td className="[overflow-wrap:anywhere]">
                       {h.email}
-                      {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
-                    </p>
-                    <div className="mt-1">{role(h)}</div>
-                    {!h.confirmed && <p className="mt-1 text-xs text-haldi-deep">Invitation not accepted yet</p>}
-                    <p className="mt-1 text-sm text-ink-soft">
-                      Last signed in: {h.lastSignInAt ? dateTime(h.lastSignInAt) : "never"} · Dashboard views: {viewText(h.userId)}
-                    </p>
-                    {h.role !== "owner" && (
-                      <div className="mt-2">
-                        <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />
-                      </div>
-                    )}
-                  </li>
+                      {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
+                    </td>
+                    <td>{role(h)}</td>
+                    <td>{signedIn(h)}</td>
+                    <td>{viewText(h.userId)}</td>
+                    <td>{h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}</td>
+                  </tr>
                 ))}
-              </ul>
-            </div>
+              </tbody>
+            </table>
           </div>
+          <ul className="space-y-3 lg:hidden">
+            {hosts.map((h) => (
+              <li key={h.userId} className="rounded-[14px] border border-line p-3.5">
+                <p className="font-semibold [overflow-wrap:anywhere]">
+                  {h.email}
+                  {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
+                </p>
+                <div className="mt-1">{role(h)}</div>
+                <p className="mt-1 text-sm text-ink-soft">
+                  Last signed in: {signedIn(h)} · Dashboard visits: {viewText(h.userId)}
+                </p>
+                {h.role !== "owner" && (
+                  <div className="mt-2">
+                    <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
         </Section>
       </div>
     </EventShell>

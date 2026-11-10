@@ -109,7 +109,7 @@ dialog::backdrop {
   .card {
     background: var(--color-card);
     border: 1px solid var(--color-line);
-    border-radius: 1rem;
+    border-radius: 1.25rem;
     box-shadow: 0 1px 2px rgb(46 26 28 / 0.05), 0 4px 16px -8px rgb(121 13 22 / 0.08);
   }
 
@@ -236,7 +236,7 @@ dialog::backdrop {
     color: var(--color-haldi-deep);
   }
   .badge-no {
-    background: #efe8e2;
+    background: var(--color-paper-deep);
     color: var(--color-ink-soft);
   }
 
@@ -269,6 +269,8 @@ dialog::backdrop {
     color: var(--color-ink);
   }
 
+  /* Tables: the first (header) column left-aligned, every other column
+     centred, everything vertically centred in its row. */
   .table-p {
     width: 100%;
     border-collapse: collapse;
@@ -276,16 +278,26 @@ dialog::backdrop {
   }
   .table-p th {
     background: var(--color-paper-deep);
-    text-align: left;
+    text-align: center;
     font-weight: 600;
-    padding: 0.625rem 0.75rem;
+    padding: 0.75rem;
     color: var(--color-ink);
     white-space: nowrap;
   }
   .table-p td {
-    padding: 0.625rem 0.75rem;
+    padding: 0.75rem;
     border-top: 1px solid var(--color-line);
-    vertical-align: top;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .table-p th:first-child,
+  .table-p td:first-child {
+    text-align: left;
+    padding-left: 1rem;
+  }
+  .table-p td form {
+    display: inline-flex; /* a button in a cell (e.g. Remove) sits on the text line */
+    vertical-align: middle;
   }
   .table-p tbody tr:hover {
     background: rgb(242 232 210 / 0.55);
@@ -316,6 +328,36 @@ dialog::backdrop {
     position: absolute;
     opacity: 0;
     pointer-events: none;
+  }
+  /* Tick-box pills ("Invited to"): the real checkbox shows; ticked = light blue. */
+  .choice-check {
+    border-radius: 999px;
+    padding-inline: 1rem;
+    gap: 0.625rem;
+  }
+  .choice.choice-check input {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--color-kumkum);
+  }
+  .choice.choice-check:has(input:checked) {
+    background: var(--color-haldi-soft);
+    border-color: var(--color-haldi-deep);
+    color: var(--color-ink);
+  }
+  /* "Can't come" picked: muted brown rather than maroon. */
+  .choice.choice-no:has(input:checked) {
+    background: var(--color-ink-soft);
+    border-color: var(--color-ink-soft);
+  }
+  /* Arrival picked: dusty blue. */
+  .choice.choice-sky:has(input:checked) {
+    background: var(--color-haldi);
+    border-color: var(--color-haldi-deep);
+    color: var(--color-ink);
   }
   .choice:has(input:focus-visible) {
     outline: 3px solid var(--color-haldi-deep);

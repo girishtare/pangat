@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { UserPlus } from "lucide-react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../ui/kit";
 import { addHousehold } from "./actions";
@@ -15,16 +14,16 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
 
   return (
     <form ref={form} action={action} className="mt-4 space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="label">Name (English)</span>
-          <input name="name" required maxLength={120} className="input" placeholder="Shri. A. Joshi & family" />
-        </label>
-        <label className="block">
-          <span className="label">Name (Marathi)</span>
-          <input name="nameMr" lang="mr" maxLength={120} className="input" placeholder="श्री. अ. जोशी सहपरिवार" />
-        </label>
-      </div>
+      <label className="block">
+        <span className="label">Name in English</span>
+        <input name="name" required maxLength={120} className="input" placeholder="Shri. A. Joshi & family" />
+      </label>
+      <label className="block">
+        <span className="label">
+          Name in Marathi <span className="font-normal text-ink-soft">(optional)</span>
+        </span>
+        <input name="nameMr" lang="mr" maxLength={120} className="input" placeholder="श्री. अ. जोशी सहपरिवार" />
+      </label>
       {hostSide ? (
         <input type="hidden" name="side" value={hostSide} />
       ) : (
@@ -40,27 +39,29 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
           </div>
         </fieldset>
       )}
-      <div className="grid gap-4 sm:grid-cols-[1fr_9rem]">
-        <label className="block">
-          <span className="label">Mobile</span>
-          <input name="mobile" inputMode="tel" autoComplete="off" className="input" placeholder="98765 43210" />
-          <span className="hint mt-1 block">The number that should get the WhatsApp link. Leave blank if they have none.</span>
-        </label>
-        <label className="block">
-          <span className="label">Cap (optional)</span>
-          <input name="cap" type="number" min={1} max={30} className="input" placeholder="e.g. 6" />
-        </label>
-      </div>
+      <label className="block">
+        <span className="label">
+          Mobile <span className="font-normal text-ink-soft">(for WhatsApp)</span>
+        </span>
+        <input name="mobile" inputMode="tel" autoComplete="off" className="input" placeholder="98765 43210" />
+        <span className="hint mt-1 block">The number that should get the WhatsApp link. Leave blank if they have none.</span>
+      </label>
       <fieldset>
         <legend className="label">Invited to</legend>
         <div className="flex flex-wrap gap-2">
           {functions.map((f) => (
-            <label key={f.id} className="choice relative px-4">
+            <label key={f.id} className="choice choice-check">
               <input type="checkbox" name="functions" value={f.name} defaultChecked /> {f.name}
             </label>
           ))}
         </div>
       </fieldset>
+      <label className="block">
+        <span className="label">
+          Most people on this card <span className="font-normal text-ink-soft">(optional)</span>
+        </span>
+        <input name="cap" type="number" min={1} max={30} className="input max-w-[10rem]" placeholder="e.g. 6" />
+      </label>
 
       {state && !state.ok && (
         <Alert tone="error">
@@ -72,12 +73,11 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
       )}
       {state?.ok && (
         <Alert tone="success">
-          Added {state.codes[0]?.name}. Short code <span className="font-mono font-semibold">{state.codes[0]?.shortCode}</span>.
+          Added {state.codes[0]?.name}. Short code <span className="font-display tracking-[0.2em]">{state.codes[0]?.shortCode}</span>.
         </Alert>
       )}
 
-      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
-        <UserPlus className="h-5 w-5" aria-hidden="true" />
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-lg">
         {pending ? "Adding…" : "Add household"}
       </button>
     </form>

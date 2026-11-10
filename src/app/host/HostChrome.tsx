@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { LogOut, ShieldAlert } from "lucide-react";
+import { LayoutList, LogOut, ShieldAlert } from "lucide-react";
 import type { HostContext, HostGate } from "@/lib/host";
 import { scopeLabel } from "@/lib/sides";
 import { shortDay } from "@/lib/when";
@@ -10,11 +10,12 @@ import MobileNav from "../ui/MobileNav";
 import { NavIcon, type NavItem, type NavKey } from "../ui/navIcons";
 import { signOut } from "./actions";
 
-export function SignOutButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "link" }) {
-  if (variant === "link") {
+export function SignOutButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "rail" }) {
+  if (variant === "rail") {
     return (
       <form action={signOut}>
-        <button type="submit" className="inline-flex min-h-11 items-center font-bold text-kumkum underline underline-offset-4 hover:text-kumkum-dark">
+        <button type="submit" className="flex min-h-12 w-full items-center gap-3 rounded-xl px-1.5 font-semibold text-kumkum hover:bg-paper">
+          <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
           Sign out
         </button>
       </form>
@@ -71,7 +72,10 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
           <Mark className="h-[26px] w-[26px]" />
           Pangat
         </Link>
-        <div className="mx-2 mt-[22px] rounded-[14px] bg-sand p-3.5">
+        <p className="mx-2 mt-3 text-[0.9375rem] text-ink-soft [overflow-wrap:anywhere]">
+          {host.email} · {roleLabel(host)}
+        </p>
+        <div className="mx-2 mt-4 rounded-[14px] bg-sand p-3.5">
           <p className="wrap-names font-display text-xl leading-[1.3] text-kumkum">{host.event.name.en}</p>
           {host.event.name.mr && (
             <p lang="mr" className="wrap-names text-[0.9375rem] text-ink-soft">
@@ -98,20 +102,18 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
             ))}
           </ul>
         </nav>
-        <div className="mx-2 mt-[22px] border-t border-line pt-3.5 text-[0.9375rem] text-ink-soft">
-          <p className="[overflow-wrap:anywhere]">
-            {host.email} · {roleLabel(host)}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4">
-            <Link href="/host?all=1" className="inline-flex min-h-11 items-center font-bold text-kumkum underline underline-offset-4 hover:text-kumkum-dark">
-              All events
-            </Link>
-            <SignOutButton variant="link" />
-          </div>
+        <div className="mx-2 mt-[18px] border-y border-line py-1">
+          <Link href="/host?all=1" className="flex min-h-12 items-center gap-3 rounded-xl px-1.5 font-semibold text-ink hover:bg-paper">
+            <LayoutList className="h-5 w-5 shrink-0" aria-hidden="true" />
+            All events
+          </Link>
+        </div>
+        <div className="mx-2 mt-auto pt-6">
+          <SignOutButton variant="rail" />
         </div>
       </aside>
 
-      <MobileNav eventName={host.event.name.en} eventDate={date} items={items} who={who} signOut={<SignOutButton compact />} />
+      <MobileNav eventName={host.event.name.en} eventDate={date} items={items} who={who} signOut={<SignOutButton variant="rail" />} />
 
       <main id="main" className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:pb-14 lg:pt-8 print:p-0">
         <div className="mx-auto max-w-[72rem] print:max-w-none">{children}</div>

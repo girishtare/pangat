@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ClipboardList, Hash, MessageSquareText, Phone, PhoneOff, Printer } from "lucide-react";
+import { ChevronLeft, Printer } from "lucide-react";
 import { hostGate } from "@/lib/host";
-import { formatDay, formatWhen } from "@/lib/i18n";
+import { formatDay } from "@/lib/i18n";
 import { displayPhone } from "@/lib/outreach";
 import { loadHousehold } from "@/lib/store/admin";
-import { Alert, Section, SideBadge } from "../../../../../ui/kit";
+import { shortDay, shortStamp } from "@/lib/when";
+import { Alert, Section } from "../../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../../HostChrome";
 import { CopyLink, DeleteHousehold, DetailsForm, ReplyForm } from "./HouseholdForms";
 
@@ -34,41 +35,32 @@ export default async function Household({ params }: { params: Promise<{ slug: st
 
   return (
     <EventShell host={host} current="guests">
-      <nav aria-label="Breadcrumb" className="mb-4">
-        <Link href={`/host/e/${slug}/guests`} className="btn btn-quiet btn-sm -ml-2">
-          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+      <nav aria-label="Breadcrumb" className="mb-3">
+        <Link href={`/host/e/${slug}/guests`} className="inline-flex min-h-11 items-center gap-1 font-bold text-kumkum hover:text-kumkum-dark">
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           Guest list
         </Link>
       </nav>
 
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-l-4 border-haldi pl-4">
+      <header className="card mb-5 flex flex-wrap items-center justify-between gap-4 p-[18px] sm:p-7">
         <div className="min-w-0">
-          <h1 className="wrap-names font-display text-3xl text-kumkum sm:text-4xl">{hh.nameEn}</h1>
+          <h1 className="wrap-names font-display text-[1.875rem] leading-[1.2] text-kumkum lg:text-[2.5rem]">{hh.nameEn}</h1>
           {hh.nameMr && (
-            <p lang="mr" className="wrap-names mt-1 font-display text-xl text-ink">
+            <p lang="mr" className="wrap-names font-display text-2xl text-ink">
               {hh.nameMr}
             </p>
           )}
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <SideBadge side={hh.side} />
-            {hh.mobile ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-0.5 font-semibold ring-1 ring-line">
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                {displayPhone(hh.mobile)}
-              </span>
-            ) : (
-              <span className="badge badge-partly">
-                <PhoneOff className="h-3.5 w-3.5" aria-hidden="true" />
-                No mobile
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1 rounded-full bg-card px-2.5 py-0.5 font-mono font-semibold tracking-wider ring-1 ring-line">
-              <Hash className="h-4 w-4" aria-hidden="true" />
-              {hh.shortCode}
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <span className={`badge text-sm ${hh.side === "bride" ? "badge-bride" : "badge-groom"}`}>
+              {hh.side === "bride" ? "Bride's side" : "Groom's side"}
+            </span>
+            {hh.mobile ? <span>{displayPhone(hh.mobile)}</span> : <span className="font-bold text-kumkum">No mobile</span>}
+            <span>
+              Code <span className="font-display text-lg tracking-[0.2em]">{hh.shortCode}</span>
             </span>
           </div>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <CopyLink path={`/r/${hh.token}`} />
           <Link href={`/host/e/${slug}/slips?ids=${hh.id}`} className="btn btn-secondary">
             <Printer className="h-5 w-5" aria-hidden="true" />
@@ -77,15 +69,20 @@ export default async function Household({ params }: { params: Promise<{ slug: st
         </div>
       </header>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-2">
         <Section
-          icon={MessageSquareText}
           title="Reply"
           subtitle={
-            latest ? `Last reply ${SOURCE[latestSource ?? ""] ?? ""}, ${formatWhen(latest, "en")}.` : "No reply yet."
+            latest ? (
+              <>
+                Last reply: <b className="text-ink">{SOURCE[latestSource ?? ""] ?? ""}</b> · {shortStamp(latest)}. Change it here if they told you
+                something different on the phone.
+              </>
+            ) : (
+              "No reply yet. Record it here when they reply by phone or in person."
+            )
           }
         >
-          <p className="hint mb-4">Use this when they reply by phone or in person. It is saved as entered by a host.</p>
           {closed && (
             <div className="mb-4">
               <Alert tone="info">
@@ -104,7 +101,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
                 return {
                   id: f.id,
                   name: f.name.en,
-                  when: formatWhen(f.startsAt, "en"),
+                  when: shortDay(f.startsAt),
                   catered: f.catered,
                   current: r ? { status: r.status, heads: r.heads, veg: r.veg, arrivalSlot: r.arrivalSlot } : null,
                 };
@@ -113,28 +110,27 @@ export default async function Household({ params }: { params: Promise<{ slug: st
           )}
         </Section>
 
-        <Section icon={ClipboardList} title="Details and invitations">
-          <DetailsForm
-            slug={slug}
-            id={hh.id}
-            hostSide={host.side}
-            side={hh.side}
-            nameEn={hh.nameEn}
-            nameMr={hh.nameMr}
-            mobile={displayPhone(hh.mobile)}
-            softCap={hh.softCap}
-            functions={host.functions.map((f) => ({
-              id: f.id,
-              name: f.name.en,
-              invited: hh.functionIds.includes(f.id),
-              replied: hh.responses.some((r) => r.functionId === f.id),
-            }))}
-          />
-        </Section>
-      </div>
-
-      <div className="mt-8 border-t border-line pt-6">
-        <DeleteHousehold slug={slug} id={hh.id} name={hh.nameEn} replied={hh.responses.length > 0} />
+        <div className="grid gap-5">
+          <Section title="Details and invitations">
+            <DetailsForm
+              slug={slug}
+              id={hh.id}
+              hostSide={host.side}
+              side={hh.side}
+              nameEn={hh.nameEn}
+              nameMr={hh.nameMr}
+              mobile={displayPhone(hh.mobile)}
+              softCap={hh.softCap}
+              functions={host.functions.map((f) => ({
+                id: f.id,
+                name: f.name.en,
+                invited: hh.functionIds.includes(f.id),
+                replied: hh.responses.some((r) => r.functionId === f.id),
+              }))}
+            />
+          </Section>
+          <DeleteHousehold slug={slug} id={hh.id} name={hh.nameEn} replied={hh.responses.length > 0} />
+        </div>
       </div>
     </EventShell>
   );

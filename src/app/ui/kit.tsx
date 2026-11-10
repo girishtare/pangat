@@ -52,40 +52,24 @@ export function WhatsAppIcon({ className = "h-5 w-5" }: { className?: string }) 
 
 /* Page structure */
 
-export function PageHeader({
-  icon: Icon,
-  title,
-  subtitle,
-  actions,
-  large = false,
-}: {
-  icon?: LucideIcon;
-  title: string;
-  subtitle?: ReactNode;
-  actions?: ReactNode;
-  /** The Dashboard and Caterer numbers look: 40 px title, no divider. */
-  large?: boolean;
-}) {
+/** Page title: Rozha about 40 px in maroon, a short line under it, optional actions on the right. */
+export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
-    <header className={large ? "mb-5 lg:mb-6" : "mb-6"}>
+    <header className="mb-5 lg:mb-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className={`flex items-center gap-3 font-display leading-[1.2] text-kumkum ${large ? "text-[1.875rem] lg:text-[2.5rem]" : "text-3xl sm:text-4xl"}`}>
-            {Icon && <Icon className="h-8 w-8 shrink-0 text-haldi-deep" aria-hidden="true" />}
-            <span className="min-w-0">{title}</span>
-          </h1>
+          <h1 className="font-display text-[1.875rem] leading-[1.2] text-kumkum lg:text-[2.5rem]">{title}</h1>
           {subtitle && <div className="mt-1 text-ink-soft">{subtitle}</div>}
         </div>
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
       </div>
-      {!large && <Divider className="mt-4 max-w-md" />}
     </header>
   );
 }
 
+/** A card with a Rozha title (optionally numbered), a subtitle and actions on the right. */
 export function Section({
   n,
-  icon: Icon,
   title,
   subtitle,
   actions,
@@ -95,7 +79,6 @@ export function Section({
   tone = "card",
 }: {
   n?: number;
-  icon?: LucideIcon;
   title: string;
   subtitle?: ReactNode;
   actions?: ReactNode;
@@ -105,22 +88,17 @@ export function Section({
   tone?: "card" | "plain";
 }) {
   return (
-    <section id={id} className={`${tone === "card" ? "card p-4 sm:p-6" : ""} scroll-mt-24 ${className}`}>
+    <section id={id} className={`${tone === "card" ? "card p-[18px] sm:p-[22px]" : ""} scroll-mt-24 ${className}`}>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
         <div className="flex min-w-0 flex-1 basis-60 items-start gap-3">
           {n !== undefined && (
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-lg text-white">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-lg text-white">
               {n}
             </span>
           )}
-          {Icon && n === undefined && (
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-haldi-soft text-haldi-deep">
-              <Icon className="h-5 w-5" aria-hidden="true" />
-            </span>
-          )}
           <div className="min-w-0">
-            <h2 className="font-display text-xl text-kumkum sm:text-2xl">{title}</h2>
-            {subtitle && <div className="mt-0.5 text-sm text-ink-soft">{subtitle}</div>}
+            <h2 className="font-display text-2xl leading-[1.3] text-kumkum">{title}</h2>
+            {subtitle && <div className="mt-0.5 text-[0.9375rem] text-ink-soft">{subtitle}</div>}
           </div>
         </div>
         {actions && <div className="shrink-0">{actions}</div>}

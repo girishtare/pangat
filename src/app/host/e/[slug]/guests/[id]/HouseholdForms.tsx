@@ -4,7 +4,6 @@ import { useActionState, useState } from "react";
 import { Check, Copy, Save, Trash } from "lucide-react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../../ui/kit";
-import Stepper from "../../../../../ui/Stepper";
 import { recordReply, removeHousehold, saveHousehold, type FormState } from "./actions";
 
 const MAX = 30;
@@ -19,7 +18,7 @@ export function CopyLink({ path }: { path: string }) {
   return (
     <button
       type="button"
-      className="btn btn-primary"
+      className="btn btn-secondary"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(`${window.location.origin}${path}`);
@@ -48,59 +47,82 @@ function ReplyRow({ f }: { f: ReplyFn }) {
   const [coming, setComing] = useState<"yes" | "no" | "">(f.current?.status ?? "");
   const [heads, setHeads] = useState(f.current?.status === "yes" ? f.current.heads : 2);
   const [veg, setVeg] = useState(f.current?.status === "yes" ? f.current.veg : 0);
+  const num = "input min-h-12 w-20 px-3 text-lg font-bold tabular-nums";
   return (
-    <fieldset className="rounded-xl border border-line bg-card">
-      <legend className="sr-only">{f.name}</legend>
-      <div className="rounded-t-xl border-b border-line bg-paper-deep/70 px-4 py-2">
-        <p className="font-display text-lg text-kumkum">{f.name}</p>
-        <p className="text-sm text-ink-soft">{f.when}</p>
+    <fieldset className="min-w-0 rounded-[14px] border border-line px-4 pb-4 pt-1">
+      <legend className="px-1.5 font-bold">
+        {f.name} · {f.when}
+      </legend>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <label className="choice relative min-h-12 px-5">
+          <input type="radio" name={`coming_${f.id}`} value="yes" checked={coming === "yes"} onChange={() => setComing("yes")} />
+          {coming === "yes" && <Check className="h-4 w-4" aria-hidden="true" />}
+          Coming
+        </label>
+        <label className="choice choice-no relative min-h-12 px-5">
+          <input type="radio" name={`coming_${f.id}`} value="no" checked={coming === "no"} onChange={() => setComing("no")} />
+          {coming === "no" && <Check className="h-4 w-4" aria-hidden="true" />}
+          Can&apos;t come
+        </label>
       </div>
-      <div className="space-y-4 p-4">
-        <div className="grid grid-cols-2 gap-3">
-          <label className="choice relative">
-            <input type="radio" name={`coming_${f.id}`} value="yes" checked={coming === "yes"} onChange={() => setComing("yes")} />
-            Coming
-          </label>
-          <label className="choice relative">
-            <input type="radio" name={`coming_${f.id}`} value="no" checked={coming === "no"} onChange={() => setComing("no")} />
-            Not coming
-          </label>
-        </div>
-        {coming === "yes" && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <span className="label">People</span>
-              <Stepper
-                label="People"
+      {coming === "yes" && (
+        <div className="mt-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <label className="flex items-center gap-2.5">
+              <span className="text-ink-soft">People</span>
+              <input
                 name={`heads_${f.id}`}
-                value={heads}
+                type="number"
+                inputMode="numeric"
                 min={1}
                 max={MAX}
-                onChange={(v) => {
-                  setHeads(v);
+                required
+                value={heads}
+                onChange={(e) => {
+                  const v = Math.min(MAX, Math.max(1, Number(e.target.value) || 1));
                   setVeg((old) => (old === heads ? v : Math.min(old, v)));
+                  setHeads(v);
                 }}
+                className={num}
               />
-            </div>
-            {f.catered && (
-              <div>
-                <span className="label">Vegetarian</span>
-                <Stepper label="Vegetarian" name={`veg_${f.id}`} value={veg} min={0} max={heads} onChange={setVeg} />
-                <p className="hint mt-1">Non-veg: {heads - veg}</p>
-              </div>
-            )}
-            <label className="block sm:col-span-2">
-              <span className="label">Arrival</span>
-              <select name={`arrival_${f.id}`} defaultValue={f.current?.arrivalSlot ?? ""} className="input">
-                <option value="">Not asked</option>
-                <option value="early">Early</option>
-                <option value="on_time">On time</option>
-                <option value="late">A little late</option>
-              </select>
             </label>
+            {f.catered && (
+              <label className="flex items-center gap-2.5">
+                <span className="text-ink-soft">Veg</span>
+                <input
+                  name={`veg_${f.id}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={heads}
+                  value={veg}
+                  onChange={(e) => setVeg(Math.min(heads, Math.max(0, Number(e.target.value) || 0)))}
+                  className={num}
+                />
+                <span className="text-sm text-ink-soft">non-veg {heads - veg}</span>
+              </label>
+            )}
           </div>
-        )}
-      </div>
+          <fieldset className="flex flex-wrap items-center gap-2">
+            <legend className="sr-only">Arrival</legend>
+            <span className="mr-1 text-ink-soft" aria-hidden="true">
+              Arrival:
+            </span>
+            {(
+              [
+                ["early", "Early"],
+                ["on_time", "On time"],
+                ["late", "A little late"],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value} className="choice choice-sky relative min-h-11 px-3.5 text-[0.9375rem]">
+                <input type="radio" name={`arrival_${f.id}`} value={value} defaultChecked={f.current?.arrivalSlot === value} />
+                {label}
+              </label>
+            ))}
+          </fieldset>
+        </div>
+      )}
     </fieldset>
   );
 }
@@ -109,15 +131,12 @@ export function ReplyForm({ slug, id, functions }: { slug: string; id: string; f
   const [state, action, pending] = useActionState(recordReply.bind(null, slug, id), null);
   return (
     <form action={action} className="space-y-4">
-      <div className="space-y-4">
-        {functions.map((f) => (
-          <ReplyRow key={f.id} f={f} />
-        ))}
-      </div>
+      {functions.map((f) => (
+        <ReplyRow key={f.id} f={f} />
+      ))}
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
-        <Check className="h-5 w-5" aria-hidden="true" />
-        {pending ? "Saving…" : "Save reply"}
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-lg">
+        {pending ? "Saving…" : "Save reply on their behalf"}
       </button>
     </form>
   );
@@ -138,20 +157,22 @@ export function DetailsForm(props: {
   return (
     <form action={action} className="space-y-4">
       <label className="block">
-        <span className="label">Name (English)</span>
+        <span className="label">Name in English</span>
         <input name="nameEn" required maxLength={120} defaultValue={props.nameEn} className="input" />
       </label>
       <label className="block">
-        <span className="label">Name (Marathi)</span>
+        <span className="label">Name in Marathi</span>
         <input name="nameMr" lang="mr" maxLength={120} defaultValue={props.nameMr ?? ""} className="input" />
       </label>
-      <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
+      <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="label">Mobile</span>
           <input name="mobile" inputMode="tel" defaultValue={props.mobile ?? ""} className="input" placeholder="98765 43210" />
         </label>
         <label className="block">
-          <span className="label">Cap (optional)</span>
+          <span className="label">
+            Most people <span className="font-normal text-ink-soft">(optional)</span>
+          </span>
           <input name="cap" type="number" min={1} max={30} defaultValue={props.softCap ?? ""} className="input" />
         </label>
       </div>
@@ -172,7 +193,7 @@ export function DetailsForm(props: {
         <legend className="label">Invited to</legend>
         <div className="flex flex-wrap gap-2">
           {props.functions.map((f) => (
-            <label key={f.id} className="choice relative px-4" title={f.replied ? "They have replied for this function" : undefined}>
+            <label key={f.id} className="choice choice-check" title={f.replied ? "They have replied for this function" : undefined}>
               <input type="checkbox" name="functions" value={f.id} defaultChecked={f.invited} disabled={f.replied} />
               {f.name}
               {f.replied && <span className="text-xs font-normal">(replied)</span>}
@@ -195,16 +216,21 @@ export function DeleteHousehold({ slug, id, name, replied }: { slug: string; id:
   return (
     <form
       action={action}
-      className="flex flex-col items-center gap-2 text-center"
+      className="space-y-3 rounded-[1.25rem] border-2 border-dashed border-line p-[18px] sm:p-[22px]"
       onSubmit={(e) => {
         if (!confirm(`Delete ${name} from the guest list? Their link and short code will stop working.`)) e.preventDefault();
       }}
     >
-      <button type="submit" disabled={pending || replied} className="btn btn-quiet">
+      <h2 className="text-lg font-bold">Delete household</h2>
+      <p className="text-[0.9375rem] text-ink-soft">
+        {replied
+          ? "Not possible: they have replied, so they can't be deleted. Mark them as not coming instead."
+          : "Their link and short code will stop working."}
+      </p>
+      <button type="submit" disabled={pending || replied} className="btn btn-secondary">
         <Trash className="h-5 w-5" aria-hidden="true" />
         {pending ? "Deleting…" : "Delete household"}
       </button>
-      {replied && <p className="hint">They have replied, so they can&apos;t be deleted. Mark them as not coming instead.</p>}
       <Message state={state} />
     </form>
   );

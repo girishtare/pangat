@@ -25,25 +25,27 @@ export function EventForm(props: {
   catererFinalOn: string | null;
 }) {
   const [state, action, pending] = useActionState(saveEvent.bind(null, props.slug), null);
+  const missing = "border-kumkum";
   return (
-    <form action={action} className="space-y-5">
-      <div className="grid gap-4 md:grid-cols-2">
+    <form action={action} className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-3">
         <label className="block">
-          <span className="label">Event name (English)</span>
+          <span className="label">Event name in English</span>
           <input name="nameEn" required maxLength={120} defaultValue={props.nameEn} className="input" />
         </label>
         <label className="block">
-          <span className="label">Event name (Marathi)</span>
+          <span className="label">Event name in Marathi</span>
           <input name="nameMr" lang="mr" maxLength={120} defaultValue={props.nameMr ?? ""} className="input" />
+        </label>
+        <label className="block">
+          <span className="label">Replies close on</span>
+          <input name="cutoff" type="datetime-local" required defaultValue={props.cutoff} className="input" />
+          <span className="hint mt-1 block">After this, only hosts can change replies.</span>
         </label>
       </div>
 
-      <fieldset className="grid gap-4 md:grid-cols-3">
-        <legend className="mb-2 font-display text-lg text-ink">Dates</legend>
-        <label className="block">
-          <span className="label">Guests can reply until</span>
-          <input name="cutoff" type="datetime-local" required defaultValue={props.cutoff} className="input" />
-        </label>
+      <fieldset className="grid gap-4 md:grid-cols-2">
+        <legend className="mb-1 text-lg font-bold">The caterer&apos;s dates</legend>
         <label className="block">
           <span className="label">Caterer needs the first count by</span>
           <input name="catererDueOn" type="date" defaultValue={props.catererDueOn ?? ""} className="input" />
@@ -54,30 +56,52 @@ export function EventForm(props: {
         </label>
       </fieldset>
 
-      <fieldset className="grid gap-4 md:grid-cols-2">
-        <legend className="mb-2 font-display text-lg text-ink">Contact numbers on the slips</legend>
-        <label className="block">
-          <span className="label">Bride&apos;s side</span>
-          <input name="contactBride" inputMode="tel" defaultValue={props.contactBride ?? ""} className="input" placeholder="98765 43210" />
-        </label>
-        <label className="block">
-          <span className="label">Groom&apos;s side</span>
-          <input name="contactGroom" inputMode="tel" defaultValue={props.contactGroom ?? ""} className="input" placeholder="98765 43210" />
-        </label>
-        <p className="hint md:col-span-2">For guests without a smartphone: they call this number and give their code.</p>
+      <fieldset>
+        <legend className="text-lg font-bold">How &quot;Expected&quot; is worked out</legend>
+        <p className="hint mb-3">Your family&apos;s experience beats our guess. Leave these alone unless you know better.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="label">Of those who say yes, how many come?</span>
+            <span className="flex items-center gap-2">
+              <input name="yesShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.yesShowRate * 100)} className="input w-28 text-lg font-bold" />
+              <span className="text-lg text-ink-soft">%</span>
+            </span>
+          </label>
+          <label className="block">
+            <span className="label">Of households that never reply, how many come?</span>
+            <span className="flex items-center gap-2">
+              <input name="pendingShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.pendingShowRate * 100)} className="input w-28 text-lg font-bold" />
+              <span className="text-lg text-ink-soft">%</span>
+            </span>
+          </label>
+        </div>
       </fieldset>
 
-      <fieldset className="grid gap-4 md:grid-cols-2">
-        <legend className="mb-2 font-display text-lg text-ink">Expected headcount rates</legend>
-        <label className="block">
-          <span className="label">People who said yes and turn up (%)</span>
-          <input name="yesShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.yesShowRate * 100)} className="input" />
-        </label>
-        <label className="block">
-          <span className="label">Silent households that come anyway (%)</span>
-          <input name="pendingShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.pendingShowRate * 100)} className="input" />
-        </label>
-        <p className="hint md:col-span-2">These are guesses until a real event has been counted.</p>
+      <fieldset>
+        <legend className="text-lg font-bold">Contact numbers printed on slips</legend>
+        <p className="hint mb-3">For guests without a smartphone: they call this number and give their code.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="label">Bride&apos;s side</span>
+            <input
+              name="contactBride"
+              inputMode="tel"
+              defaultValue={props.contactBride ?? ""}
+              className={`input ${props.contactBride ? "" : missing}`}
+              placeholder="Not set: slips will have no call-us line"
+            />
+          </label>
+          <label className="block">
+            <span className="label">Groom&apos;s side</span>
+            <input
+              name="contactGroom"
+              inputMode="tel"
+              defaultValue={props.contactGroom ?? ""}
+              className={`input ${props.contactGroom ? "" : missing}`}
+              placeholder="Not set: slips will have no call-us line"
+            />
+          </label>
+        </div>
       </fieldset>
 
       <Message state={state} />
@@ -93,13 +117,13 @@ export function EventForm(props: {
 
 function FunctionFields(props: { nameEn?: string; nameMr?: string | null; startsAt?: string; venue?: string | null; mapUrl?: string | null; catered?: boolean }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <label className="block">
-        <span className="label">Name (English)</span>
+        <span className="label">Name in English</span>
         <input name="nameEn" required maxLength={60} defaultValue={props.nameEn ?? ""} className="input" placeholder="Sangeet" />
       </label>
       <label className="block">
-        <span className="label">Name (Marathi)</span>
+        <span className="label">Name in Marathi</span>
         <input name="nameMr" lang="mr" maxLength={60} defaultValue={props.nameMr ?? ""} className="input" placeholder="संगीत" />
       </label>
       <label className="block">
@@ -110,16 +134,15 @@ function FunctionFields(props: { nameEn?: string; nameMr?: string | null; starts
         <span className="label">Venue</span>
         <input name="venue" maxLength={200} defaultValue={props.venue ?? ""} className="input" />
       </label>
-      <label className="block sm:col-span-2">
-        <span className="label">Map link (optional)</span>
+      <label className="block xl:col-span-2">
+        <span className="label">
+          Map link <span className="font-normal text-ink-soft">(optional)</span>
+        </span>
         <input name="mapUrl" type="url" defaultValue={props.mapUrl ?? ""} className="input" placeholder="https://maps.app.goo.gl/…" />
       </label>
-      <label className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-paper-deep/50 px-3 sm:col-span-2">
-        <input type="checkbox" name="catered" defaultChecked={props.catered ?? true} className="h-5 w-5 accent-kumkum" />
-        <span>
-          <span className="font-semibold">Food served</span>
-          <span className="hint block">Guests are asked how many are vegetarian.</span>
-        </span>
+      <label className="flex min-h-11 items-center gap-3 sm:col-span-2 xl:col-span-3">
+        <input type="checkbox" name="catered" defaultChecked={props.catered ?? true} className="h-6 w-6 accent-kumkum" />
+        <span className="font-bold">Food served (asks the veg question)</span>
       </label>
     </div>
   );
@@ -131,6 +154,7 @@ export function FunctionEditor(props: {
   nameEn: string;
   nameMr: string | null;
   startsAt: string;
+  when: string;
   venue: string | null;
   mapUrl: string | null;
   catered: boolean;
@@ -140,32 +164,41 @@ export function FunctionEditor(props: {
   const [state, action, pending] = useActionState(saveFunction.bind(null, props.slug, props.id), null);
   const [delState, delAction, deleting] = useActionState(removeFunction.bind(null, props.slug, props.id), null);
   return (
-    <article className="overflow-hidden rounded-xl border border-line bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-paper-deep/70 px-4 py-3">
-        <h3 className="font-display text-lg text-kumkum">
-          {props.nameEn}
+    <details className="group rounded-[14px] border border-line bg-card">
+      <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
+          <b>{props.nameEn}</b>
           {props.nameMr && (
-            <span lang="mr" className="ml-2 text-base font-semibold text-ink-soft">
+            <b lang="mr">
+              {" · "}
               {props.nameMr}
-            </span>
+            </b>
           )}
-        </h3>
-        <span className="text-sm text-ink-soft">
-          <b className="text-ink">{props.invites}</b> invited · <b className="text-ink">{props.replies}</b> replied
+          <span className="text-ink-soft">
+            {" · "}
+            {props.when}
+            {props.venue ? ` · ${props.venue}` : ""}
+            {props.catered ? " · food served" : " · no food"}
+          </span>
         </span>
-      </div>
-      <div className="p-4">
+        <span className="btn btn-secondary btn-sm shrink-0 group-open:hidden">Edit</span>
+        <span className="btn btn-quiet btn-sm hidden shrink-0 group-open:inline-flex">Close</span>
+      </summary>
+      <div className="border-t border-line p-4">
         <form action={action} className="space-y-4">
           <FunctionFields {...props} />
+          <p className="text-sm text-ink-soft">
+            {props.invites} households invited · {props.replies} replied{props.replies > 0 ? " · can't be deleted" : ""}
+          </p>
           <Message state={state} />
-          <button type="submit" disabled={pending} className="btn btn-primary w-full">
+          <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
             <Save className="h-5 w-5" aria-hidden="true" />
-            {pending ? "Saving…" : "Save"}
+            {pending ? "Saving…" : "Save function"}
           </button>
         </form>
         <form
           action={delAction}
-          className="mt-2 flex flex-col items-center gap-1 text-center"
+          className="mt-2"
           onSubmit={(e) => {
             const warn = props.invites
               ? `Delete ${props.nameEn}? ${props.invites} households will no longer be invited to it.`
@@ -173,15 +206,32 @@ export function FunctionEditor(props: {
             if (!confirm(warn)) e.preventDefault();
           }}
         >
-          <button type="submit" disabled={deleting || props.replies > 0} className="btn btn-quiet btn-sm">
+          <button type="submit" disabled={deleting || props.replies > 0} className="btn btn-quiet btn-sm -ml-2">
             <Trash className="h-4 w-4" aria-hidden="true" />
             {deleting ? "Deleting…" : "Delete function"}
           </button>
-          {props.replies > 0 && <span className="hint">Can&apos;t be deleted: households have replied.</span>}
           <Message state={delState} />
         </form>
       </div>
-    </article>
+    </details>
+  );
+}
+
+/** "+ Add a function" in the Functions header: opens the new-function form below the list. */
+export function AddFunctionButton() {
+  return (
+    <button
+      type="button"
+      className="btn btn-secondary"
+      onClick={() => {
+        const d = document.getElementById("new-function") as HTMLDetailsElement | null;
+        if (!d) return;
+        d.open = true;
+        d.scrollIntoView({ behavior: "smooth", block: "center" });
+      }}
+    >
+      + Add a function
+    </button>
   );
 }
 
@@ -192,23 +242,24 @@ export function NewFunctionForm({ slug, households }: { slug: string; households
     if (state?.ok) form.current?.reset();
   }, [state]);
   return (
-    <form ref={form} action={action} className="space-y-4 rounded-xl border-2 border-dashed border-haldi bg-haldi-soft/20 p-4">
-      <h3 className="flex items-center gap-2 font-display text-lg text-kumkum">
+    <details id="new-function" className="rounded-[14px] border-2 border-dashed border-line">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-4 font-bold text-kumkum [&::-webkit-details-marker]:hidden">
         <Plus className="h-5 w-5" aria-hidden="true" />
-        Add a function
-      </h3>
-      <p className="hint -mt-2">For example Sangeet or Mehendi.</p>
-      <FunctionFields />
-      <label className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-card px-3">
-        <input type="checkbox" name="inviteAll" defaultChecked={households > 0} disabled={households === 0} className="h-5 w-5 accent-kumkum" />
-        <span>{households > 0 ? `Invite all ${households} households already on the list` : "No households on the list yet"}</span>
-      </label>
-      <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-secondary w-full">
-        <Plus className="h-5 w-5" aria-hidden="true" />
-        {pending ? "Adding…" : "Add function"}
-      </button>
-    </form>
+        Add a function <span className="font-normal text-ink-soft">(for example Sangeet or Mehendi)</span>
+      </summary>
+      <form ref={form} action={action} className="space-y-4 border-t border-dashed border-line p-4">
+        <FunctionFields />
+        <label className="flex min-h-11 items-center gap-3">
+          <input type="checkbox" name="inviteAll" defaultChecked={households > 0} disabled={households === 0} className="h-6 w-6 accent-kumkum" />
+          <span>{households > 0 ? `Invite all ${households} households already on the list` : "No households on the list yet"}</span>
+        </label>
+        <Message state={state} />
+        <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
+          <Plus className="h-5 w-5" aria-hidden="true" />
+          {pending ? "Adding…" : "Add function"}
+        </button>
+      </form>
+    </details>
   );
 }
 
@@ -230,7 +281,7 @@ export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boo
         onClick={open}
         disabled={bothFull}
         title={bothFull ? "Both sides have 3 co-owners. Remove one to invite someone else." : undefined}
-        className="btn btn-primary btn-sm"
+        className="btn btn-secondary"
       >
         <UserPlus className="h-5 w-5" aria-hidden="true" />
         Invite co-owner
@@ -306,12 +357,12 @@ export function RemoveHostButton({ slug, userId, email }: { slug: string; userId
   return (
     <form
       action={action}
-      className="flex flex-wrap items-center gap-2"
+      className="inline-flex flex-wrap items-center justify-center gap-2"
       onSubmit={(e) => {
         if (!confirm(`Remove ${email} as a co-owner? Their account stays, but they lose access to this event.`)) e.preventDefault();
       }}
     >
-      <button type="submit" disabled={pending} className="btn btn-quiet btn-sm">
+      <button type="submit" disabled={pending} className="btn btn-quiet btn-sm align-middle">
         {pending ? "Removing…" : "Remove"}
       </button>
       {state && !state.ok && <span className="text-sm text-kumkum">{state.message}</span>}
