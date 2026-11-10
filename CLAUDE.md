@@ -81,7 +81,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 ## Technical notes
 
 - Next.js 16 (App Router), React 19, Tailwind v4, Supabase, zod 4, vitest. Versions match the owner's Sutradhar project, except Next is 16.4.6 (security fixes).
-- Hosting: Vercel, project `pangat`, deployed by Vercel's Git integration on every push to `main`; functions pinned to Mumbai (`bom1`, `vercel.json`) next to the Supabase database. Moved off Cloudflare Workers on 10 Nov: its Next.js adapter needed build workarounds and its Node proxy support is experimental. Vercel Hobby is non-commercial; selling Pangat would need Pro. CI (GitHub Actions) runs typecheck, test and build.
+- Hosting: Vercel, project `pangat`, production URL https://pangat-tau.vercel.app (`pangat.vercel.app` belongs to someone else; the other `*.vercel.app` aliases sit behind Vercel's login), deployed by Vercel's Git integration on every push to `main`; functions pinned to Mumbai (`bom1`, `vercel.json`) next to the Supabase database. Moved off Cloudflare Workers on 10 Nov: its Next.js adapter needed build workarounds and its Node proxy support is experimental. Vercel Hobby is non-commercial; selling Pangat would need Pro. CI (GitHub Actions) runs typecheck, test and build.
 - Repo: github.com/girishtare/pangat (private). Environment variables are listed in README.
 - Do not build or install locally: Windows Smart App Control on the owner's PC blocks new native npm binaries (rolldown, rollup). Push and let CI and Vercel build.
 - Guests never reach the database directly. Server code uses the service-role key and looks households up by token. RLS is on with no anonymous policies. Keep it that way.
@@ -98,7 +98,8 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 - Demo mode on Workers keeps data per isolate, so replies can vanish or not appear on `/host`. Supabase is needed before the dry run.
 - Seen in testing: the English/Marathi choice is not remembered on reload (page reverts to Marathi); Marathi view mixes Devanagari dates with Latin digits and "AM/PM" in headcounts and times.
 - Supabase project `pangat` (ref `sibsiwicyoawdysgqeft`, Mumbai, free plan) created 10 Nov; migrations 0001 to 0003 and the demo-wedding seed applied; security advisor clean. RLS tested in SQL with throwaway users (rolled back): bride host sees 4 households/10 invites, groom host 4/9, both-sides host 8/19, signed-in non-host 0; anon read and host writes are refused.
-- Not yet run live: `src/lib/store/supabase.ts` (guest flow), `/host/login`, `src/proxy.ts` on Vercel. Needs the Vercel variables set. Host account girish.s.tare@gmail.com exists and is linked to both sides of `demo-wedding`.
+- Live on Vercel against Supabase (10 Nov): home page shows no demo box; `/host` redirects to `/host/login`; a guest reply via `/r/demo-family-6?s=q` saved to `responses` with source `qr`, correct heads/veg/arrival, and one `response_history` row per function.
+- Not yet run live: an actual host sign-in and the per-side dashboard (needs the owner to sign in; account girish.s.tare@gmail.com is linked to both sides of `demo-wedding`).
 - Free Supabase projects pause after a week without activity; a pause would break guest links.
 - Marathi strings in `src/lib/i18n.ts` are a first draft and need a native reader.
 
