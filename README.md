@@ -2,7 +2,7 @@
 
 Know who is really coming. Guests reply through a personal link or QR code; the host sees a headcount per function.
 
-Stage 1 of the v1 spec, built 10 November 2026. Project context for Claude Code is in `CLAUDE.md`.
+Stage 1 of the v1 spec plus stage 2 item 1 (host sign-in), 10 November 2026. Live in demo mode at https://pangat.girish-s-tare.workers.dev (Cloudflare Workers, deployed on every push to `main`). Project context for Claude Code is in `CLAUDE.md`.
 
 ## Run it
 
@@ -18,14 +18,13 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build` (Next.js build 
 ## What is built
 
 - Guest flow at `/r/<token>`: "is this you?", reply per function (coming, headcount, vegetarian count, arrival), summary, change until the cut-off. Marathi and English.
-- Host dashboard at `/host` (demo mode only): replies and expected headcount per function.
+- Host dashboard at `/host`: replies and expected headcount per function, split by side for hosts of both sides. With Supabase connected it needs sign-in at `/host/login` (email and password) and shows only the host's side, enforced by row-level security (`supabase/migrations/0002_host_access.sql`). In demo mode it is open.
 - Forecast, validation and token logic in `src/lib`, with tests in `tests`.
 - Database schema in `supabase/migrations/0001_init.sql`.
 - Supabase data layer in `src/lib/store/supabase.ts`.
 
 ## Not built yet
 
-- Host sign-in and per-side access (the dashboard is switched off outside demo mode until this exists).
 - Guest list import, late additions, mark on behalf.
 - Printable slips with QR codes and short codes.
 - "Not us" mobile-number lookup and approval queue.
@@ -33,19 +32,33 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build` (Next.js build 
 
 ## Not yet verified
 
-- `npm run build` and the pages in a browser. They type-check, but have not been run.
-- The Supabase data layer against a live project.
+- The Supabase data layer and host sign-in against a live project.
 - The Marathi wording in `src/lib/i18n.ts`. Have a native reader check it before guests see it.
 
 ## Connecting Supabase
 
-1. Create a project and run `supabase/migrations/0001_init.sql`.
-2. Set these environment variables on the host (Cloudflare: Worker → Settings → Variables and Secrets):
-   - `NEXT_PUBLIC_SUPABASE_URL`: the project URL.
-   - `SUPABASE_SERVICE_ROLE_KEY`: server-only; store it as a secret.
+1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding.
+2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
+3. Set these on the host (Cloudflare: Worker → Settings → Variables and Secrets), then redeploy:
+   - `SUPABASE_URL`: the project URL.
+   - `SUPABASE_PUBLISHABLE_KEY`: the publishable (anon) key. Used only for host sessions; row-level security applies.
+   - `SUPABASE_SERVICE_ROLE_KEY`: the secret key. Store it as a **Secret**. Server-only; bypasses row-level security.
    - `PANGAT_EVENT_SLUG`: slug of the event the host dashboard shows (defaults to `demo-wedding`).
 
-   Leave both Supabase variables unset to run in demo mode. There is deliberately no `.env.example`: Cloudflare's import form turns every variable in it into a required field, which blocks a demo-mode deploy.
-3. The service-role key is server-only. Never prefix it with `NEXT_PUBLIC_` or commit it.
+   Leave both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` unset to run in demo mode. None of these use the `NEXT_PUBLIC_` prefix: no browser code talks to Supabase. There is deliberately no `.env.example`: Cloudflare's import form turns every variable in it into a required field, which blocks a demo-mode deploy.
+
+## Adding a host
+
+1. Supabase → Authentication → Users → Add user: their email and a password, with "Auto confirm" on. Give them the password in person or by phone.
+2. In the SQL editor, link them to the event and a side (`'bride'`, `'groom'`, or `null` for both):
+
+```sql
+insert into hosts (event_id, user_id, side)
+select e.id, u.id, 'bride'
+from events e, auth.users u
+where e.slug = 'demo-wedding' and u.email = 'host@example.com';
+```
+
+A signed-in user without a `hosts` row sees a "not a host of this event" message and no data.
 
 QR codes on printed slips should point at `/r/<token>?s=q` so replies record which channel was used.

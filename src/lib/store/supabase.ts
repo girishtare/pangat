@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { supabaseConfig } from "../supabase/config";
 import type {
   DashboardData,
   EventInfo,
@@ -8,15 +9,19 @@ import type {
   InviteFact,
   ResponseRecord,
   ResponseSource,
+  Side,
 } from "../types";
 import type { NormalisedAnswer } from "../validate";
 
-// NOTE: written against supabase/migrations/0001_init.sql but not yet run
-// against a live project. Test with the dry-run households before real use.
+// Guest reads and all writes use the service-role client (bypasses RLS).
+// The host dashboard is loaded with the host's own session client instead,
+// so row-level security limits it to their event and side.
 
 let client: SupabaseClient | null = null;
 function db(): SupabaseClient {
-  client ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+  const cfg = supabaseConfig();
+  if (!cfg) throw new Error("Supabase is not configured");
+  client ??= createClient(cfg.url, cfg.serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   return client;
@@ -98,37 +103,51 @@ export const supabaseStore = {
     if (error) throw new Error(`saving responses failed: ${error.message}`);
   },
 
-  async getDashboard(eventSlug: string): Promise<DashboardData | null> {
-    const { data: ev, error: evErr } = await db().from("events").select("*").eq("slug", eventSlug).maybeSingle();
-    if (evErr) throw new Error(`event lookup failed: ${evErr.message}`);
-    if (!ev) return null;
-
-    const [fnRes, hhRes] = await Promise.all([
-      db().from("functions").select("*").eq("event_id", ev.id).order("sort_order").order("starts_at"),
-      db()
-        .from("households")
-        .select("id, side, invites(function_id), responses(function_id, status, heads, veg, nonveg)")
-        .eq("event_id", ev.id)
-        .range(0, 4999),
-    ]);
-    if (fnRes.error) throw new Error(`functions lookup failed: ${fnRes.error.message}`);
-    if (hhRes.error) throw new Error(`households lookup failed: ${hhRes.error.message}`);
-
-    const facts: InviteFact[] = [];
-    for (const h of (hhRes.data ?? []) as any[]) {
-      for (const inv of h.invites ?? []) {
-        const r = (h.responses ?? []).find((x: any) => x.function_id === inv.function_id);
-        facts.push({
-          householdId: h.id,
-          side: h.side,
-          functionId: inv.function_id,
-          status: r ? r.status : "pending",
-          heads: r?.heads ?? 0,
-          veg: r?.veg ?? 0,
-          nonveg: r?.nonveg ?? 0,
-        });
-      }
-    }
-    return { event: toEvent(ev), functions: (fnRes.data ?? []).map(toFunction), facts };
+  getDashboard(eventSlug: string): Promise<DashboardData | null> {
+    return loadDashboard(db(), eventSlug);
   },
 };
+
+/** Dashboard data as `client` is allowed to see it (all of it for service role; one side for a host). */
+export async function loadDashboard(client: SupabaseClient, eventSlug: string): Promise<DashboardData | null> {
+  const { data: ev, error: evErr } = await client.from("events").select("*").eq("slug", eventSlug).maybeSingle();
+  if (evErr) throw new Error(`event lookup failed: ${evErr.message}`);
+  if (!ev) return null;
+
+  const [fnRes, hhRes] = await Promise.all([
+    client.from("functions").select("*").eq("event_id", ev.id).order("sort_order").order("starts_at"),
+    client
+      .from("households")
+      .select("id, side, invites(function_id), responses(function_id, status, heads, veg, nonveg)")
+      .eq("event_id", ev.id)
+      .range(0, 4999),
+  ]);
+  if (fnRes.error) throw new Error(`functions lookup failed: ${fnRes.error.message}`);
+  if (hhRes.error) throw new Error(`households lookup failed: ${hhRes.error.message}`);
+
+  const facts: InviteFact[] = [];
+  for (const h of (hhRes.data ?? []) as any[]) {
+    for (const inv of h.invites ?? []) {
+      const r = (h.responses ?? []).find((x: any) => x.function_id === inv.function_id);
+      facts.push({
+        householdId: h.id,
+        side: h.side,
+        functionId: inv.function_id,
+        status: r ? r.status : "pending",
+        heads: r?.heads ?? 0,
+        veg: r?.veg ?? 0,
+        nonveg: r?.nonveg ?? 0,
+      });
+    }
+  }
+  return { event: toEvent(ev), functions: (fnRes.data ?? []).map(toFunction), facts };
+}
+
+export type HostAccess = { side: Side | null } | null;
+
+/** The signed-in host's role for this event, or null if they are not a host of it. */
+export async function loadHostAccess(client: SupabaseClient, eventSlug: string): Promise<HostAccess> {
+  const { data, error } = await client.from("hosts").select("side, events!inner(slug)").eq("events.slug", eventSlug).maybeSingle();
+  if (error) throw new Error(`host lookup failed: ${error.message}`);
+  return data ? { side: (data as any).side ?? null } : null;
+}
