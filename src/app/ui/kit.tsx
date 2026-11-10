@@ -16,6 +16,20 @@ export function Marigold({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+/** Landing-page mark (palette E): six maroon petals, sky-blue centre. */
+export function Mark({ className = "h-8 w-8" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <g className="fill-maroon">
+        {[0, 60, 120, 180, 240, 300].map((a) => (
+          <ellipse key={a} cx="12" cy="6.2" rx="2.4" ry="4" transform={a ? `rotate(${a} 12 12)` : undefined} />
+        ))}
+      </g>
+      <circle cx="12" cy="12" r="2.6" className="fill-sky" />
+    </svg>
+  );
+}
+
 export function Divider({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-3 ${className}`} aria-hidden="true">

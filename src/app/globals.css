@@ -18,6 +18,19 @@
   --color-leaf-soft: #e2f2e7;
   --color-whatsapp: #128c4a;
 
+  /* Palette E: the public landing page only, for now. Never use sky for text
+     (about 1.5:1 on cream); sky-ink is the text-safe blue. */
+  --color-maroon: #790d16;
+  --color-maroon-dark: #5c0a11;
+  --color-sand: #e5d3af;
+  --color-cream: #f5efe1;
+  --color-sky: #aec4d4;
+  --color-sky-ink: #4f6b80;
+  --color-ink-e: #2e1a1c;
+  --color-ink-e-soft: #5e4446;
+  --color-card-e: #fffcf5;
+  --color-track: #ebe1cb;
+
   --font-sans: var(--font-noto-sans), var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
   --font-display: var(--font-noto-serif), var(--font-noto-serif-deva), "Nirmala UI", Georgia, serif;
 }
