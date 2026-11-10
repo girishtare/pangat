@@ -38,11 +38,10 @@ export default async function GuestList({ params }: { params: Promise<{ slug: st
             <AddHouseholdForm slug={slug} hostSide={host.side} functions={host.functions.map((f) => ({ id: f.id, name: f.name.en }))} />
           </div>
           <div className="rounded-xl border border-haldi/60 bg-white p-4">
-            <h2 className="text-xl font-semibold">Import from a sheet</h2>
+            <h2 className="text-xl font-semibold">Import from Excel</h2>
             <p className="mt-1 text-sm">
-              One row per household (one card), with a header row. Columns: <b>Name</b>, Marathi name,
-              {host.side ? "" : " Side,"} Mobile, Functions (blank = all), Cap. Copy the cells in Google Sheets or Excel,
-              header included, and paste them here.
+              Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Functions (blank = all), Cap. Households already on
+              the list are skipped, so the same file can be uploaded again after adding rows.
             </p>
             <ImportForm slug={slug} />
           </div>

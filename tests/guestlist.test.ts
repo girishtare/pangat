@@ -135,3 +135,33 @@ describe("checkSheet", () => {
     expect(check("\nName\tSide\n\nJoshi\tbride\n").rows[0].line).toBe(4);
   });
 });
+
+describe("Excel rows", () => {
+  it("prefers the Guests sheet, otherwise the first", async () => {
+    const { pickSheet } = await import("@/lib/guestlist");
+    const a = { sheet: "How to fill", data: [] };
+    const b = { sheet: " guests ", data: [] };
+    expect(pickSheet([a, b])).toBe(b);
+    expect(pickSheet([a])).toBe(a);
+    expect(pickSheet([])).toBeNull();
+  });
+
+  it("turns cells into the same text as a paste, and the checks still apply", async () => {
+    const { rowsToText } = await import("@/lib/guestlist");
+    const text = rowsToText([
+      ["Name", "Marathi name", "Side", "Mobile", "Functions", "Cap"],
+      ["Shri A Joshi", "श्री अ जोशी", "bride", 9876543210, "Wedding, Reception", 6],
+      ["Line\nbreak\tname", null, "groom", "+91 91234 56789", undefined, null],
+    ]);
+    expect(text.split("\n")[1]).toBe("Shri A Joshi\tश्री अ जोशी\tbride\t9876543210\tWedding, Reception\t6");
+    const r = check(text);
+    expect(r.counts).toEqual({ new: 2, exists: 0, error: 0 });
+    expect(r.rows[0].draft).toMatchObject({ mobile: "+919876543210", softCap: 6, functionIds: ["f-wedding", "f-reception"] });
+    expect(r.rows[1].draft).toMatchObject({ nameEn: "Line break name", mobile: "+919123456789", functionIds: all });
+  });
+
+  it("writes dates as plain dates and keeps large integers exact", async () => {
+    const { rowsToText } = await import("@/lib/guestlist");
+    expect(rowsToText([[new Date("2026-12-28T00:00:00Z"), 919876543210, 1.5, true]])).toBe("2026-12-28\t919876543210\t1.5\tyes");
+  });
+});

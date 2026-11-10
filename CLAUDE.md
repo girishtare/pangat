@@ -74,6 +74,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 1. Host sign-in (Supabase Auth) and RLS policies so each host sees only their side. Then enable `/host` outside demo mode. **Code written 10 Nov (migration 0002, `/host/login`, `src/proxy.ts`); RLS tested in SQL; owner signed in on the live site and saw the both-sides dashboard. Done.**
 2. Guest list import from a sheet, add a late household, token and short-code generation (`src/lib/token.ts`). **Code written 10 Nov: `/host/guests`, `src/lib/guestlist.ts`, migration 0004 (atomic `import_households`, service role only). Import function tested in SQL; the page not yet used live.**
    Also (owner's call, 10 Nov: "everything that needs a change should be on page"): events are created on the page with Haldi/Wedding/Reception by default; functions, event details, show rates and hosts are edited on Event settings (hosts of both sides only). Routes are per event: `/host/e/<slug>`. Migration 0005; `PANGAT_EVENT_SLUG` is gone.
+   Excel (owner, 10 Nov): per-event template at `/host/e/<slug>/guests/template` (exceljs, writing only) and `.xlsx` upload (read-excel-file, reading untrusted files), both feeding the same check step. Only the "Guests" sheet is imported.
 3. Mark on behalf (source `on_behalf`, `updated_by` = host).
 4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi.
 5. "Not us" mobile lookup and approval queue.
