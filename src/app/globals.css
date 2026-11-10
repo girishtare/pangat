@@ -46,6 +46,12 @@ h3,
   word-break: normal;
 }
 
+/* Pop-ups: dim the page behind. A plain colour, because ::backdrop doesn't
+   inherit the theme variables in every browser. */
+dialog::backdrop {
+  background: rgb(43 29 22 / 0.55);
+}
+
 :focus-visible {
   outline: 3px solid var(--color-haldi);
   outline-offset: 2px;

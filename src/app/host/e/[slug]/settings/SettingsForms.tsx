@@ -238,7 +238,7 @@ export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boo
       <dialog
         ref={dialog}
         aria-labelledby="invite-title"
-        className="card m-auto w-[calc(100%-2rem)] max-w-lg p-0 backdrop:bg-ink/50 open:flex open:flex-col"
+        className="card m-auto w-[calc(100%-2rem)] max-w-lg p-0 open:flex open:flex-col"
         onClick={(e) => {
           if (e.target === dialog.current) dialog.current?.close(); // click on the backdrop
         }}
