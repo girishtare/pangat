@@ -1,7 +1,7 @@
 import { isoToIstInput } from "@/lib/events";
 import { hostGate } from "@/lib/host";
 import { scopeLabel } from "@/lib/sides";
-import { functionUsage, listHosts } from "@/lib/store/admin";
+import { dashboardViewStats, functionUsage, listHosts } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
 import { EventHeader, GateMessage } from "../../../HostChrome";
 import { AddHostForm, EventForm, FunctionEditor, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
@@ -23,10 +23,11 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     );
   }
 
-  const [usage, hosts, households] = await Promise.all([
+  const [usage, hosts, households, views] = await Promise.all([
     Promise.all(host.functions.map((f) => functionUsage(host.event.id, f.id))),
     listHosts(host.event.id),
     loadHouseholdKeys(host.event.id),
+    dashboardViewStats(host.event.id),
   ]);
 
   return (
@@ -43,6 +44,8 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             cutoff={isoToIstInput(host.event.cutoffAt)}
             yesShowRate={host.event.yesShowRate}
             pendingShowRate={host.event.pendingShowRate}
+            contactBride={host.event.contactPhone.bride}
+            contactGroom={host.event.contactPhone.groom}
           />
         </div>
       </section>
@@ -79,7 +82,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
           <table className="w-full text-left text-sm">
             <thead className="bg-haldi/20">
               <tr>
-                {["Email", "Side", "Last signed in", ""].map((h) => (
+                {["Email", "Side", "Last signed in", "Dashboard views", ""].map((h) => (
                   <th key={h} className="px-3 py-2 font-semibold">
                     {h}
                   </th>
@@ -100,6 +103,11 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
                           new Date(h.lastSignInAt),
                         )
                       : "Never"}
+                  </td>
+                  <td className="px-3 py-2">
+                    {views.get(h.userId)
+                      ? `${views.get(h.userId)!.count}, last ${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(views.get(h.userId)!.last))}`
+                      : "None"}
                   </td>
                   <td className="px-3 py-2">
                     <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />

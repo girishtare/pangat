@@ -23,6 +23,8 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 - Each event at `/host/e/<event>`: **Dashboard**, **Guest list** and, for hosts of both sides, **Event settings**: event name and cut-off, show rates, functions (rename, re-time, venue, map link, food yes/no, delete unless someone has replied, add e.g. Sangeet and optionally invite every household), and hosts (add by email with side and a starting password, remove).
 - Guest list at `/host/e/<event>/guests`: download the event's **Excel template** (dropdowns for Side and Functions, Mobile kept as text, a "How to fill" sheet), fill it in Excel or Google Sheets, and upload it (`.xlsx` or `.csv`); or paste cells. Pangat checks every row, then adds. One row per household; header row with **Name** (required), Marathi name, Side, Mobile, Functions (blank = all), Cap. Mobiles are normalised to +91…; duplicates inside the paste and households already in the list are caught; a one-side host can only add to their side. "Add one household" uses the same checks. Each new household gets a token and a six-character short code.
 - Household page (`/host/e/<event>/guests/<id>`, from the guest list or its search by name, mobile or code): record a reply taken by phone or in person (source `on_behalf`, signed with the host; works after the cut-off), edit details and invitations (functions already replied to can't be removed), delete if no reply, copy the guest's link.
+- **Slips** tab: A4 sheets of 8 slips (about 97 × 70 mm, dashed cut lines): family name in Marathi and English, QR to `/r/<token>?s=q`, short code, reply-by date, and "no smartphone? call <number> and give your code" using the side's contact number from Event settings. Filter by side or "added on or after"; one slip from a household page. QR codes point at `PANGAT_PUBLIC_URL`, else Vercel's production domain.
+- **WhatsApp** tab: per household, a button that opens WhatsApp (wa.me) with the invitation or reminder text and their own link filled in; each tap is recorded (`nudges`). Hosts of both sides can edit both texts (placeholders such as {name}, {link}). Also an **effort log** (minutes and calls spent chasing) for the review. Dashboard visits are recorded per host and shown in Event settings.
 - **Caterer numbers** tab (hosts of both sides): the family's baseline per function, a button to freeze the tool's expected headcount and veg/non-veg split (for 14 December), the number for the caterer (the higher of the two), actual counts on the day, and which number came closer. Migration 0006 (`function_numbers`).
 - Forecast, validation, token, guest-list and pilot logic in `src/lib`, with tests in `tests`.
 - Database schema in `supabase/migrations/0001_init.sql`.
@@ -30,9 +32,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
 ## Not built yet
 
-- Printable slips with QR codes and short codes.
 - "Not us" mobile-number lookup and approval queue.
-- WhatsApp nudge links.
 
 ## Not yet verified
 
@@ -41,7 +41,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
 ## Connecting Supabase
 
-1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`, `0003_advisor_fixes.sql`, `0004_import_households.sql`, `0005_event_setup.sql` and `0006_pilot_numbers.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
+1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`, `0003_advisor_fixes.sql`, `0004_import_households.sql`, `0005_event_setup.sql`, `0006_pilot_numbers.sql` and `0007_slips_whatsapp_evidence.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
 2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
 3. Set these in Vercel (Project → Settings → Environment Variables, Production), then redeploy:
    - `SUPABASE_URL`: the project URL.

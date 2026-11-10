@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseConfig } from "../supabase/config";
+import type { MessageKind } from "../outreach";
 import type { FunctionNumbers } from "../pilot";
 import type { Side } from "../types";
 
@@ -59,7 +60,15 @@ export async function createEvent(input: {
 
 export async function updateEvent(
   eventId: string,
-  fields: { nameEn: string; nameMr: string | null; cutoffAt: string; yesShowRate: number; pendingShowRate: number },
+  fields: {
+    nameEn: string;
+    nameMr: string | null;
+    cutoffAt: string;
+    yesShowRate: number;
+    pendingShowRate: number;
+    contactBride: string | null;
+    contactGroom: string | null;
+  },
 ): Promise<void> {
   const { error } = await admin()
     .from("events")
@@ -69,6 +78,8 @@ export async function updateEvent(
       cutoff_at: fields.cutoffAt,
       yes_show_rate: fields.yesShowRate,
       pending_show_rate: fields.pendingShowRate,
+      contact_phone_bride: fields.contactBride,
+      contact_phone_groom: fields.contactGroom,
     })
     .eq("id", eventId);
   if (error) throw new Error(`update event failed: ${error.message}`);
@@ -343,4 +354,119 @@ export async function saveOnBehalf(
   }));
   const { error } = await admin().from("responses").upsert(rows, { onConflict: "household_id,function_id" });
   if (error) throw new Error(`saving reply failed: ${error.message}`);
+}
+
+/* ---------- Outreach: message texts, WhatsApp sends ---------- */
+
+
+export async function saveMessageText(eventId: string, kind: MessageKind, text: string | null): Promise<void> {
+  const column = kind === "invite" ? "wa_invite_text" : "wa_reminder_text";
+  const { error } = await admin().from("events").update({ [column]: text }).eq("id", eventId);
+  if (error) throw new Error(`saving message failed: ${error.message}`);
+}
+
+export async function recordNudge(householdId: string, kind: MessageKind, userId: string): Promise<void> {
+  const { error } = await admin().from("nudges").insert({ household_id: householdId, kind, sent_by: userId });
+  if (error) throw new Error(`recording nudge failed: ${error.message}`);
+}
+
+export interface NudgeSummary {
+  invite: string | null; // last time an invitation was opened for sending
+  reminder: string | null;
+  reminders: number;
+}
+
+export async function loadNudges(eventId: string): Promise<Map<string, NudgeSummary>> {
+  const { data, error } = await admin()
+    .from("nudges")
+    .select("household_id, kind, sent_at, households!inner(event_id)")
+    .eq("households.event_id", eventId)
+    .order("sent_at")
+    .range(0, 19999);
+  if (error) throw new Error(`nudges lookup failed: ${error.message}`);
+  const out = new Map<string, NudgeSummary>();
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  for (const r of (data ?? []) as any[]) {
+    const s = out.get(r.household_id) ?? { invite: null, reminder: null, reminders: 0 };
+    if (r.kind === "invite") s.invite = r.sent_at;
+    else {
+      s.reminder = r.sent_at;
+      s.reminders++;
+    }
+    out.set(r.household_id, s);
+  }
+  return out;
+}
+
+/* ---------- Evidence: effort log, dashboard views ---------- */
+
+export interface EffortEntry {
+  id: number;
+  email: string | null;
+  loggedOn: string;
+  minutes: number;
+  calls: number;
+  note: string | null;
+}
+
+export async function addEffort(eventId: string, userId: string, e: { loggedOn: string; minutes: number; calls: number; note: string | null }) {
+  const { error } = await admin()
+    .from("effort_log")
+    .insert({ event_id: eventId, user_id: userId, logged_on: e.loggedOn, minutes: e.minutes, calls: e.calls, note: e.note });
+  if (error) throw new Error(`saving effort failed: ${error.message}`);
+}
+
+export async function listEffort(eventId: string, hosts: HostRow[]): Promise<EffortEntry[]> {
+  const { data, error } = await admin()
+    .from("effort_log")
+    .select("id, user_id, logged_on, minutes, calls, note")
+    .eq("event_id", eventId)
+    .order("logged_on", { ascending: false })
+    .order("id", { ascending: false })
+    .range(0, 999);
+  if (error) throw new Error(`effort lookup failed: ${error.message}`);
+  const email = new Map(hosts.map((h) => [h.userId, h.email]));
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  return ((data ?? []) as any[]).map((r) => ({
+    id: r.id,
+    email: email.get(r.user_id) ?? null,
+    loggedOn: r.logged_on,
+    minutes: r.minutes,
+    calls: r.calls,
+    note: r.note,
+  }));
+}
+
+/** One row per dashboard visit; repeat visits within 30 minutes count once. */
+export async function recordDashboardView(eventId: string, userId: string): Promise<void> {
+  const db = admin();
+  const since = new Date(Date.now() - 30 * 60_000).toISOString();
+  const { count } = await db
+    .from("dashboard_views")
+    .select("id", { count: "exact", head: true })
+    .eq("event_id", eventId)
+    .eq("user_id", userId)
+    .gte("viewed_at", since);
+  if (count) return;
+  const { error } = await db.from("dashboard_views").insert({ event_id: eventId, user_id: userId });
+  if (error) console.error("recording dashboard view failed", error.message);
+}
+
+export async function dashboardViewStats(eventId: string): Promise<Map<string, { count: number; last: string }>> {
+  const { data, error } = await admin()
+    .from("dashboard_views")
+    .select("user_id, viewed_at")
+    .eq("event_id", eventId)
+    .order("viewed_at")
+    .range(0, 19999);
+  if (error) throw new Error(`views lookup failed: ${error.message}`);
+  const out = new Map<string, { count: number; last: string }>();
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  for (const r of (data ?? []) as any[]) {
+    const s = out.get(r.user_id) ?? { count: 0, last: r.viewed_at };
+    s.count++;
+    s.last = r.viewed_at;
+    out.set(r.user_id, s);
+  }
+  return out;
 }

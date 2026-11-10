@@ -25,6 +25,8 @@ export function EventForm(props: {
   cutoff: string;
   yesShowRate: number;
   pendingShowRate: number;
+  contactBride: string | null;
+  contactGroom: string | null;
 }) {
   const [state, action, pending] = useActionState(saveEvent.bind(null, props.slug), null);
   return (
@@ -51,6 +53,17 @@ export function EventForm(props: {
           <input name="pendingShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.pendingShowRate * 100)} className={input} />
         </label>
       </div>
+      <label className="block">
+        <span className="font-semibold">Bride's side: number guests can call</span>
+        <input name="contactBride" inputMode="tel" defaultValue={props.contactBride ?? ""} className={input} placeholder="98765 43210" />
+      </label>
+      <label className="block">
+        <span className="font-semibold">Groom's side: number guests can call</span>
+        <input name="contactGroom" inputMode="tel" defaultValue={props.contactGroom ?? ""} className={input} placeholder="98765 43210" />
+      </label>
+      <p className="text-sm sm:col-span-2">
+        The contact numbers are printed on that side's slips, for guests without a smartphone: they call and give their code.
+      </p>
       <p className="text-sm sm:col-span-2">
         Show rates feed the expected headcount: the share of people who said yes that turn up, and the share of silent households that come
         anyway. They are guesses until a real event has been counted.

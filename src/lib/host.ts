@@ -13,6 +13,10 @@ export interface HostEvent {
   cutoffAt: string;
   yesShowRate: number;
   pendingShowRate: number;
+  /** Number guests on each side can call (printed on slips). */
+  contactPhone: Record<Side, string | null>;
+  /** Custom WhatsApp texts; null = the built-in default. */
+  messageText: { invite: string | null; reminder: string | null };
 }
 
 export interface HostContext {
@@ -59,7 +63,7 @@ export async function hostGate(slug: string): Promise<HostGate> {
 
   const { data: ev, error } = await client
     .from("events")
-    .select("id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate")
+    .select("id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text")
     .eq("slug", slug)
     .single();
   if (error) throw new Error(`event lookup failed: ${error.message}`);
@@ -86,6 +90,8 @@ export async function hostGate(slug: string): Promise<HostGate> {
         cutoffAt: ev.cutoff_at,
         yesShowRate: Number(ev.yes_show_rate),
         pendingShowRate: Number(ev.pending_show_rate),
+        contactPhone: { bride: ev.contact_phone_bride, groom: ev.contact_phone_groom },
+        messageText: { invite: ev.wa_invite_text, reminder: ev.wa_reminder_text },
       },
       functions: (fns ?? []).map((f) => ({
         id: f.id,
