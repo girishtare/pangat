@@ -80,16 +80,21 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 
 ## Technical notes
 
-- Next.js 16 (App Router), React 19, Tailwind v4, Supabase, zod 4, vitest. Versions match the owner's Sutradhar project.
+- Next.js 16 (App Router), React 19, Tailwind v4, Supabase, zod 4, vitest. Versions match the owner's Sutradhar project, except Next is 16.4.6 (security fixes; also required by the Cloudflare adapter).
+- Hosting: Cloudflare Workers via `@opennextjs/cloudflare`, deployed by Cloudflare's Git integration on every push to `main`. Live (demo mode): https://pangat.girish-s-tare.workers.dev. `npm run build` runs OpenNext, which calls `npm run build:next`. CI (GitHub Actions) runs typecheck, test and build.
+- Repo: github.com/girishtare/pangat (private). No `.env.example` on purpose: Cloudflare's import form makes every listed variable required. Variables are listed in README.
+- Do not build or install locally: Windows Smart App Control on the owner's PC blocks new native npm binaries (rolldown, rollup). Push and let CI and Cloudflare build.
 - Guests never reach the database directly. Server code uses the service-role key and looks households up by token. RLS is on with no anonymous policies. Keep it that way.
 - `src/lib/store` has two implementations behind one interface: `demo.ts` (in memory) and `supabase.ts`. The app uses demo mode when the Supabase env vars are missing.
 - Forecast: `expected = confirmed heads x yesShowRate + pending households x average heads per yes x pendingShowRate`. Defaults 0.90 and 0.40 are guesses, stored per event.
 - Departures from the original spec: replies are yes or no only (no "maybe"); the form asks total people and vegetarian count (no adults and children split).
 
-## Verification status on 10 November 2026
+## Verification status (updated 10 November 2026)
 
-- Type-check passes. The 13 logic tests passed under a stand-in runner, not under vitest.
-- `npm install`, `npm run build`, `npm test` and the pages in a browser have **not** been run. Do this first.
+- CI passes: type-check, 13 tests under vitest, Next build and Cloudflare bundle.
+- On the live Cloudflare site (demo mode): `/`, `/r/demo-family-1` and `/host` load; a guest reply (demo-family-3) submitted, survived reload, showed on `/host` with correct expected figures, and a changed reply updated the dashboard without double-counting. Unknown tokens show a bilingual "link isn't valid" message.
+- Demo mode on Workers keeps data per isolate, so replies can vanish or not appear on `/host`. Supabase is needed before the dry run.
+- Seen in testing: the English/Marathi choice is not remembered on reload (page reverts to Marathi); Marathi view mixes Devanagari dates with Latin digits and "AM/PM" in headcounts and times.
 - `src/lib/store/supabase.ts` and the migration have not been run against a live project.
 - Marathi strings in `src/lib/i18n.ts` are a first draft and need a native reader.
 
