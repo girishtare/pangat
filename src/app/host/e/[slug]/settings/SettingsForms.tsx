@@ -27,6 +27,8 @@ export function EventForm(props: {
   pendingShowRate: number;
   contactBride: string | null;
   contactGroom: string | null;
+  catererDueOn: string | null;
+  catererFinalOn: string | null;
 }) {
   const [state, action, pending] = useActionState(saveEvent.bind(null, props.slug), null);
   return (
@@ -60,6 +62,14 @@ export function EventForm(props: {
       <label className="block">
         <span className="font-semibold">Groom's side: number guests can call</span>
         <input name="contactGroom" inputMode="tel" defaultValue={props.contactGroom ?? ""} className={input} placeholder="98765 43210" />
+      </label>
+      <label className="block">
+        <span className="font-semibold">Caterer needs the first count by</span>
+        <input name="catererDueOn" type="date" defaultValue={props.catererDueOn ?? ""} className={input} />
+      </label>
+      <label className="block">
+        <span className="font-semibold">Caterer accepts changes until</span>
+        <input name="catererFinalOn" type="date" defaultValue={props.catererFinalOn ?? ""} className={input} />
       </label>
       <p className="text-sm sm:col-span-2">
         The contact numbers are printed on that side's slips, for guests without a smartphone: they call and give their code.

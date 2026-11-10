@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { freezePredicted, saveActuals, saveBaselines, type FormState } from "./actions";
+import { freezePredicted, freezeRevised, saveActuals, saveBaselines, type FormState } from "./actions";
 
 const num = "w-24 rounded-lg border-2 border-haldi/60 bg-white px-2 py-1 text-right";
 const primary = "rounded-xl bg-kumkum px-4 py-2 font-semibold text-white disabled:opacity-50";
@@ -47,21 +47,30 @@ export function BaselineForm({ slug, functions, values }: { slug: string; functi
   );
 }
 
-export function FreezeButton({ slug, frozenBefore }: { slug: string; frozenBefore: boolean }) {
-  const [state, action, pending] = useActionState(freezePredicted.bind(null, slug), null);
+export function FreezeButton({
+  slug,
+  kind,
+  frozenBefore,
+  label,
+  confirmText,
+}: {
+  slug: string;
+  kind: "first" | "revised";
+  frozenBefore: boolean;
+  label: string;
+  confirmText: string;
+}) {
+  const [state, action, pending] = useActionState((kind === "first" ? freezePredicted : freezeRevised).bind(null, slug), null);
   return (
     <form
       action={action}
       className="flex flex-wrap items-center gap-3"
       onSubmit={(e) => {
-        const msg = frozenBefore
-          ? "Freeze again? This replaces the tool's frozen numbers with today's."
-          : "Freeze the tool's numbers now? The plan is to do this on 14 December.";
-        if (!confirm(msg)) e.preventDefault();
+        if (!confirm(frozenBefore ? `${confirmText} This replaces the numbers frozen earlier.` : confirmText)) e.preventDefault();
       }}
     >
       <button type="submit" disabled={pending} className={primary}>
-        {pending ? "Freezing…" : frozenBefore ? "Freeze again with today's numbers" : "Freeze the tool's numbers"}
+        {pending ? "Freezing…" : label}
       </button>
       <Message state={state} />
     </form>

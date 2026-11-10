@@ -50,6 +50,8 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             pendingShowRate={host.event.pendingShowRate}
             contactBride={host.event.contactPhone.bride}
             contactGroom={host.event.contactPhone.groom}
+            catererDueOn={host.event.catererDueOn}
+            catererFinalOn={host.event.catererFinalOn}
           />
         </div>
       </section>

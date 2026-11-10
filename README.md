@@ -29,7 +29,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 - **WhatsApp** tab: per household, a button that opens WhatsApp (wa.me) with the invitation or reminder text and their own link filled in; each tap is recorded (`nudges`). Hosts of both sides can edit both texts (placeholders such as {name}, {link}). Also an **effort log** (minutes and calls spent chasing) for the review. Dashboard visits are recorded per host and shown in Event settings.
 - **"Not us"**: a guest who opens a link that isn't theirs leaves their mobile; the guest is told nothing about matches. The request appears on the Guest list (and a banner on the Dashboard) for hosts of that side: send the matched household its own link on WhatsApp in one tap, or dismiss. At most 5 requests per link per day. Migration 0008.
 - The guest page remembers English or Marathi on that phone (cookie `pangat_lang`).
-- **Caterer numbers** tab (hosts of both sides): the family's baseline per function, a button to freeze the tool's expected headcount and veg/non-veg split (for 14 December), the number for the caterer (the higher of the two), actual counts on the day, and which number came closer. Migration 0006 (`function_numbers`).
+- **Caterer numbers** tab (owner): the family's baseline per function, a button to freeze the tool's expected headcount and veg/non-veg split for the caterer's first count (the pilot is judged on it), a second button to freeze a revised count later (up to the caterer's last-change date), the number for the caterer (the higher of baseline and the latest frozen number), actual counts on the day, and which number came closer. Migration 0006 (`function_numbers`).
 - Forecast, validation, token, guest-list and pilot logic in `src/lib`, with tests in `tests`.
 - Database schema in `supabase/migrations/0001_init.sql`.
 - Supabase data layer in `src/lib/store/supabase.ts`.
@@ -45,7 +45,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
 ## Connecting Supabase
 
-1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`, `0003_advisor_fixes.sql`, `0004_import_households.sql`, `0005_event_setup.sql`, `0006_pilot_numbers.sql`, `0007_slips_whatsapp_evidence.sql`, `0008_lookup_requests.sql` and `0009_roles_and_event_kind.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
+1. Create a project. In the SQL editor run `supabase/migrations/0001_init.sql`, then `0002_host_access.sql`, `0003_advisor_fixes.sql`, `0004_import_households.sql`, `0005_event_setup.sql`, `0006_pilot_numbers.sql`, `0007_slips_whatsapp_evidence.sql`, `0008_lookup_requests.sql`, `0009_roles_and_event_kind.sql` and `0010_revised_caterer_numbers.sql`. For testing only, `supabase/seed/demo_wedding.sql` loads the sample wedding; re-running it clears all replies but keeps host links.
 2. Authentication → Sign In / Providers: keep Email on, turn **off** "Allow new users to sign up". Hosts never sign themselves up.
 3. Set these in Vercel (Project → Settings → Environment Variables, Production), then redeploy:
    - `SUPABASE_URL`: the project URL.

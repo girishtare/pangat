@@ -68,6 +68,8 @@ export async function updateEvent(
     pendingShowRate: number;
     contactBride: string | null;
     contactGroom: string | null;
+    catererDueOn: string | null;
+    catererFinalOn: string | null;
   },
 ): Promise<void> {
   const { error } = await admin()
@@ -80,6 +82,8 @@ export async function updateEvent(
       pending_show_rate: fields.pendingShowRate,
       contact_phone_bride: fields.contactBride,
       contact_phone_groom: fields.contactGroom,
+      caterer_due_on: fields.catererDueOn,
+      caterer_final_on: fields.catererFinalOn,
     })
     .eq("id", eventId);
   if (error) throw new Error(`update event failed: ${error.message}`);
@@ -235,6 +239,10 @@ export async function loadNumbers(functionIds: string[]): Promise<Map<string, Fu
       predictedVeg: r.predicted_veg,
       predictedNonveg: r.predicted_nonveg,
       predictedAt: r.predicted_at,
+      revised: r.revised,
+      revisedVeg: r.revised_veg,
+      revisedNonveg: r.revised_nonveg,
+      revisedAt: r.revised_at,
       actual: r.actual,
       actualVeg: r.actual_veg,
       actualNonveg: r.actual_nonveg,

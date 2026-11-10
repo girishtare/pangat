@@ -62,7 +62,7 @@ The owner will decide after 3 January whether the product is sold on savings or 
 1. ~~Which functions get their own headcount, and which are catered?~~ Answered 10 Nov: hosts set this per event on the page (each function has its own headcount and a "food served" flag).
 2. Is the groom's side in the tool with its own login, or do they hand over one number?
 3. ~~Does each card map to one household, and is there a soft cap on heads per card?~~ Answered 10 Nov: one card = one household, with an optional soft cap (Cap column). The cap is stored but not yet enforced on the guest form.
-4. ~~How far can the caterer's count move after 15 December, and at what cost?~~ Answered 10 Nov: the caterer accepts changes until **24 December**. The pilot is still judged on the tool's number frozen on 14 December; a later update to the caterer (up to 24 Dec) is extra, and should be recorded separately if used.
+4. ~~How far can the caterer's count move after 15 December, and at what cost?~~ Answered 10 Nov: the caterer accepts changes until **24 December**. The pilot is still judged on the tool's number frozen on 14 December; a later update to the caterer (up to 24 Dec) is frozen separately as the "revised count" on the Caterer numbers tab (migration 0010); the caterer then gets the higher of baseline and the revised number. Caterer dates are Event settings.
 5. ~~Is the menu all-vegetarian? If so, drop the diet question.~~ Answered 10 Nov: both veg and non-veg are served, so the vegetarian question stays.
 
 ## v1 scope

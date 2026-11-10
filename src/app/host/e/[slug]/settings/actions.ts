@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { istInputToIso } from "@/lib/events";
+import { istInputToIso, isValidDate } from "@/lib/events";
 import { normaliseMobile } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
 import { publicBaseUrl } from "@/lib/site";
@@ -66,6 +66,10 @@ export async function saveEvent(slug: string, _prev: FormState, fd: FormData): P
   const bride = normaliseMobile(text(fd.get("contactBride")));
   const groom = normaliseMobile(text(fd.get("contactGroom")));
   if (!bride.ok || !groom.ok) return { ok: false, message: "A contact number doesn't look like a phone number." };
+  const dueOn = text(fd.get("catererDueOn")) || null;
+  const finalOn = text(fd.get("catererFinalOn")) || null;
+  if ((dueOn && !isValidDate(dueOn)) || (finalOn && !isValidDate(finalOn))) return { ok: false, message: "Choose valid caterer dates." };
+  if (dueOn && finalOn && finalOn < dueOn) return { ok: false, message: "The caterer's last-change date can't be before the first-count date." };
   await updateEvent(who.host.event.id, {
     nameEn,
     nameMr,
@@ -74,6 +78,8 @@ export async function saveEvent(slug: string, _prev: FormState, fd: FormData): P
     pendingShowRate: rates.data.pending / 100,
     contactBride: bride.value,
     contactGroom: groom.value,
+    catererDueOn: dueOn,
+    catererFinalOn: finalOn,
   });
   return done("Saved.");
 }
