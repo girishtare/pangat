@@ -9,6 +9,15 @@ export default function NewEventForm() {
   const [state, action, pending] = useActionState(createEventAction, null);
   return (
     <form action={action} className="mt-6 space-y-4">
+      <fieldset>
+        <legend className="font-semibold">Kind of event</legend>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <label className="flex items-center gap-3 rounded-xl border-2 border-kumkum bg-white px-4 py-3">
+            <input type="radio" name="kind" value="wedding" defaultChecked /> <span className="font-semibold">Wedding</span>
+          </label>
+          <div className="rounded-xl border-2 border-dashed border-gray-300 px-4 py-3 text-gray-500">More kinds coming soon</div>
+        </div>
+      </fieldset>
       <label className="block">
         <span className="font-semibold">Event name (English)</span>
         <input name="nameEn" required maxLength={120} className={input} placeholder="Riya & Arjun's Wedding" />

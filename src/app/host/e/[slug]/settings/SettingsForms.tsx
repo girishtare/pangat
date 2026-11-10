@@ -187,39 +187,40 @@ export function NewFunctionForm({ slug, households }: { slug: string; households
 
 /* ---------- Hosts ---------- */
 
-export function AddHostForm({ slug }: { slug: string }) {
+export function AddHostForm({ slug, full }: { slug: string; full: { bride: boolean; groom: boolean } }) {
   const [state, action, pending] = useActionState(inviteHost.bind(null, slug), null);
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) form.current?.reset();
   }, [state]);
+  if (full.bride && full.groom) return <p className="text-sm">Both sides have 3 co-owners. Remove one to invite someone else.</p>;
   return (
     <form ref={form} action={action} className="space-y-3 rounded-xl border-2 border-dashed border-haldi bg-white p-4">
-      <h3 className="text-lg font-semibold">Add a host</h3>
+      <h3 className="text-lg font-semibold">Invite a co-owner</h3>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="font-semibold">Email</span>
+          <span className="font-semibold">Their email</span>
           <input name="email" type="email" required autoComplete="off" className={input} />
         </label>
         <label className="block">
           <span className="font-semibold">Side</span>
-          <select name="side" required defaultValue="bride" className={input}>
-            <option value="bride">Bride&apos;s side (sees only that side)</option>
-            <option value="groom">Groom&apos;s side (sees only that side)</option>
-            <option value="both">Both sides (can also change the event)</option>
+          <select name="side" required defaultValue={full.bride ? "groom" : "bride"} className={input}>
+            <option value="bride" disabled={full.bride}>
+              Bride&apos;s side{full.bride ? " (full)" : ""}
+            </option>
+            <option value="groom" disabled={full.groom}>
+              Groom&apos;s side{full.groom ? " (full)" : ""}
+            </option>
           </select>
         </label>
-        <label className="block sm:col-span-2">
-          <span className="font-semibold">Starting password</span>
-          <input name="password" type="password" autoComplete="new-password" minLength={10} className={input} />
-          <span className="mt-1 block text-sm">
-            Only needed if they don&apos;t have a Pangat sign-in yet. At least 10 characters. Tell it to them in person or by phone.
-          </span>
-        </label>
       </div>
+      <p className="text-sm">
+        They get an email to set a password, or they can sign in with Google using this address. A co-owner sees and works on their side
+        only: guests, slips and WhatsApp.
+      </p>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={primary}>
-          {pending ? "Adding…" : "Add host"}
+          {pending ? "Inviting…" : "Invite"}
         </button>
         <Message state={state} />
       </div>
@@ -234,7 +235,7 @@ export function RemoveHostButton({ slug, userId, email }: { slug: string; userId
       action={action}
       className="flex flex-wrap items-center gap-2"
       onSubmit={(e) => {
-        if (!confirm(`Remove ${email} as a host of this event? Their sign-in stays, but they lose access to this event.`)) e.preventDefault();
+        if (!confirm(`Remove ${email} as a co-owner? Their account stays, but they lose access to this event.`)) e.preventDefault();
       }}
     >
       <button type="submit" disabled={pending} className="text-sm text-kumkum underline disabled:opacity-50">

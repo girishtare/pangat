@@ -32,7 +32,7 @@ export function EventHeader({ host, current }: { host: HostContext; current: "da
           ← All events
         </Link>
         <span>
-          {host.email} · {host.side ? scopeLabel(host.side) : "Both sides"}
+          {host.email} · {host.role === "owner" ? "Owner" : `Co-owner, ${host.side ? scopeLabel(host.side) : ""}`}
         </span>
       </div>
       <h1 className="mt-3 text-3xl font-bold text-kumkum">{host.event.name.en}</h1>

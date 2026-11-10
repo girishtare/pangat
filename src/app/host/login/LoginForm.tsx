@@ -5,7 +5,8 @@ import { signIn, type SignInState } from "../actions";
 
 const MESSAGES: Record<NonNullable<SignInState>["error"], string> = {
   invalid: "Enter your email address and password.",
-  wrong: "That email and password don't match. Check them, or ask the family member who set up your account.",
+  wrong: "That email and password don't match. Check them, or use Forgot your password.",
+  unconfirmed: "Please confirm your email first: open the link we emailed you when you signed up.",
   unavailable: "Sign-in isn't working right now. Please try again in a few minutes.",
 };
 

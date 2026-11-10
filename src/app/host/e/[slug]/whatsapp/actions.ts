@@ -23,7 +23,7 @@ export async function recordSend(slug: string, householdId: string, kind: Messag
 export async function saveText(slug: string, kind: MessageKind, _prev: FormState, fd: FormData): Promise<FormState> {
   const gate = await hostGate(slug);
   if (!gate.ok) return { ok: false, message: "Please sign in again." };
-  if (!gate.host.canManage) return { ok: false, message: "Only hosts of both sides can change the messages." };
+  if (!gate.host.canManage) return { ok: false, message: "Only the event's owner can change the messages." };
   const reset = fd.get("reset") === "1";
   const text = String(fd.get("text") ?? "").replace(/\r\n/g, "\n").trim();
   if (!reset) {

@@ -22,7 +22,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
     return (
       <main className="mx-auto max-w-3xl px-5 py-10">
         <EventHeader host={host} current="numbers" />
-        <p className="mt-6">Only hosts of both sides record the caterer numbers.</p>
+        <p className="mt-6">Only the event&apos;s owner records the caterer numbers.</p>
       </main>
     );
   }

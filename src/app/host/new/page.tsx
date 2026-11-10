@@ -22,7 +22,7 @@ export default async function NewEvent() {
         ← All events
       </Link>
       <h1 className="mt-3 text-3xl font-bold text-kumkum">Create an event</h1>
-      <p className="mt-1">You will be its host for both sides, and can add other hosts afterwards.</p>
+      <p className="mt-1">You will be its owner, and can invite up to 3 co-owners from each side afterwards.</p>
       <NewEventForm />
     </main>
   );

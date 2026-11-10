@@ -1,17 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { istInputToIso } from "@/lib/events";
 import { normaliseMobile } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
+import { publicBaseUrl } from "@/lib/site";
 import {
   addFunction,
-  addHost,
+  addCoOwner,
   deleteFunction,
   functionUsage,
   listHosts,
+  MAX_CO_OWNERS_PER_SIDE,
   removeHost,
   updateEvent,
   updateFunction,
@@ -25,7 +26,7 @@ const text = (v: FormDataEntryValue | null) => String(v ?? "").replace(/\s+/g, "
 async function manager(slug: string): Promise<{ host: HostContext } | { error: string }> {
   const gate = await hostGate(slug);
   if (!gate.ok) return { error: gate.reason === "not_host" ? "You are not a host of this event." : "Please sign in again." };
-  if (!gate.host.canManage) return { error: "Only hosts of both sides can change the event." };
+  if (!gate.host.canManage) return { error: "Only the event's owner can change this." };
   return { host: gate.host };
 }
 
@@ -114,35 +115,34 @@ export async function createFunction(slug: string, _prev: FormState, fd: FormDat
 
 /* ---------- Hosts ---------- */
 
-const hostSchema = z.object({
+const coOwnerSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
-  side: z.enum(["bride", "groom", "both"]),
-  password: z.string().max(200),
+  side: z.enum(["bride", "groom"]),
 });
 
 export async function inviteHost(slug: string, _prev: FormState, fd: FormData): Promise<FormState> {
   const who = await manager(slug);
   if ("error" in who) return { ok: false, message: who.error };
-  const parsed = hostSchema.safeParse({ email: fd.get("email"), side: fd.get("side"), password: fd.get("password") ?? "" });
+  const parsed = coOwnerSchema.safeParse({ email: fd.get("email"), side: fd.get("side") });
   if (!parsed.success) return { ok: false, message: "Enter their email address and choose a side." };
-  const { email, side, password } = parsed.data;
-  if (password && password.length < 10) return { ok: false, message: "Use a password of at least 10 characters." };
-  if (email === who.host.email.toLowerCase()) return { ok: false, message: "You are already a host of this event." };
+  const { email, side } = parsed.data;
+  if (email === who.host.email.toLowerCase()) return { ok: false, message: "You are the owner of this event already." };
 
-  const r = await addHost(who.host.event.id, email, side === "both" ? null : side, password || null);
-  if ("error" in r) {
-    const message =
-      r.error === "needs_password"
-        ? `${email} doesn't have a Pangat sign-in yet. Set a starting password for them (at least 10 characters).`
-        : r.error === "weak_password"
-          ? "That password is too weak. Use a longer one."
-          : "Adding the host failed. Please try again.";
+  const base = await publicBaseUrl();
+  const r = await addCoOwner(who.host.event.id, email, side, `${base}/host`);
+  if (!r.ok) {
+    const message = {
+      owner: "That person is the event's owner.",
+      limit: `The ${side === "bride" ? "bride's" : "groom's"} side already has ${MAX_CO_OWNERS_PER_SIDE} co-owners. Remove one first.`,
+      rate_limited: "Too many invitations just now. Please try again in an hour.",
+      invite_failed: "The invitation email couldn't be sent. Check the email address, or try again later.",
+    }[r.error];
     return { ok: false, message };
   }
   return done(
-    r.created
-      ? `Added ${email}. Give them the password in person or by phone; they sign in at /host/login.`
-      : `Added ${email}. They can sign in with their existing password.`,
+    r.invited
+      ? `Invited ${email}. They'll get an email to set a password, or they can sign in with Google using this address.`
+      : `Added ${email}. They already have a Pangat account and will see this event when they sign in.`,
   );
 }
 
@@ -151,12 +151,8 @@ export async function dropHost(slug: string, userId: string, _prev: FormState): 
   if ("error" in who) return { ok: false, message: who.error };
   const hosts = await listHosts(who.host.event.id);
   const target = hosts.find((h) => h.userId === userId);
-  if (!target) return { ok: false, message: "That host is no longer on this event." };
-  const managers = hosts.filter((h) => h.side === null);
-  if (target.side === null && managers.length <= 1) {
-    return { ok: false, message: "This is the only host of both sides. Add another before removing them." };
-  }
+  if (!target) return { ok: false, message: "That co-owner is no longer on this event." };
+  if (target.role === "owner") return { ok: false, message: "The owner can't be removed." };
   await removeHost(who.host.event.id, userId);
-  if (userId === who.host.userId) redirect("/host?all=1");
   return done(`Removed ${target.email}.`);
 }

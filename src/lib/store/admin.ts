@@ -147,45 +147,71 @@ export interface HostRow {
   userId: string;
   email: string;
   side: Side | null;
+  role: "owner" | "co_owner";
   lastSignInAt: string | null;
+  /** False until they have confirmed their email (accepted the invitation, or signed in with Google). */
+  confirmed: boolean;
 }
 
 export async function listHosts(eventId: string): Promise<HostRow[]> {
   const { data, error } = await admin().rpc("event_hosts", { p_event: eventId });
   if (error) throw new Error(`hosts lookup failed: ${error.message}`);
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  return ((data ?? []) as any[]).map((r) => ({ userId: r.user_id, email: r.email, side: r.side, lastSignInAt: r.last_sign_in_at }));
+  return ((data ?? []) as any[]).map((r) => ({
+    userId: r.user_id,
+    email: r.email,
+    side: r.side,
+    role: r.role === "owner" ? "owner" : "co_owner",
+    lastSignInAt: r.last_sign_in_at,
+    confirmed: !!r.confirmed,
+  }));
 }
 
+export const MAX_CO_OWNERS_PER_SIDE = 3;
+export const MAX_OWNED_EVENTS = 10;
+
+export async function ownedEventCount(userId: string): Promise<number> {
+  const { data, error } = await admin().rpc("owned_event_count", { p_user: userId });
+  if (error) throw new Error(`event count failed: ${error.message}`);
+  return Number(data ?? 0);
+}
+
+export type AddCoOwnerResult =
+  | { ok: true; invited: boolean }
+  | { ok: false; error: "owner" | "limit" | "invite_failed" | "rate_limited" };
+
 /**
- * Makes someone a host. Creates their sign-in account if it doesn't exist yet
- * (password required then); otherwise links the existing account.
+ * Makes someone a co-owner of one side. If they have no Pangat account yet,
+ * Supabase emails them an invitation (they can also just sign in with Google
+ * using that email). Never touches the owner's row.
  */
-export async function addHost(
-  eventId: string,
-  email: string,
-  side: Side | null,
-  password: string | null,
-): Promise<{ created: boolean } | { error: "needs_password" | "weak_password" | "failed" }> {
+export async function addCoOwner(eventId: string, email: string, side: Side, inviteRedirect: string): Promise<AddCoOwnerResult> {
   const db = admin();
   const { data: existingId, error: lookupErr } = await db.rpc("user_id_by_email", { p_email: email });
   if (lookupErr) throw new Error(`user lookup failed: ${lookupErr.message}`);
 
   let userId = existingId as string | null;
-  let created = false;
+  let invited = false;
   if (!userId) {
-    if (!password) return { error: "needs_password" };
-    const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true });
+    const { data, error } = await db.auth.admin.inviteUserByEmail(email, { redirectTo: inviteRedirect });
     if (error) {
-      console.error("createUser failed", error.status, error.code);
-      return { error: error.code === "weak_password" ? "weak_password" : "failed" };
+      console.error("invite failed", error.status, error.code);
+      return { ok: false, error: error.code === "over_email_send_rate_limit" ? "rate_limited" : "invite_failed" };
     }
     userId = data.user.id;
-    created = true;
+    invited = true;
   }
-  const { error } = await db.from("hosts").upsert({ event_id: eventId, user_id: userId, side }, { onConflict: "event_id,user_id" });
-  if (error) throw new Error(`add host failed: ${error.message}`);
-  return { created };
+
+  const { data: current } = await db.from("hosts").select("role").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
+  if (current?.role === "owner") return { ok: false, error: "owner" };
+  const { error } = current
+    ? await db.from("hosts").update({ side }).eq("event_id", eventId).eq("user_id", userId)
+    : await db.from("hosts").insert({ event_id: eventId, user_id: userId, side, role: "co_owner" });
+  if (error) {
+    if (error.code === "23514") return { ok: false, error: "limit" }; // check_violation from the 3-per-side trigger
+    throw new Error(`add co-owner failed: ${error.message}`);
+  }
+  return { ok: true, invited };
 }
 
 export async function removeHost(eventId: string, userId: string): Promise<void> {

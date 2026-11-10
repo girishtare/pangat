@@ -54,7 +54,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
                 <div className="text-lg font-semibold text-kumkum">{e.name.en}</div>
                 <div className="text-sm">
                   {e.firstStartsAt ? formatDay(e.firstStartsAt, "en") : "No functions yet"} ·{" "}
-                  {e.side ? scopeLabel(e.side) : "Both sides"}
+                  {e.role === "owner" ? "Owner" : `Co-owner, ${e.side ? scopeLabel(e.side) : ""}`}
                 </div>
               </Link>
             </li>
