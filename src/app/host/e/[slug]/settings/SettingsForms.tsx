@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { Plus, Save, Send, Trash } from "lucide-react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
 import { Alert } from "../../../../ui/kit";
 import { createFunction, dropHost, inviteHost, removeFunction, saveEvent, saveFunction, type FormState } from "./actions";
 
@@ -214,21 +214,62 @@ export function NewFunctionForm({ slug, households }: { slug: string; households
 
 /* ---------- Co-owners ---------- */
 
-export function AddHostForm({ slug, full }: { slug: string; full: { bride: boolean; groom: boolean } }) {
+/** "Invite co-owner" button; the form opens in a dialog. */
+export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boolean; groom: boolean } }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [formKey, setFormKey] = useState(0);
+  const bothFull = full.bride && full.groom;
+  const open = () => {
+    setFormKey((k) => k + 1); // a fresh, empty form every time
+    dialog.current?.showModal();
+  };
+  return (
+    <>
+      <button
+        type="button"
+        onClick={open}
+        disabled={bothFull}
+        title={bothFull ? "Both sides have 3 co-owners. Remove one to invite someone else." : undefined}
+        className="btn btn-primary btn-sm"
+      >
+        <UserPlus className="h-5 w-5" aria-hidden="true" />
+        Invite co-owner
+      </button>
+      <dialog
+        ref={dialog}
+        aria-labelledby="invite-title"
+        className="card m-auto w-[calc(100%-2rem)] max-w-lg p-0 backdrop:bg-ink/50 open:flex open:flex-col"
+        onClick={(e) => {
+          if (e.target === dialog.current) dialog.current?.close(); // click on the backdrop
+        }}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-line bg-paper-deep/70 px-5 py-4">
+          <h3 id="invite-title" className="font-display text-xl font-bold text-kumkum">
+            Invite a co-owner
+          </h3>
+          <button type="button" onClick={() => dialog.current?.close()} className="btn btn-quiet btn-sm" aria-label="Close">
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="p-5">
+          <InviteForm key={formKey} slug={slug} full={full} onDone={() => dialog.current?.close()} />
+        </div>
+      </dialog>
+    </>
+  );
+}
+
+function InviteForm({ slug, full, onDone }: { slug: string; full: { bride: boolean; groom: boolean }; onDone: () => void }) {
   const [state, action, pending] = useActionState(inviteHost.bind(null, slug), null);
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) form.current?.reset();
   }, [state]);
-  if (full.bride && full.groom) {
-    return <Alert tone="info">Both sides have 3 co-owners. Remove one to invite someone else.</Alert>;
-  }
   return (
-    <form ref={form} action={action} className="space-y-4 rounded-xl border border-line bg-paper-deep/40 p-4">
-      <h3 className="font-display text-lg font-bold text-kumkum">Invite a co-owner</h3>
+    <form ref={form} action={action} className="space-y-4">
       <label className="block">
         <span className="label">Their email</span>
-        <input name="email" type="email" required autoComplete="off" className="input" placeholder="name@example.com" />
+        <input name="email" type="email" required autoComplete="off" autoFocus className="input" placeholder="name@example.com" />
       </label>
       <fieldset>
         <legend className="label">Side</legend>
@@ -247,10 +288,15 @@ export function AddHostForm({ slug, full }: { slug: string; full: { bride: boole
         They get an email to set a password, or can sign in with Google using this address. A co-owner sees and works on their side only.
       </p>
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary w-full">
-        <Send className="h-5 w-5" aria-hidden="true" />
-        {pending ? "Inviting…" : "Invite co-owner"}
-      </button>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" onClick={onDone} className="btn btn-secondary">
+          {state?.ok ? "Done" : "Cancel"}
+        </button>
+        <button type="submit" disabled={pending} className="btn btn-primary">
+          <Send className="h-5 w-5" aria-hidden="true" />
+          {pending ? "Inviting…" : "Send invitation"}
+        </button>
+      </div>
     </form>
   );
 }

@@ -6,7 +6,7 @@ import { dashboardViewStats, functionUsage, listHosts, MAX_CO_OWNERS_PER_SIDE } 
 import { loadHouseholdKeys } from "@/lib/store/supabase";
 import { Alert, PageHeader, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
-import { AddHostForm, EventForm, FunctionEditor, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
+import { EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +104,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
           icon={Users}
           title="Owner and co-owners"
           subtitle={`You are the owner: the only one who changes these settings and the caterer numbers. Invite up to ${MAX_CO_OWNERS_PER_SIDE} co-owners per side; each sees their own side's guests only.`}
+          actions={<InviteCoOwner slug={slug} full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }} />}
         >
           <div className="mb-4 flex flex-wrap gap-2">
             <span className="badge badge-bride text-sm">
@@ -113,7 +114,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
               Groom&apos;s side: {coOwners.groom} of {MAX_CO_OWNERS_PER_SIDE}
             </span>
           </div>
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div>
             <div>
               <div className="hidden lg:block">
                 <table className="table-p">
@@ -131,7 +132,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
                   <tbody>
                     {hosts.map((h) => (
                       <tr key={h.userId}>
-                        <td className="break-all">
+                        <td className="min-w-[16rem] [overflow-wrap:anywhere]">
                           {h.email}
                           {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
                           {!h.confirmed && <div className="text-xs text-haldi-deep">Invitation not accepted yet</div>}
@@ -148,7 +149,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
               <ul className="space-y-3 lg:hidden">
                 {hosts.map((h) => (
                   <li key={h.userId} className="rounded-xl border border-line p-3">
-                    <p className="break-all font-semibold">
+                    <p className="font-semibold [overflow-wrap:anywhere]">
                       {h.email}
                       {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
                     </p>
@@ -166,7 +167,6 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
                 ))}
               </ul>
             </div>
-            <AddHostForm slug={slug} full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }} />
           </div>
         </Section>
       </div>

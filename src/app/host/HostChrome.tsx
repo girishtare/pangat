@@ -90,7 +90,7 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
         </nav>
         <div className="mt-auto pt-6">
           <Divider className="mb-4" />
-          <p className="break-all px-2 text-xs text-ink-soft">{host.email}</p>
+          <p className="px-2 text-xs text-ink-soft [overflow-wrap:anywhere]">{host.email}</p>
           <p className="px-2 text-xs font-semibold text-ink">{roleLabel(host)}</p>
           <div className="mt-2 flex flex-wrap items-center">
             <Link href="/host?all=1" className="btn btn-quiet btn-sm">
