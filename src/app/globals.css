@@ -1,43 +1,66 @@
 @import "tailwindcss";
 
-/* Pangat design tokens: paper cream, kumkum red, haldi turmeric, ink brown. */
+/*
+ * Pangat design tokens. One palette for the whole app: maroon, sand, cream,
+ * dusty blue. The values live once, in :root; the Tailwind names below (old
+ * and new) all point at them, so `kumkum` and `maroon` are the same colour.
+ * Never use `haldi` / `sky` (#aec4d4) for text: about 1.5:1 on cream. Its
+ * text-safe partner is `haldi-deep` / `sky-ink` (#4f6b80).
+ */
+:root {
+  --p-maroon: #790d16;
+  --p-maroon-dark: #5c0a11;
+  --p-maroon-soft: #f2e4d8;
+  --p-cream: #f5efe1;
+  --p-track: #ebe1cb;
+  --p-card: #fffcf5;
+  --p-ink: #2e1a1c;
+  --p-ink-soft: #5e4446;
+  --p-sand: #e5d3af;
+  --p-sand-soft: #f2e8d2;
+  --p-sand-deep: #b59a64;
+  --p-sky: #aec4d4;
+  --p-sky-ink: #4f6b80;
+  --p-sky-soft: #dfe8ef;
+}
+
 @theme inline {
-  --color-kumkum: #8c1c13;
-  --color-kumkum-dark: #6e140d;
-  --color-kumkum-soft: #f8e6e1;
-  --color-haldi: #e3a008;
-  --color-haldi-deep: #8a5a00; /* haldi for text: 6:1 on cream */
-  --color-haldi-soft: #fbeecb;
-  --color-paper: #fdf8ef;
-  --color-paper-deep: #f6ecda;
-  --color-card: #fffdf8;
-  --color-ink: #2b1d16;
-  --color-ink-soft: #5c4637;
-  --color-line: #e8d6b5;
+  --color-kumkum: var(--p-maroon);
+  --color-kumkum-dark: var(--p-maroon-dark);
+  --color-kumkum-soft: var(--p-maroon-soft);
+  --color-haldi: var(--p-sky); /* fills, bars and borders only */
+  --color-haldi-deep: var(--p-sky-ink); /* the blue for text and icons */
+  --color-haldi-soft: var(--p-sky-soft);
+  --color-paper: var(--p-cream);
+  --color-paper-deep: var(--p-track);
+  --color-card: var(--p-card);
+  --color-ink: var(--p-ink);
+  --color-ink-soft: var(--p-ink-soft);
+  --color-line: var(--p-sand);
+  --color-sand: var(--p-sand); /* panels */
+  --color-sand-soft: var(--p-sand-soft); /* highlighted table column */
+  --color-sand-deep: var(--p-sand-deep); /* the family's-guess bar */
   --color-leaf: #1d6b3f;
   --color-leaf-soft: #e2f2e7;
   --color-whatsapp: #128c4a;
 
-  /* Palette E: the public landing page only, for now. Never use sky for text
-     (about 1.5:1 on cream); sky-ink is the text-safe blue. */
-  --color-maroon: #790d16;
-  --color-maroon-dark: #5c0a11;
-  --color-sand: #e5d3af;
-  --color-cream: #f5efe1;
-  --color-sky: #aec4d4;
-  --color-sky-ink: #4f6b80;
-  --color-ink-e: #2e1a1c;
-  --color-ink-e-soft: #5e4446;
-  --color-card-e: #fffcf5;
-  --color-track: #ebe1cb;
+  /* Aliases used by the landing and guest pages. */
+  --color-maroon: var(--p-maroon);
+  --color-maroon-dark: var(--p-maroon-dark);
+  --color-cream: var(--p-cream);
+  --color-sky: var(--p-sky);
+  --color-sky-ink: var(--p-sky-ink);
+  --color-ink-e: var(--p-ink);
+  --color-ink-e-soft: var(--p-ink-soft);
+  --color-card-e: var(--p-card);
+  --color-track: var(--p-track);
 
-  /* Palette E fonts; the variables are set by src/app/fonts.ts on the public pages.
-     Rozha One has one weight: pair font-heading-e with font-normal, 20 px and up. */
-  --font-heading-e: var(--font-rozha-one), var(--font-noto-serif-deva), Georgia, serif;
-  --font-body-e: var(--font-mukta-sans), var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
-
-  --font-sans: var(--font-noto-sans), var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
-  --font-display: var(--font-noto-serif), var(--font-noto-serif-deva), "Nirmala UI", Georgia, serif;
+  /* Fonts (src/app/fonts.ts, set on <html>): Rozha One for display, weight
+     400 only and 20 px and up; Mukta for text. Both cover Devanagari. */
+  --font-sans: var(--font-mukta-sans), "Nirmala UI", system-ui, sans-serif;
+  --font-display: var(--font-rozha-one), "Nirmala UI", Georgia, serif;
+  --font-body-e: var(--font-mukta-sans), "Nirmala UI", system-ui, sans-serif; /* = font-sans */
+  --font-heading-e: var(--font-rozha-one), "Nirmala UI", Georgia, serif; /* = font-display */
 }
 
 html {
@@ -47,6 +70,7 @@ html {
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+  font-size: 1.0625rem; /* 17 px: Mukta runs small */
   line-height: 1.55;
 }
 
@@ -67,24 +91,26 @@ h3,
 /* Pop-ups: dim the page behind. A plain colour, because ::backdrop doesn't
    inherit the theme variables in every browser. */
 dialog::backdrop {
-  background: rgb(43 29 22 / 0.55);
+  background: rgb(46 26 28 / 0.55);
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-haldi);
+  outline: 3px solid var(--color-haldi-deep);
   outline-offset: 2px;
 }
 
 @layer components {
   .font-display {
     font-family: var(--font-display);
+    font-weight: 400;
+    font-synthesis-weight: none; /* Rozha has no bold; never smear a fake one */
   }
 
   .card {
     background: var(--color-card);
     border: 1px solid var(--color-line);
     border-radius: 1rem;
-    box-shadow: 0 1px 2px rgb(43 29 22 / 0.05), 0 4px 16px -8px rgb(140 28 19 / 0.08);
+    box-shadow: 0 1px 2px rgb(46 26 28 / 0.05), 0 4px 16px -8px rgb(121 13 22 / 0.08);
   }
 
   .btn {
@@ -129,7 +155,7 @@ dialog::backdrop {
     color: var(--color-ink);
   }
   .btn-haldi:hover:not(:disabled) {
-    background: #cf9106;
+    background: #98b2c5;
   }
   .btn-whatsapp {
     background: var(--color-whatsapp);
@@ -165,7 +191,7 @@ dialog::backdrop {
   .input:focus {
     border-color: var(--color-kumkum);
     outline: none;
-    box-shadow: 0 0 0 3px rgb(227 160 8 / 0.35);
+    box-shadow: 0 0 0 4px rgb(174 196 212 / 0.6);
   }
   textarea.input {
     min-height: 8rem;
@@ -224,7 +250,7 @@ dialog::backdrop {
   }
   .alert-error {
     background: var(--color-kumkum-soft);
-    border-color: #efc8c0;
+    border-color: #e3c3b0;
     color: var(--color-kumkum-dark);
   }
   .alert-success {
@@ -234,8 +260,8 @@ dialog::backdrop {
   }
   .alert-warn {
     background: var(--color-haldi-soft);
-    border-color: #f1d891;
-    color: #5f3e00;
+    border-color: var(--color-haldi);
+    color: var(--color-ink);
   }
   .alert-info {
     background: var(--color-paper-deep);
@@ -262,7 +288,7 @@ dialog::backdrop {
     vertical-align: top;
   }
   .table-p tbody tr:hover {
-    background: rgb(251 238 203 / 0.35);
+    background: rgb(242 232 210 / 0.55);
   }
 
   /* Choice pills (radio and checkbox look-alikes with big targets). */
@@ -292,7 +318,7 @@ dialog::backdrop {
     pointer-events: none;
   }
   .choice:has(input:focus-visible) {
-    outline: 3px solid var(--color-haldi);
+    outline: 3px solid var(--color-haldi-deep);
     outline-offset: 2px;
   }
   .choice:has(input:disabled) {

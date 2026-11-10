@@ -125,7 +125,7 @@ export default async function WhatsApp({
 
       <section className="mt-8" aria-labelledby="send-list">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 id="send-list" className="font-display text-2xl font-bold text-kumkum">
+          <h2 id="send-list" className="font-display text-2xl text-kumkum">
             {listTitle} <span className="text-ink-soft">({rows.length})</span>
           </h2>
           <Link href={`/host/e/${slug}/whatsapp?kind=${kind}&show=${show === "all" ? "todo" : "all"}`} className="btn btn-quiet btn-sm">
@@ -203,7 +203,7 @@ export default async function WhatsApp({
                 return (
                   <li key={g.id} className="card p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <Link href={`/host/e/${slug}/guests/${g.id}`} className="wrap-names min-w-0 font-display text-lg font-bold text-kumkum">
+                      <Link href={`/host/e/${slug}/guests/${g.id}`} className="wrap-names min-w-0 font-display text-lg text-kumkum">
                         {g.nameEn}
                       </Link>
                       <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />

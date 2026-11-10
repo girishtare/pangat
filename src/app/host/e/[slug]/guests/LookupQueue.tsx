@@ -98,7 +98,7 @@ export default function LookupQueue({ slug, items }: { slug: string; items: Look
   if (items.length === 0) return null;
   return (
     <section className="card mt-6 border-kumkum/30 bg-kumkum-soft/50 p-4 sm:p-5">
-      <h2 className="flex items-center gap-2 font-display text-xl font-bold text-kumkum">
+      <h2 className="flex items-center gap-2 font-display text-xl text-kumkum">
         <Link2Off className="h-6 w-6" aria-hidden="true" />
         Wrong-link requests ({items.length})
       </h2>
