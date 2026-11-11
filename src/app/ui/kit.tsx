@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { CircleCheck, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import type { Side } from "@/lib/types";
@@ -64,6 +65,48 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
       </div>
     </header>
+  );
+}
+
+/**
+ * Tabs inside a page, as plain links (`?tab=…`), so each tab is a normal page
+ * load that works without JavaScript and can be bookmarked. On phones the row
+ * scrolls sideways rather than wrapping.
+ */
+export function PageTabs({
+  label,
+  tabs,
+  current,
+}: {
+  label: string;
+  tabs: { key: string; label: string; href: string; icon?: LucideIcon; count?: number }[];
+  current: string;
+}) {
+  return (
+    <nav aria-label={label} className="-mx-4 mb-5 overflow-x-auto px-4 sm:mx-0 sm:px-0 lg:mb-6">
+      <ul className="flex min-w-max gap-1 border-b-2 border-line">
+        {tabs.map(({ key, label: text, href, icon: Icon, count }) => {
+          const on = key === current;
+          return (
+            <li key={key}>
+              <Link
+                href={href}
+                aria-current={on ? "page" : undefined}
+                className={`-mb-0.5 flex min-h-12 items-center gap-2 rounded-t-xl border-b-[3px] px-4 font-bold transition-colors ${
+                  on ? "border-kumkum text-kumkum" : "border-transparent text-ink-soft hover:bg-paper-deep/60 hover:text-ink"
+                }`}
+              >
+                {Icon && <Icon className="h-5 w-5" aria-hidden="true" />}
+                {text}
+                {count !== undefined && (
+                  <span className={`rounded-full px-2 text-sm ${on ? "bg-kumkum text-white" : "bg-paper-deep text-ink"}`}>{count}</span>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
 

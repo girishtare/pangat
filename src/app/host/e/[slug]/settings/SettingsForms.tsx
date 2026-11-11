@@ -294,8 +294,8 @@ export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boo
           if (e.target === dialog.current) dialog.current?.close(); // click on the backdrop
         }}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-line bg-paper-deep/70 px-5 py-4">
-          <h3 id="invite-title" className="font-display text-xl text-kumkum">
+        <div className="flex items-center justify-between gap-3 border-b border-line bg-paper-deep px-5 py-4">
+          <h3 id="invite-title" className="font-display text-[1.375rem] leading-tight text-kumkum">
             Invite a co-owner
           </h3>
           <button type="button" onClick={() => dialog.current?.close()} className="btn btn-quiet btn-sm" aria-label="Close">

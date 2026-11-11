@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, Pencil, Users } from "lucide-react";
+import { ClipboardList, ListTodo, Pencil, Users } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
 import { displayPhone, whatsappLink } from "@/lib/outreach";
@@ -9,7 +9,7 @@ import { isOverdue, sortTasks, taskMessage, todayIst, type Helper, type Task } f
 import type { Side as SideType } from "@/lib/types";
 import { shortDay } from "@/lib/when";
 import PopupButton from "../../../../ui/PopupButton";
-import { EmptyState, PageHeader, SideBadge, WhatsAppIcon } from "../../../../ui/kit";
+import { EmptyState, PageHeader, PageTabs, SideBadge, WhatsAppIcon } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { DeleteButton, PersonForm, StatusSwitch, TaskForm } from "./TodoForms";
 
@@ -22,7 +22,7 @@ export default async function Todo({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ show?: string; side?: string; person?: string }>;
+  searchParams: Promise<{ show?: string; side?: string; person?: string; tab?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -32,6 +32,7 @@ export default async function Todo({
 
   // Read as the host: a co-owner only gets their own side's people and tasks.
   const [helpers, allTasks] = await Promise.all([listHelpers(host.client, host.event.id), listTasks(host.client, host.event.id)]);
+  const tab: "tasks" | "people" = sp.tab === "people" ? "people" : "tasks";
   const show: Show = sp.show === "done" || sp.show === "all" ? sp.show : "open";
   const side: SideType | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
   const person = helpers.find((h) => h.id === sp.person) ?? null;
@@ -107,6 +108,17 @@ export default async function Todo({
         }
       />
 
+      <PageTabs
+        label="To-do"
+        current={tab}
+        tabs={[
+          { key: "tasks", label: "Tasks", href: base, icon: ListTodo, count: allTasks.filter((t) => t.status !== "done").length },
+          { key: "people", label: "People helping", href: `${base}?tab=people`, icon: Users, count: helpers.length },
+        ]}
+      />
+
+      {tab === "tasks" && (
+        <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Count value={counts.todo} label="to do" />
         <Count value={counts.doing} label="in progress" />
@@ -114,7 +126,7 @@ export default async function Todo({
         <Count value={counts.done} label="done" />
       </div>
 
-      <section className="mt-8" aria-labelledby="tasks-title">
+      <section className="mt-6" aria-labelledby="tasks-title">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h2 id="tasks-title" className="font-display text-[1.625rem] text-kumkum">
             Tasks{person ? ` · ${person.fullName}` : ""}
@@ -278,14 +290,17 @@ export default async function Todo({
           </>
         )}
       </section>
+        </>
+      )}
 
-      <section className="mt-10" aria-labelledby="people-title">
-        <h2 id="people-title" className="font-display text-[1.625rem] text-kumkum">
+      {tab === "people" && (
+      <section aria-labelledby="people-title">
+        <h2 id="people-title" className="sr-only">
           People helping
         </h2>
         <p className="text-ink-soft">
           The owner and co-owners are here by default; add relatives and friends who take on tasks. They don&apos;t sign in; the WhatsApp
-          button sends them their task.
+          button sends them their task. An owner or co-owner leaves this list only when removed in Event settings.
           {host.side ? ` You see the ${scopeLabel(host.side).toLowerCase()} only.` : ""}
         </p>
         {helpers.length === 0 ? (
@@ -329,7 +344,11 @@ export default async function Todo({
                             <PersonForm slug={slug} hostSide={host.side} person={h} />
                           </PopupButton>
                         )}
-                        {!h.hostUserId && <DeleteButton slug={slug} id={h.id} kind="person" name={h.fullName} />}
+                        {h.hostUserId ? (
+                          <span className="inline-block w-11" aria-hidden="true" />
+                        ) : (
+                          <DeleteButton slug={slug} id={h.id} kind="person" name={h.fullName} />
+                        )}
                       </span>
                     </td>
                   </tr>
@@ -339,6 +358,7 @@ export default async function Todo({
           </div>
         )}
       </section>
+      )}
     </EventShell>
   );
 }

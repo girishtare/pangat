@@ -35,7 +35,8 @@ export default function Dashboard({
 
   return (
     <div>
-      <div className="grid gap-3.5 lg:grid-cols-[repeat(auto-fit,minmax(270px,1fr))] lg:gap-[18px]">
+      {/* Three cards a row on laptops; a fourth function or more wraps to the next row. */}
+      <div className="grid gap-3.5 md:grid-cols-2 lg:gap-[18px] xl:grid-cols-3">
         {per.map(({ fn, f }) => (
           <FunctionCard key={fn.id} fn={fn} f={f} />
         ))}
@@ -121,9 +122,10 @@ function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
   const share = (v: number) => (f.invitedHouseholds ? `${(v / f.invitedHouseholds) * 100}%` : "0%");
   return (
     <section className="rounded-[18px] border border-line bg-card p-[18px] lg:rounded-[20px] lg:p-[22px]">
-      <div className="flex items-baseline justify-between gap-2.5">
-        <h2 className="wrap-names min-w-0 font-display text-2xl text-ink lg:text-[1.625rem]">{fn.name.en}</h2>
-        <span className="shrink-0 text-sm text-ink-soft">{shortWhen(fn.startsAt)}</span>
+      {/* A long name wraps whole words; the date drops under it rather than splitting the name. */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
+        <h2 className="wrap-names font-display text-2xl text-ink lg:text-[1.625rem]">{fn.name.en}</h2>
+        <span className="text-sm text-ink-soft">{shortWhen(fn.startsAt)}</span>
       </div>
 
       {/* Expected on the left, Confirmed on the right in the same style; veg and non-veg belong to Confirmed. */}
