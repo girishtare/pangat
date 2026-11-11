@@ -115,7 +115,7 @@ export function normaliseMobile(raw: string): { ok: true; value: string | null }
   if (s === "") return { ok: true, value: null };
   if (s.startsWith("00")) s = "+" + s.slice(2);
   if (s.startsWith("+")) {
-    if (!/^\+\d{8,15}$/.test(s)) return { ok: false };
+    if (!/^\+[1-9]\d{7,14}$/.test(s)) return { ok: false }; // no country code starts with 0
     if (s.startsWith("+91")) return /^\+91[6-9]\d{9}$/.test(s) ? { ok: true, value: s } : { ok: false };
     return { ok: true, value: s };
   }

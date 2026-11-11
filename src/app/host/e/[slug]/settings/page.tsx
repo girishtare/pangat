@@ -6,7 +6,7 @@ import { loadHouseholdKeys } from "@/lib/store/supabase";
 import { longStamp, shortWhen } from "@/lib/when";
 import { Alert, PageHeader, PageTabs, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
-import { AddFunctionButton, EventForm, FunctionEditor, HostNameForm, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
+import { AddFunctionButton, EditHostForm, EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
 import PopupButton from "../../../../ui/PopupButton";
 import { CalendarDays, Pencil, SlidersHorizontal, Users } from "lucide-react";
 
@@ -45,20 +45,45 @@ export default async function EventSettings({
     loadHouseholdKeys(host.event.id),
     dashboardViewStats(host.event.id),
   ]);
+  // A co-owner of both sides counts on each side's limit.
   const coOwners = {
-    bride: hosts.filter((h) => h.role === "co_owner" && h.side === "bride").length,
-    groom: hosts.filter((h) => h.role === "co_owner" && h.side === "groom").length,
+    bride: hosts.filter((h) => h.role === "co_owner" && h.side !== "groom").length,
+    groom: hosts.filter((h) => h.role === "co_owner" && h.side !== "bride").length,
   };
+  const full = { bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE };
   const role = (h: (typeof hosts)[number]) =>
-    h.role === "owner" ? <span className="font-bold">Owner</span> : <span className={`badge ${h.side === "groom" ? "badge-groom" : "badge-bride"}`}>Co-owner · {h.side === "groom" ? "Groom" : "Bride"}</span>;
-  const nameButton = (h: (typeof hosts)[number]) => (
+    h.role === "owner" ? (
+      <span className="font-bold">Owner</span>
+    ) : (
+      <span className={`badge ${h.side === "groom" ? "badge-groom" : h.side === "bride" ? "badge-bride" : "badge-no"}`}>
+        Co-owner · {h.side === "groom" ? "Groom" : h.side === "bride" ? "Bride" : "Both"}
+      </span>
+    );
+  const editButton = (h: (typeof hosts)[number]) => (
     <PopupButton
-      label={<Pencil className="h-4 w-4" aria-label={`Edit the name of ${h.displayName}`} />}
-      title={h.displayName !== h.email ? "Edit name" : "Add name"}
+      label={<Pencil className="h-4 w-4" aria-label={`Edit ${h.displayName}`} />}
+      title={h.role === "owner" ? "Edit owner" : "Edit co-owner"}
       className="btn btn-quiet btn-sm"
     >
-      <HostNameForm slug={slug} userId={h.userId} fullName={h.displayName !== h.email ? h.displayName : null} />
+      <EditHostForm
+        slug={slug}
+        full={full}
+        host={{
+          userId: h.userId,
+          fullName: h.fullName ?? (h.displayName !== h.email ? h.displayName : null),
+          email: h.email,
+          phone: h.phone ? displayPhone(h.phone) : null,
+          side: h.side,
+          role: h.role,
+        }}
+      />
     </PopupButton>
+  );
+  const name = (h: (typeof hosts)[number]) => (
+    <>
+      <span className={h.displayName !== h.email ? "font-semibold" : "text-ink-soft"}>{h.displayName !== h.email ? h.displayName : "No name yet"}</span>
+      {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
+    </>
   );
   const signedIn = (h: (typeof hosts)[number]) => (!h.confirmed ? "Invited, not signed in yet" : h.lastSignInAt ? longStamp(h.lastSignInAt) : "Never");
   const viewText = (userId: string) => {
@@ -130,15 +155,15 @@ export default async function EventSettings({
         <Section
           id="people"
           title="Owner and co-owners"
-          subtitle={`Up to ${MAX_CO_OWNERS_PER_SIDE} helpers on each side (bride's side ${coOwners.bride} of ${MAX_CO_OWNERS_PER_SIDE}, groom's side ${coOwners.groom} of ${MAX_CO_OWNERS_PER_SIDE}). A co-owner sees and works on their own side only; only you change these settings and the caterer numbers.`}
-          actions={<InviteCoOwner slug={slug} full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }} />}
+          subtitle={`Up to ${MAX_CO_OWNERS_PER_SIDE} co-owners on each side (bride's side ${coOwners.bride} of ${MAX_CO_OWNERS_PER_SIDE}, groom's side ${coOwners.groom} of ${MAX_CO_OWNERS_PER_SIDE}; a co-owner of both sides counts on each). A co-owner works on their side, or both; only you change these settings and the caterer numbers.`}
+          actions={<InviteCoOwner slug={slug} full={full} />}
         >
           <div className="relative hidden overflow-x-auto rounded-[14px] border border-line lg:block">
-            <table className="table-p min-w-[860px]">
+            <table className="table-p min-w-[900px]">
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Email</th>
+                  <th>Email and mobile</th>
                   <th>Role</th>
                   <th>Last signed in</th>
                   <th>Dashboard visits</th>
@@ -150,18 +175,25 @@ export default async function EventSettings({
               <tbody>
                 {hosts.map((h) => (
                   <tr key={h.userId}>
+                    <td className="whitespace-nowrap">{name(h)}</td>
                     <td className="whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1">
-                        <span className={h.displayName !== h.email ? "font-semibold" : "text-ink-soft"}>{h.displayName !== h.email ? h.displayName : "Add name"}</span>
-                        {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
-                        {nameButton(h)}
-                      </span>
+                      {h.email}
+                      <div className="text-sm text-ink-soft">{h.phone ? displayPhone(h.phone) : "No mobile yet"}</div>
                     </td>
-                    <td className="whitespace-nowrap">{h.email}</td>
                     <td>{role(h)}</td>
                     <td>{signedIn(h)}</td>
                     <td>{viewText(h.userId)}</td>
-                    <td>{h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}</td>
+                    <td className="whitespace-nowrap">
+                      {/* Pencil first, then Remove (co-owners only); the owner's pencil sits in the same column. */}
+                      <span className="inline-flex items-center gap-1">
+                        {editButton(h)}
+                        {h.role !== "owner" ? (
+                          <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />
+                        ) : (
+                          <span className="inline-block w-[4.75rem]" aria-hidden="true" />
+                        )}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -170,21 +202,17 @@ export default async function EventSettings({
           <ul className="space-y-3 lg:hidden">
             {hosts.map((h) => (
               <li key={h.userId} className="rounded-[14px] border border-line p-3.5">
-                <p className="flex flex-wrap items-center gap-1 font-semibold">
-                  {h.displayName !== h.email ? h.displayName : <span className="font-normal text-ink-soft">Add name</span>}
-                  {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
-                  {nameButton(h)}
-                </p>
+                <p>{name(h)}</p>
                 <p className="text-sm [overflow-wrap:anywhere]">{h.email}</p>
+                <p className="text-sm text-ink-soft">{h.phone ? displayPhone(h.phone) : "No mobile yet"}</p>
                 <div className="mt-1">{role(h)}</div>
                 <p className="mt-1 text-sm text-ink-soft">
                   Last signed in: {signedIn(h)} · Dashboard visits: {viewText(h.userId)}
                 </p>
-                {h.role !== "owner" && (
-                  <div className="mt-2">
-                    <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />
-                  </div>
-                )}
+                <div className="mt-2 flex flex-wrap items-center gap-1">
+                  {editButton(h)}
+                  {h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}
+                </div>
               </li>
             ))}
           </ul>
