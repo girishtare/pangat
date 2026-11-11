@@ -56,10 +56,9 @@
   --color-track: var(--p-track);
 
   /* Fonts (src/app/fonts.ts, set on <html>), the same on every page:
-     Noto Sans for English text, Noto Sans Devanagari for Marathi, Playfair
-     Display for large English headings. Noto Sans and Playfair have no
-     Devanagari, so Marathi letters (in text and in headings) fall through to
-     Noto Sans Devanagari, the next font in each list. */
+     Noto Sans for text (Google's Noto Sans includes Devanagari, so Marathi in
+     text comes from it), Playfair Display for large English headings with
+     Noto Sans Devanagari behind it for Marathi in headings. */
   --font-sans: var(--font-noto-sans), var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
   --font-display: var(--font-playfair-display), var(--font-noto-sans-deva), "Nirmala UI", Georgia, serif;
   /* Older names used by the landing and guest pages: the same two stacks. */
