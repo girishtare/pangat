@@ -45,3 +45,9 @@ export function slipDate(iso: string): { en: string; mr: string } {
     mr[p.type] = p.value;
   return { en: `${d}${suffix} ${en.month} ${en.year}`, mr: `${mr.day} ${mr.month} ${mr.year}` };
 }
+
+/** "10 Feb 2027", for event dates in lists. */
+export function dayMonthYear(iso: string): string {
+  const p = parts(iso, { day: "numeric", month: "short", year: "numeric" });
+  return `${p.day} ${p.month} ${p.year}`;
+}

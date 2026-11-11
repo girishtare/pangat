@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { listMyEvents, signedInUser } from "@/lib/host";
-import { formatDay } from "@/lib/i18n";
 import { scopeLabel } from "@/lib/sides";
 import { getStore } from "@/lib/store";
+import { dayMonthYear } from "@/lib/when";
+import { ArrowRight, CalendarDays, Plus } from "lucide-react";
+import { Divider, Mark } from "../ui/kit";
 import Dashboard from "./Dashboard";
 import { SignOutButton } from "./HostChrome";
 
@@ -37,33 +39,119 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
   // Most hosts have one event: take them straight to it.
   if (events.length === 1 && !all) redirect(`/host/e/${events[0].slug}`);
 
+  const create = (
+    <Link href="/host/new" className="btn btn-haldi min-h-12 w-full px-6 text-lg sm:w-auto">
+      <Plus className="h-5 w-5" aria-hidden="true" />
+      Create an event
+    </Link>
+  );
+
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm">{who.email}</span>
-        <SignOutButton />
-      </div>
-      <h1 className="mt-3 text-3xl font-bold text-kumkum">Your events</h1>
-      {events.length === 0 ? (
-        <p className="mt-3">You are not a host of any event yet. Create one, or ask the person running an event to add you.</p>
-      ) : (
-        <ul className="mt-4 space-y-3">
-          {events.map((e) => (
-            <li key={e.slug}>
-              <Link href={`/host/e/${e.slug}`} className="block rounded-xl border border-haldi/60 bg-white p-4 hover:border-kumkum">
-                <div className="text-lg font-semibold text-kumkum">{e.name.en}</div>
-                <div className="text-sm">
-                  {e.firstStartsAt ? formatDay(e.firstStartsAt, "en") : "No functions yet"} ·{" "}
-                  {e.role === "owner" ? "Owner" : `Co-owner, ${e.side ? scopeLabel(e.side) : ""}`}
-                </div>
-              </Link>
-            </li>
+    <div className="min-h-screen">
+      <header className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-5 sm:px-6 sm:pt-7">
+        <span className="flex items-center gap-2 font-display text-[1.75rem] leading-none text-kumkum sm:text-[2rem]">
+          <Mark className="h-7 w-7 sm:h-8 sm:w-8" />
+          Pangat
+        </span>
+        <div className="flex min-w-0 items-center gap-3 text-sm sm:text-base">
+          <span className="min-w-0 truncate text-ink">{who.email}</span>
+          <span className="h-6 w-px shrink-0 bg-line" aria-hidden="true" />
+          <SignOutButton variant="text" />
+        </div>
+      </header>
+      <Divider className="mx-auto mt-4 max-w-4xl px-4 sm:px-6" />
+
+      <main className="mx-auto max-w-4xl px-4 pb-14 pt-6 sm:px-6 sm:pt-8">
+        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <div>
+            <h1 className="font-display text-[2rem] leading-tight text-kumkum-dark sm:text-[2.75rem]">Your events</h1>
+            <p className="mt-1 text-lg text-ink-soft">Choose an event to continue.</p>
+          </div>
+          {events.length > 0 && create}
+        </div>
+
+        {events.length === 0 ? (
+          <div className="card mt-8 flex flex-col items-center gap-4 px-6 py-10 text-center">
+            <EventArt className="h-20 w-24" />
+            <p className="font-display text-2xl text-kumkum">No events yet</p>
+            <p className="max-w-md text-ink-soft">You are not a host of any event yet. Create one, or ask the person running an event to add you.</p>
+            {create}
+          </div>
+        ) : (
+          <ul className="mt-7 space-y-4">
+            {events.map((e) => (
+              <li key={e.slug}>
+                <article className="card relative flex flex-col gap-4 p-4 transition-colors hover:border-kumkum sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+                  <div className="flex min-w-0 flex-1 items-start gap-4 sm:items-center sm:gap-6">
+                    <EventArt className="h-16 w-20 shrink-0 sm:h-24 sm:w-28" />
+                    <span className="hidden h-20 w-px shrink-0 bg-line sm:block" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <h2 className="wrap-names font-display text-xl leading-snug text-ink sm:text-[1.75rem]">{e.name.en}</h2>
+                      <p className="mt-1 flex items-center gap-2 text-ink-soft sm:text-lg">
+                        <CalendarDays className="h-5 w-5 shrink-0 text-kumkum" aria-hidden="true" />
+                        {e.firstStartsAt ? `First function: ${dayMonthYear(e.firstStartsAt)}` : "No functions yet"}
+                      </p>
+                      <span className="badge badge-groom mt-2 whitespace-normal text-sm sm:text-base">
+                        {e.role === "owner" ? "Owner" : `Co-owner · ${e.side ? scopeLabel(e.side) : ""}`}
+                      </span>
+                    </div>
+                  </div>
+                  {/* The whole card opens the event; the button is the visible, large tap target. */}
+                  <Link
+                    href={`/host/e/${e.slug}`}
+                    aria-label={`Open ${e.name.en}`}
+                    className="btn btn-primary min-h-12 w-full shrink-0 text-lg after:absolute after:inset-0 after:rounded-[1.25rem] after:content-[''] sm:w-auto sm:px-7"
+                  >
+                    Open event
+                    <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                  </Link>
+                </article>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <Divider className="mx-auto mt-10 max-w-md" />
+      </main>
+    </div>
+  );
+}
+
+/** A small marigold-and-diya drawing for each event card. Decorative. */
+function EventArt({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 96" className={className} aria-hidden="true">
+      <g fill="none" stroke="#b59a64" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 70c6-14 16-22 28-24" />
+        <path d="M22 66c-4-6-4-12 0-17 4 5 4 11 0 17z" fill="#ebe1cb" />
+      </g>
+      {[
+        [34, 30, 13],
+        [24, 50, 11],
+      ].map(([cx, cy, r]) => (
+        <g key={`${cx}-${cy}`}>
+          {Array.from({ length: 10 }, (_, i) => (
+            <ellipse
+              key={i}
+              cx={cx}
+              cy={cy - r * 0.55}
+              rx={r * 0.32}
+              ry={r * 0.55}
+              transform={`rotate(${i * 36} ${cx} ${cy})`}
+              fill="#e5c26a"
+              stroke="#b59a64"
+              strokeWidth="0.8"
+            />
           ))}
-        </ul>
-      )}
-      <Link href="/host/new" className="mt-6 inline-block rounded-xl bg-kumkum px-5 py-3 font-semibold text-white">
-        Create an event
-      </Link>
-    </main>
+          <circle cx={cx} cy={cy} r={r * 0.35} fill="#d9a441" />
+        </g>
+      ))}
+      <ellipse cx="78" cy="80" rx="36" ry="7" fill="#f2e8d2" stroke="#b59a64" strokeWidth="1.6" />
+      <path d="M58 70c0 7 9 11 20 11s20-4 20-11z" fill="#fffcf5" stroke="#5e4446" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M58 70h40" stroke="#5e4446" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M78 48c-4 6-5 11-2 15 2 3 6 2 6-2 0-5-3-8-4-13z" fill="#e5a33a" stroke="#790d16" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M78 63v7" stroke="#5e4446" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M50 82c3-2 7-2 9 0" stroke="#790d16" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
   );
 }

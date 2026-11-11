@@ -10,7 +10,16 @@ import MobileNav from "../ui/MobileNav";
 import { NavIcon, type NavItem, type NavKey } from "../ui/navIcons";
 import { signOut } from "./actions";
 
-export function SignOutButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "rail" }) {
+export function SignOutButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "rail" | "text" }) {
+  if (variant === "text") {
+    return (
+      <form action={signOut}>
+        <button type="submit" className="inline-flex min-h-11 items-center px-1 font-bold text-kumkum hover:text-kumkum-dark hover:underline">
+          Sign out
+        </button>
+      </form>
+    );
+  }
   if (variant === "rail") {
     return (
       <form action={signOut}>

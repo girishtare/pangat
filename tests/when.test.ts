@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { longStamp, shortDay, shortStamp, shortTime, shortWhen, slipDate } from "@/lib/when";
+import { dayMonthYear, longStamp, shortDay, shortStamp, shortTime, shortWhen, slipDate } from "@/lib/when";
 
 describe("host dates", () => {
   it("writes a short day in India time", () => {
@@ -30,5 +30,9 @@ describe("host dates", () => {
     expect(slipDate("2026-12-13T06:00:00Z").en).toBe("13th December 2026");
     expect(slipDate("2026-12-22T06:00:00Z").en).toBe("22nd December 2026");
     expect(slipDate("2026-12-24T06:00:00Z").mr).toContain("२०२६");
+  });
+
+  it("writes an event date with the year", () => {
+    expect(dayMonthYear("2027-02-10T04:30:00Z")).toBe("10 Feb 2027");
   });
 });
