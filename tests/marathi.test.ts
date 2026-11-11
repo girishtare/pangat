@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanSuggestion, isSuggestKind, MARATHI_MAX, suggestPrompt } from "../src/lib/marathi";
+import { cleanSuggestion, geminiReplyText, isSuggestKind, MARATHI_MAX, suggestPrompt } from "../src/lib/marathi";
 
 describe("cleanSuggestion", () => {
   it("keeps a plain Marathi line", () => {
@@ -39,5 +39,21 @@ describe("isSuggestKind", () => {
     expect(["event", "function", "household"].every(isSuggestKind)).toBe(true);
     expect(isSuggestKind("message")).toBe(false);
     expect(isSuggestKind(undefined)).toBe(false);
+  });
+});
+
+describe("geminiReplyText", () => {
+  const reply = (parts: unknown[], finishReason = "STOP") => ({ candidates: [{ finishReason, content: { role: "model", parts } }] });
+
+  it("joins the text parts and skips thoughts", () => {
+    expect(geminiReplyText(reply([{ text: "thinking…", thought: true }, { text: "हळद" }]))).toBe("हळद");
+  });
+
+  it("returns null for a blocked prompt, a safety stop or no text", () => {
+    expect(geminiReplyText({ promptFeedback: { blockReason: "SAFETY" } })).toBeNull();
+    expect(geminiReplyText(reply([{ text: "हळद" }], "SAFETY"))).toBeNull();
+    expect(geminiReplyText(reply([]))).toBeNull();
+    expect(geminiReplyText(null)).toBeNull();
+    expect(geminiReplyText({})).toBeNull();
   });
 });
