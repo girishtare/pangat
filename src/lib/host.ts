@@ -35,7 +35,7 @@ export interface HostContext {
   /** Only the owner manages the event: details, functions, co-owners, caterer numbers. */
   canManage: boolean;
   event: HostEvent;
-  functions: (FunctionRef & { startsAt: string; venue: string | null; mapUrl: string | null; catered: boolean })[];
+  functions: (FunctionRef & { startsAt: string; venue: string | null; mapUrl: string | null; catered: boolean; vegOnly: boolean })[];
 }
 
 export type SignedIn =
@@ -75,7 +75,7 @@ export async function hostGate(slug: string): Promise<HostGate> {
   if (error) throw new Error(`event lookup failed: ${error.message}`);
   const { data: fns, error: fnErr } = await client
     .from("functions")
-    .select("id, name_en, name_mr, starts_at, venue, map_url, catered")
+    .select("id, name_en, name_mr, starts_at, venue, map_url, catered, veg_only")
     .eq("event_id", ev.id)
     .order("starts_at")
     .order("sort_order");
@@ -113,6 +113,7 @@ export async function hostGate(slug: string): Promise<HostGate> {
         venue: f.venue,
         mapUrl: f.map_url,
         catered: f.catered,
+        vegOnly: !!f.veg_only,
       })),
     },
   };

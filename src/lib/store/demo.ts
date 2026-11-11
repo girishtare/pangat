@@ -32,9 +32,9 @@ function seed(): DemoState {
     pendingShowRate: 0.4,
   };
   const functions: FunctionInfo[] = [
-    { id: "fn-haldi", name: { en: "Haldi", mr: "हळद" }, startsAt: "2026-12-27T10:00:00+05:30", venue: "Family home", mapUrl: null, catered: true },
-    { id: "fn-wedding", name: { en: "Wedding", mr: "विवाह" }, startsAt: "2026-12-28T11:30:00+05:30", venue: "Sample Hall", mapUrl: null, catered: true },
-    { id: "fn-reception", name: { en: "Reception", mr: "स्वागत समारंभ" }, startsAt: "2026-12-28T19:00:00+05:30", venue: "Sample Hall", mapUrl: null, catered: true },
+    { id: "fn-haldi", name: { en: "Haldi", mr: "हळद" }, startsAt: "2026-12-27T10:00:00+05:30", venue: "Family home", mapUrl: null, catered: true, vegOnly: false },
+    { id: "fn-wedding", name: { en: "Wedding", mr: "विवाह" }, startsAt: "2026-12-28T11:30:00+05:30", venue: "Sample Hall", mapUrl: null, catered: true, vegOnly: false },
+    { id: "fn-reception", name: { en: "Reception", mr: "स्वागत समारंभ" }, startsAt: "2026-12-28T19:00:00+05:30", venue: "Sample Hall", mapUrl: null, catered: true, vegOnly: false },
   ];
   const all = functions.map((f) => f.id);
   const main = ["fn-wedding", "fn-reception"];

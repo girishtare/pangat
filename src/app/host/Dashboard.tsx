@@ -149,7 +149,7 @@ function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
           <div className={label}>Confirmed</div>
           <div className={big}>{n(f.confirmedHeads)}</div>
           <div className="mt-1 text-sm text-ink-soft">
-            {fn.catered ? `veg ${n(f.veg)} · non-veg ${n(f.nonveg)}` : "no food served"}
+            {!fn.catered ? "no food served" : fn.vegOnly ? `veg only · ${n(f.veg)}` : `veg ${n(f.veg)} · non-veg ${n(f.nonveg)}`}
           </div>
         </div>
       </div>

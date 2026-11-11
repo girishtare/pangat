@@ -24,6 +24,8 @@ export interface FunctionInfo {
   venue: string | null;
   mapUrl: string | null;
   catered: boolean;
+  /** Food is served but vegetarian only: no veg question, everyone counts as veg. */
+  vegOnly: boolean;
 }
 
 export interface ResponseRecord {

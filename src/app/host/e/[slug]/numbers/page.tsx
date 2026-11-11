@@ -60,7 +60,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
   const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
   const pastFinal = !!host.event.catererFinalOn && todayIst > host.event.catererFinalOn;
   const anyActual = rows.some((r) => r.n.actual !== null);
-  const fnList = host.functions.map((f) => ({ id: f.id, name: f.name.en, catered: f.catered }));
+  const fnList = host.functions.map((f) => ({ id: f.id, name: f.name.en, catered: f.catered, vegOnly: f.vegOnly }));
   const verdicts = rows.map((r) => closer(r.n)).filter((v) => v !== null);
   const toolWins = verdicts.filter((v) => v === "tool").length;
   const baselineWins = verdicts.filter((v) => v === "baseline").length;

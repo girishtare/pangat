@@ -36,7 +36,7 @@ export async function recordReply(slug: string, id: string, _prev: FormState, fd
 
   const invited: FunctionInfo[] = host.functions
     .filter((f) => hh.functionIds.includes(f.id))
-    .map((f) => ({ id: f.id, name: f.name, startsAt: f.startsAt, venue: f.venue, mapUrl: f.mapUrl, catered: f.catered }));
+    .map((f) => ({ id: f.id, name: f.name, startsAt: f.startsAt, venue: f.venue, mapUrl: f.mapUrl, catered: f.catered, vegOnly: f.vegOnly }));
   const answers = [];
   for (const f of invited) {
     const coming = text(fd.get(`coming_${f.id}`));

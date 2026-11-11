@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { normalise, replyChanged, submissionSchema } from "@/lib/validate";
 import type { FunctionInfo } from "@/lib/types";
 
-const fn = (id: string, catered = true): FunctionInfo => ({
-  id, name: { en: id, mr: null }, startsAt: "2026-12-28T11:30:00+05:30", venue: null, mapUrl: null, catered,
+const fn = (id: string, catered = true, vegOnly = false): FunctionInfo => ({
+  id, name: { en: id, mr: null }, startsAt: "2026-12-28T11:30:00+05:30", venue: null, mapUrl: null, catered, vegOnly,
 });
 const invited = [fn("wedding"), fn("sangeet", false)];
 
@@ -76,5 +76,12 @@ describe("replyChanged", () => {
     expect(replyChanged(saved, { ...saved, veg: 2, nonveg: 1 })).toBe(true);
     expect(replyChanged(saved, { status: "no", heads: 0, veg: 0, nonveg: 0, arrival_slot: null })).toBe(true);
     expect(replyChanged(saved, { ...saved, arrival_slot: "late" })).toBe(true);
+  });
+});
+
+describe("veg-only functions", () => {
+  it("count every person as veg, whatever the form sent", () => {
+    const r = normalise([{ functionId: "lunch", coming: true, heads: 4, veg: 1, arrivalSlot: "on_time" }], [fn("lunch", true, true)]);
+    expect(r.ok && r.answers[0]).toMatchObject({ status: "yes", heads: 4, veg: 4, nonveg: 0 });
   });
 });

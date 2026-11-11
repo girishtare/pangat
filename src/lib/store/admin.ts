@@ -26,6 +26,8 @@ export interface FunctionInput {
   venue: string | null;
   mapUrl?: string | null;
   catered: boolean;
+  /** Vegetarian food only (no veg question). Only meaningful when catered. */
+  vegOnly?: boolean;
   sortOrder?: number;
 }
 
@@ -105,6 +107,7 @@ export async function addFunction(eventId: string, fn: FunctionInput, inviteAll:
       venue: fn.venue,
       map_url: fn.mapUrl ?? null,
       catered: fn.catered,
+      veg_only: fn.catered && !!fn.vegOnly,
     })
     .select("id")
     .single();
@@ -124,7 +127,7 @@ export async function updateFunction(eventId: string, functionId: string, fn: Fu
   const { error, count } = await admin()
     .from("functions")
     .update(
-      { name_en: fn.nameEn, name_mr: fn.nameMr, starts_at: fn.startsAt, venue: fn.venue, map_url: fn.mapUrl ?? null, catered: fn.catered },
+      { name_en: fn.nameEn, name_mr: fn.nameMr, starts_at: fn.startsAt, venue: fn.venue, map_url: fn.mapUrl ?? null, catered: fn.catered, veg_only: fn.catered && !!fn.vegOnly },
       { count: "exact" },
     )
     .eq("id", functionId)

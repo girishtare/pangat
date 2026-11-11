@@ -75,8 +75,9 @@ export function normalise(answers: Submission["answers"], invited: FunctionInfo[
     if (a.veg > a.heads) return { ok: false, error: "veg_exceeds_heads" };
 
     // Diet only matters where food is served.
-    const veg = fn.catered ? a.veg : 0;
-    const nonveg = fn.catered ? a.heads - a.veg : 0;
+    // Veg only: everyone counts as veg, whatever was sent.
+    const veg = !fn.catered ? 0 : fn.vegOnly ? a.heads : a.veg;
+    const nonveg = !fn.catered || fn.vegOnly ? 0 : a.heads - a.veg;
     out.push({ functionId: a.functionId, status: "yes", heads: a.heads, veg, nonveg, arrivalSlot: a.arrivalSlot });
   }
 

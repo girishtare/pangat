@@ -187,7 +187,8 @@ export default function GuestFlow({
                           />
                         </div>
                       </div>
-                      {f.catered && (
+                      {f.catered && f.vegOnly && <p className="text-[15px] text-ink-e-soft">{t(lang, "vegOnlyNote")}</p>}
+                      {f.catered && !f.vegOnly && (
                         <div className={`${dashedRow} flex items-center justify-between gap-2.5 py-3`}>
                           <span className="min-w-0">
                             <span className="block font-bold">{t(lang, "howManyVeg")}</span>
@@ -264,7 +265,7 @@ export default function GuestFlow({
                         ) : a.coming ? (
                           <>
                             {t(lang, "coming")} · {a.heads} {t(lang, "people")}
-                            {f.catered && <span className="font-normal text-ink-e-soft">{` (${dietSplit(a.heads, a.veg, lang)})`}</span>}
+                            {f.catered && <span className="font-normal text-ink-e-soft">{` (${f.vegOnly ? t(lang, "allVeg") : dietSplit(a.heads, a.veg, lang)})`}</span>}
                           </>
                         ) : (
                           <span className="text-ink-e-soft">{t(lang, "notComing")}</span>

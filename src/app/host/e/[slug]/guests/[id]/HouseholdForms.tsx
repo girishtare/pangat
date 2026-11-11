@@ -41,6 +41,7 @@ export interface ReplyFn {
   name: string;
   when: string;
   catered: boolean;
+  vegOnly: boolean;
   current: { status: "yes" | "no"; heads: number; veg: number; arrivalSlot: string | null } | null;
 }
 
@@ -87,7 +88,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
                 className={num}
               />
             </label>
-            {f.catered && (
+            {f.catered && !f.vegOnly && (
               <label className="flex min-w-0 items-center gap-2.5">
                 <span className="text-ink-soft">Veg</span>
                 <input
@@ -104,7 +105,8 @@ function ReplyRow({ f }: { f: ReplyFn }) {
               </label>
             )}
           </div>
-          {f.catered && <p className="text-sm text-ink-soft sm:hidden">Non-veg: {heads - veg}</p>}
+          {f.catered && !f.vegOnly && <p className="text-sm text-ink-soft sm:hidden">Non-veg: {heads - veg}</p>}
+          {f.catered && f.vegOnly && <p className="text-sm text-ink-soft">Veg only: everyone counts as veg.</p>}
           <fieldset className="grid grid-cols-3 items-center gap-2 sm:flex sm:flex-wrap">
             <legend className="sr-only">Arrival</legend>
             <span className="col-span-3 text-ink-soft sm:mr-1" aria-hidden="true">

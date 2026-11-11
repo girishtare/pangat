@@ -190,6 +190,7 @@ export default async function EventSettings({
                 venue={f.venue}
                 mapUrl={f.mapUrl}
                 catered={f.catered}
+                vegOnly={f.vegOnly}
                 invites={usage[i].invites}
                 replies={usage[i].replies}
               />

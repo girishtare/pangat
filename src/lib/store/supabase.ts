@@ -49,6 +49,7 @@ function toFunction(row: any): FunctionInfo {
     venue: row.venue,
     mapUrl: row.map_url,
     catered: row.catered,
+    vegOnly: !!row.veg_only,
   };
 }
 
@@ -133,6 +134,8 @@ export async function loadDashboard(client: SupabaseClient, eventSlug: string): 
   if (fnRes.error) throw new Error(`functions lookup failed: ${fnRes.error.message}`);
   if (hhRes.error) throw new Error(`households lookup failed: ${hhRes.error.message}`);
 
+  // Veg-only functions count every "yes" person as veg, whatever an older reply said.
+  const vegOnly = new Set(((fnRes.data ?? []) as any[]).filter((f) => f.catered && f.veg_only).map((f) => f.id as string));
   const facts: InviteFact[] = [];
   for (const h of (hhRes.data ?? []) as any[]) {
     for (const inv of h.invites ?? []) {
@@ -143,8 +146,8 @@ export async function loadDashboard(client: SupabaseClient, eventSlug: string): 
         functionId: inv.function_id,
         status: r ? r.status : "pending",
         heads: r?.heads ?? 0,
-        veg: r?.veg ?? 0,
-        nonveg: r?.nonveg ?? 0,
+        veg: vegOnly.has(inv.function_id) && r?.status === "yes" ? r.heads : (r?.veg ?? 0),
+        nonveg: vegOnly.has(inv.function_id) ? 0 : (r?.nonveg ?? 0),
       });
     }
   }
