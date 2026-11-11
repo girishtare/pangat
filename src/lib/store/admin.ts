@@ -880,3 +880,17 @@ export async function deleteAccountIfUnused(userId: string): Promise<"deleted" |
   }
   return "deleted";
 }
+
+/* ---------- Deleting an event ---------- */
+
+/**
+ * Deletes an event and everything in it, in one statement: functions,
+ * households, invitations, replies and their history, slips' codes, WhatsApp
+ * records, effort log, tasks, people helping, caterer numbers and host links
+ * all go with it (foreign keys cascade; checked 11 Nov). Cannot be undone.
+ * People's Pangat accounts stay.
+ */
+export async function deleteEvent(eventId: string): Promise<void> {
+  const { error } = await admin().from("events").delete().eq("id", eventId);
+  if (error) throw new Error(`deleting the event failed: ${error.message}`);
+}
