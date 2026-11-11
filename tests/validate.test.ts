@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalise, submissionSchema } from "@/lib/validate";
+import { normalise, replyChanged, submissionSchema } from "@/lib/validate";
 import type { FunctionInfo } from "@/lib/types";
 
 const fn = (id: string, catered = true): FunctionInfo => ({
@@ -59,5 +59,22 @@ describe("submissionSchema", () => {
     expect(submissionSchema.safeParse(base).success).toBe(true);
     expect(submissionSchema.safeParse({ ...base, source: "on_behalf" }).success).toBe(false);
     expect(submissionSchema.safeParse({ ...base, answers: [{ ...base.answers[0], heads: 500 }] }).success).toBe(false);
+  });
+});
+
+describe("replyChanged", () => {
+  const saved = { status: "yes", heads: 3, veg: 1, nonveg: 2, arrival_slot: "on_time" };
+
+  it("is false when nothing differs, so unchanged replies aren't rewritten", () => {
+    expect(replyChanged(saved, { ...saved })).toBe(false);
+    expect(replyChanged({ ...saved, arrival_slot: null }, { ...saved, arrival_slot: null })).toBe(false);
+  });
+
+  it("is true for a new reply or any changed field", () => {
+    expect(replyChanged(undefined, saved)).toBe(true);
+    expect(replyChanged(saved, { ...saved, heads: 4, nonveg: 3 })).toBe(true);
+    expect(replyChanged(saved, { ...saved, veg: 2, nonveg: 1 })).toBe(true);
+    expect(replyChanged(saved, { status: "no", heads: 0, veg: 0, nonveg: 0, arrival_slot: null })).toBe(true);
+    expect(replyChanged(saved, { ...saved, arrival_slot: "late" })).toBe(true);
   });
 });

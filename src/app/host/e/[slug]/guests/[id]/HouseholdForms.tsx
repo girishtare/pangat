@@ -5,6 +5,7 @@ import { Check, Copy, Save, Trash } from "lucide-react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../../ui/kit";
 import { recordReply, removeHousehold, saveHousehold, type FormState } from "./actions";
+import { useFormAction } from "../../../../../ui/useFormAction";
 
 const MAX = 30;
 
@@ -117,7 +118,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
               ] as const
             ).map(([value, label]) => (
               <label key={value} className="choice choice-sky relative min-h-11 px-2 text-[0.9375rem] leading-tight sm:px-3.5">
-                <input type="radio" name={`arrival_${f.id}`} value={value} defaultChecked={f.current?.arrivalSlot === value} />
+                <input type="radio" name={`arrival_${f.id}`} value={value} defaultChecked={(f.current?.arrivalSlot ?? "on_time") === value} />
                 {label}
               </label>
             ))}
@@ -129,13 +130,13 @@ function ReplyRow({ f }: { f: ReplyFn }) {
 }
 
 export function ReplyForm({ slug, id, functions }: { slug: string; id: string; functions: ReplyFn[] }) {
-  const [state, action, pending] = useActionState(recordReply.bind(null, slug, id), null);
+  const [state, action, pending] = useFormAction(recordReply.bind(null, slug, id));
   // React resets a form after its action runs, which would put the radios back to
   // the first-loaded reply. Keying the rows on the saved reply remounts them with
   // what the server now holds.
   const saved = functions.map((f) => `${f.id}:${f.current?.status ?? ""}:${f.current?.heads ?? ""}:${f.current?.veg ?? ""}:${f.current?.arrivalSlot ?? ""}`).join(",");
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <div key={saved} className="space-y-4">
         {functions.map((f) => (
           <ReplyRow key={f.id} f={f} />
@@ -160,9 +161,9 @@ export function DetailsForm(props: {
   softCap: number | null;
   functions: { id: string; name: string; invited: boolean; replied: boolean }[];
 }) {
-  const [state, action, pending] = useActionState(saveHousehold.bind(null, props.slug, props.id), null);
+  const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id));
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <label className="block">
         <span className="label">Name in English</span>
         <input name="nameEn" required maxLength={120} defaultValue={props.nameEn} className="input" />

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
 import { Alert, WhatsAppIcon } from "../../../../ui/kit";
 import { createFunction, dropHost, editHost, inviteHost, removeFunction, resendHostInvite, saveEvent, saveFunction, type FormState } from "./actions";
+import { useFormAction } from "../../../../ui/useFormAction";
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -24,10 +25,10 @@ export function EventForm(props: {
   catererDueOn: string | null;
   catererFinalOn: string | null;
 }) {
-  const [state, action, pending] = useActionState(saveEvent.bind(null, props.slug), null);
+  const [state, action, pending] = useFormAction(saveEvent.bind(null, props.slug));
   const missing = "border-kumkum";
   return (
-    <form action={action} className="space-y-6">
+    <form onSubmit={action} className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         <label className="block">
           <span className="label">Event name in English</span>
@@ -161,7 +162,7 @@ export function FunctionEditor(props: {
   invites: number;
   replies: number;
 }) {
-  const [state, action, pending] = useActionState(saveFunction.bind(null, props.slug, props.id), null);
+  const [state, action, pending] = useFormAction(saveFunction.bind(null, props.slug, props.id));
   const [delState, delAction, deleting] = useActionState(removeFunction.bind(null, props.slug, props.id), null);
   return (
     <details className="group rounded-[14px] border border-line bg-card">
@@ -185,7 +186,7 @@ export function FunctionEditor(props: {
         <span className="btn btn-quiet btn-sm hidden shrink-0 group-open:inline-flex">Close</span>
       </summary>
       <div className="border-t border-line p-4">
-        <form action={action} className="space-y-4">
+        <form onSubmit={action} className="space-y-4">
           <FunctionFields {...props} />
           <p className="text-sm text-ink-soft">
             {props.invites} households invited · {props.replies} replied{props.replies > 0 ? " · can't be deleted" : ""}
@@ -236,7 +237,7 @@ export function AddFunctionButton() {
 }
 
 export function NewFunctionForm({ slug, households }: { slug: string; households: number }) {
-  const [state, action, pending] = useActionState(createFunction.bind(null, slug), null);
+  const [state, action, pending] = useFormAction(createFunction.bind(null, slug));
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) form.current?.reset();
@@ -247,7 +248,7 @@ export function NewFunctionForm({ slug, households }: { slug: string; households
         <Plus className="h-5 w-5" aria-hidden="true" />
         Add a function <span className="font-normal text-ink-soft">(for example Sangeet or Mehendi)</span>
       </summary>
-      <form ref={form} action={action} className="space-y-4 border-t border-dashed border-line p-4">
+      <form ref={form} onSubmit={action} className="space-y-4 border-t border-dashed border-line p-4">
         <FunctionFields />
         <label className="flex min-h-11 items-center gap-3">
           <input type="checkbox" name="inviteAll" defaultChecked={households > 0} disabled={households === 0} className="h-6 w-6 accent-kumkum" />
@@ -389,7 +390,7 @@ function HostFields({
 }
 
 function InviteForm({ slug, full, onDone }: { slug: string; full: Full; onDone: () => void }) {
-  const [state, action, pending] = useActionState(inviteHost.bind(null, slug), null);
+  const [state, action, pending] = useFormAction(inviteHost.bind(null, slug));
   if (state?.ok) {
     return (
       <div className="space-y-4">
@@ -409,7 +410,7 @@ function InviteForm({ slug, full, onDone }: { slug: string; full: Full; onDone: 
     );
   }
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <HostFields full={full} />
       <p className="hint">
         Pangat emails them: a link to set a password if they are new to Pangat, or a note that they&apos;ve been added. They can also
@@ -440,9 +441,9 @@ export function EditHostForm({
   full: Full;
   host: { userId: string; fullName: string | null; email: string; phone: string | null; side: "bride" | "groom" | null; role: "owner" | "co_owner" };
 }) {
-  const [state, action, pending] = useActionState(editHost.bind(null, slug, host.userId), null);
+  const [state, action, pending] = useFormAction(editHost.bind(null, slug, host.userId));
   return (
-    <form action={action} className="mt-4 space-y-4">
+    <form onSubmit={action} className="mt-4 space-y-4">
       <HostFields full={full} values={host} isOwner={host.role === "owner"} />
       <Message state={state} />
       <button type="submit" disabled={pending} className="btn btn-primary w-full">

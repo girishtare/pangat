@@ -1,19 +1,20 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../ui/kit";
 import { addHousehold } from "./actions";
+import { useFormAction } from "../../../../ui/useFormAction";
 
 export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: string; hostSide: Side | null; functions: { id: string; name: string }[] }) {
-  const [state, action, pending] = useActionState(addHousehold.bind(null, slug), null);
+  const [state, action, pending] = useFormAction(addHousehold.bind(null, slug));
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok) form.current?.reset();
   }, [state]);
 
   return (
-    <form ref={form} action={action} className="mt-4 space-y-4">
+    <form ref={form} onSubmit={action} className="mt-4 space-y-4">
       <label className="block">
         <span className="label">Name in English</span>
         <input name="name" required maxLength={120} className="input" placeholder="Shri. A. Joshi & family" />

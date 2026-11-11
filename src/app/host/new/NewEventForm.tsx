@@ -1,19 +1,20 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { DEFAULT_FUNCTIONS, defaultFunctions } from "@/lib/events";
 import { shortWhen } from "@/lib/when";
 import { createEventAction } from "./actions";
+import { useFormAction } from "../../ui/useFormAction";
 
 export default function NewEventForm() {
-  const [state, action, pending] = useActionState(createEventAction, null);
+  const [state, action, pending] = useFormAction(createEventAction);
   const [weddingDate, setWeddingDate] = useState("");
   // The starting functions with their real dates once the wedding date is chosen.
   const fns = /^\d{4}-\d{2}-\d{2}$/.test(weddingDate) ? defaultFunctions(weddingDate) : null;
 
   return (
-    <form action={action} className="space-y-5">
+    <form onSubmit={action} className="space-y-5">
       <fieldset>
         <legend className="label">Kind of event</legend>
         {/* Weddings only for now; more kinds come later. */}

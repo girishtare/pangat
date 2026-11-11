@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
 import { signIn, type SignInState } from "../actions";
+import { useFormAction } from "../../ui/useFormAction";
 
 const MESSAGES: Record<NonNullable<SignInState>["error"], string> = {
   invalid: "Enter your email address and password.",
@@ -12,10 +12,10 @@ const MESSAGES: Record<NonNullable<SignInState>["error"], string> = {
 };
 
 export default function LoginForm() {
-  const [state, action, pending] = useActionState(signIn, null);
+  const [state, action, pending] = useFormAction(signIn);
   const wrong = state?.error === "wrong" || state?.error === "invalid";
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <label className="block">
         <span className="label">Email</span>
         <input name="email" type="email" autoComplete="username" required className="input" placeholder="you@example.com" />

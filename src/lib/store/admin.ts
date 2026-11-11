@@ -5,6 +5,7 @@ import type { MessageKind } from "../outreach";
 import type { FunctionNumbers } from "../pilot";
 import type { Side } from "../types";
 import { coOwnerInviteCard } from "../emailDesign";
+import { onlyChangedReplies } from "./changed";
 import { mailConfigured, sendCardMail } from "../mail";
 
 // Writes for event setup and host management. Service role: every caller must
@@ -558,7 +559,7 @@ export async function deleteHousehold(eventId: string, householdId: string): Pro
   if (error) throw new Error(`delete household failed: ${error.message}`);
 }
 
-/** Replies recorded by a host (phone call, in person): source on_behalf, signed with the host's id. */
+/** Replies recorded by a host (phone call, in person): what changed is saved with source on_behalf, signed with the host's id. */
 export async function saveOnBehalf(
   householdId: string,
   answers: { functionId: string; status: "yes" | "no"; heads: number; veg: number; nonveg: number; arrivalSlot: string | null }[],
@@ -577,7 +578,10 @@ export async function saveOnBehalf(
     updated_by: hostUserId,
     updated_at,
   }));
-  const { error } = await admin().from("responses").upsert(rows, { onConflict: "household_id,function_id" });
+  // Only the functions the host actually changed become "on behalf"; the rest keep the guest's own channel.
+  const changed = await onlyChangedReplies(admin(), householdId, rows);
+  if (changed.length === 0) return;
+  const { error } = await admin().from("responses").upsert(changed, { onConflict: "household_id,function_id" });
   if (error) throw new Error(`saving reply failed: ${error.message}`);
 }
 

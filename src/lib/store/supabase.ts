@@ -13,6 +13,7 @@ import type {
 } from "../types";
 import type { Helper, Task } from "../todo";
 import type { NormalisedAnswer } from "../validate";
+import { onlyChangedReplies } from "./changed";
 
 // Guest reads and all writes use the service-role client (bypasses RLS).
 // The host dashboard is loaded with the host's own session client instead,
@@ -103,7 +104,9 @@ export const supabaseStore = {
       source,
       updated_at,
     }));
-    const { error } = await db().from("responses").upsert(rows, { onConflict: "household_id,function_id" });
+    const changed = await onlyChangedReplies(db(), householdId, rows);
+    if (changed.length === 0) return; // sent again with nothing changed
+    const { error } = await db().from("responses").upsert(changed, { onConflict: "household_id,function_id" });
     if (error) throw new Error(`saving responses failed: ${error.message}`);
   },
 
