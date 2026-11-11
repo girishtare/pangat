@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 
 /**
@@ -20,7 +20,7 @@ export default function PopupButton({
   children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const id = `popup-${title.toLowerCase().replace(/[^a-z]+/g, "-")}`;
+  const id = useId(); // one per pop-up, even when many share a title (e.g. "Edit task")
   return (
     <>
       <button type="button" className={className} onClick={() => dialog.current?.showModal()} aria-haspopup="dialog">

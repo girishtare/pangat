@@ -42,6 +42,7 @@ function navItems(host: HostContext, current: NavKey): NavItem[] {
     { key: "guests", href: `${base}/guests`, label: "Guest list" },
     { key: "slips", href: `${base}/slips`, label: "Slips" },
     { key: "whatsapp", href: `${base}/whatsapp`, label: "WhatsApp" },
+    { key: "todo", href: `${base}/todo`, label: "To-do" },
     { key: "numbers", href: `${base}/numbers`, label: "Caterer numbers", ownerOnly: true },
     { key: "settings", href: `${base}/settings`, label: "Event settings", ownerOnly: true },
   ];

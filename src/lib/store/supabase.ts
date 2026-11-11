@@ -11,6 +11,7 @@ import type {
   ResponseSource,
   Side,
 } from "../types";
+import type { Helper, Task } from "../todo";
 import type { NormalisedAnswer } from "../validate";
 
 // Guest reads and all writes use the service-role client (bypasses RLS).
@@ -241,5 +242,41 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     createdAt: r.created_at,
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     replied: (r.responses ?? []).map((x: any) => x.function_id),
+  }));
+}
+
+/* ---------- To-do list (read as the host: row-level security keeps co-owners to their side) ---------- */
+
+export async function listHelpers(client: SupabaseClient, eventId: string): Promise<Helper[]> {
+  const { data, error } = await client
+    .from("helpers")
+    .select("id, full_name, phone, side")
+    .eq("event_id", eventId)
+    .order("full_name")
+    .range(0, 999);
+  if (error) throw new Error(`helper lookup failed: ${error.message}`);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  return ((data ?? []) as any[]).map((r) => ({ id: r.id, fullName: r.full_name, phone: r.phone, side: r.side }));
+}
+
+export async function listTasks(client: SupabaseClient, eventId: string): Promise<Task[]> {
+  const { data, error } = await client
+    .from("tasks")
+    .select("id, helper_id, side, title, note, function_id, due_on, status, updated_at")
+    .eq("event_id", eventId)
+    .order("due_on")
+    .range(0, 1999);
+  if (error) throw new Error(`task lookup failed: ${error.message}`);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  return ((data ?? []) as any[]).map((r) => ({
+    id: r.id,
+    helperId: r.helper_id,
+    side: r.side,
+    title: r.title,
+    note: r.note,
+    functionId: r.function_id,
+    dueOn: r.due_on,
+    status: r.status,
+    updatedAt: r.updated_at,
   }));
 }
