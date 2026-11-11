@@ -22,7 +22,7 @@ export default function Stepper({
   onChange: (v: number) => void;
   name?: string;
   size?: "md" | "lg";
-  /** "guest": palette E look for the guest reply page (48 px buttons, Rozha number); size is ignored. */
+  /** "guest": palette E look for the guest reply page (48 px buttons, Playfair number); size is ignored. */
   variant?: "app" | "guest";
   lessLabel?: string;
   moreLabel?: string;
@@ -36,7 +36,7 @@ export default function Stepper({
       }`;
   const icon = guest || big ? "h-6 w-6" : "h-5 w-5";
   const number = guest
-    ? "min-w-8 text-center font-heading-e text-[28px] font-normal leading-none tabular-nums"
+    ? "min-w-8 text-center font-heading-e text-[28px] font-bold leading-none tabular-nums"
     : `min-w-[3ch] text-center font-display tabular-nums ${big ? "text-4xl" : "text-2xl"}`;
   return (
     <div role="group" aria-label={label}>

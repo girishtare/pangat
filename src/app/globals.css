@@ -55,16 +55,17 @@
   --color-card-e: var(--p-card);
   --color-track: var(--p-track);
 
-  /* Fonts (src/app/fonts.ts, set on <html>): Rozha One for display, weight
-     400 only and 20 px and up; Mukta for text. Both cover Devanagari. */
-  --font-sans: var(--font-mukta-sans), "Nirmala UI", system-ui, sans-serif;
-  --font-display: var(--font-rozha-one), "Nirmala UI", Georgia, serif;
-  --font-body-e: var(--font-mukta-sans), "Nirmala UI", system-ui, sans-serif; /* = font-sans */
-  --font-heading-e: var(--font-rozha-one), "Nirmala UI", Georgia, serif; /* = font-display */
-  /* Trial on the landing page only (src/app/page.tsx loads it). */
-  --font-playfair: var(--font-playfair-display), Georgia, serif;
-  /* Trial: Marathi in the host page header (src/app/fonts.ts). */
-  --font-marathi: var(--font-tiro-marathi), "Nirmala UI", serif;
+  /* Fonts (src/app/fonts.ts, set on <html>), the same on every page:
+     Playfair Display for headings, Libre Baskerville for text, and Tiro
+     Devanagari Marathi for Marathi letters (the first two have none, so the
+     browser falls through to Tiro). */
+  --font-sans: var(--font-libre-baskerville), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
+  --font-display: var(--font-playfair-display), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
+  /* Older names used by the landing and guest pages: the same two stacks. */
+  --font-body-e: var(--font-libre-baskerville), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
+  --font-heading-e: var(--font-playfair-display), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
+  --font-playfair: var(--font-playfair-display), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
+  --font-marathi: var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
 }
 
 html {
@@ -74,7 +75,7 @@ html {
 body {
   background: var(--color-paper);
   color: var(--color-ink);
-  font-size: 1.0625rem; /* 17 px: Mukta runs small */
+  font-size: 1.0625rem; /* 17 px body text */
   line-height: 1.55;
 }
 
@@ -104,10 +105,12 @@ dialog::backdrop {
 }
 
 @layer components {
+  /* Headings: Playfair Display bold. Tiro (Marathi) has one weight; no fake
+     bold is drawn for it, so Marathi headings stay crisp. */
   .font-display {
     font-family: var(--font-display);
-    font-weight: 400;
-    font-synthesis-weight: none; /* Rozha has no bold; never smear a fake one */
+    font-weight: 700;
+    font-synthesis-weight: none;
   }
 
   .card {

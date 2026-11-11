@@ -52,7 +52,7 @@ export function WhatsAppIcon({ className = "h-5 w-5" }: { className?: string }) 
 
 /* Page structure */
 
-/** Page title: Rozha about 40 px in maroon, a short line under it, optional actions on the right. */
+/** Page title: Playfair Display about 40 px in maroon, a short line under it, optional actions on the right. */
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="mb-5 lg:mb-6">
@@ -67,7 +67,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-/** A card with a Rozha title (optionally numbered), a subtitle and actions on the right. */
+/** A card with a Playfair Display title (optionally numbered), a subtitle and actions on the right. */
 export function Section({
   n,
   title,
