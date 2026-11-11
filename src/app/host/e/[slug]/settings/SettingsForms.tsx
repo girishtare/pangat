@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
 import { Alert, WhatsAppIcon } from "../../../../ui/kit";
-import { createFunction, dropHost, editHost, inviteHost, removeFunction, saveEvent, saveFunction, type FormState } from "./actions";
+import { createFunction, dropHost, editHost, inviteHost, removeFunction, resendHostInvite, saveEvent, saveFunction, type FormState } from "./actions";
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -460,13 +460,33 @@ export function RemoveHostButton({ slug, userId, email }: { slug: string; userId
       action={action}
       className="inline-flex flex-wrap items-center justify-center gap-2"
       onSubmit={(e) => {
-        if (!confirm(`Remove ${email} as a co-owner? Their account stays, but they lose access to this event.`)) e.preventDefault();
+        if (
+          !confirm(
+            `Remove ${email} as a co-owner?
+
+They lose access to this event and get an email saying so. If they have no other Pangat events, their account is deleted too.`,
+          )
+        )
+          e.preventDefault();
       }}
     >
       <button type="submit" disabled={pending} className="btn btn-quiet btn-sm align-middle">
         {pending ? "Removing…" : "Remove"}
       </button>
       {state && !state.ok && <span className="text-sm text-kumkum">{state.message}</span>}
+    </form>
+  );
+}
+
+/** "Send again": a fresh invitation link for a co-owner who hasn't signed in yet. */
+export function ResendInviteButton({ slug, userId }: { slug: string; userId: string }) {
+  const [state, action, pending] = useActionState(resendHostInvite.bind(null, slug, userId), null);
+  return (
+    <form action={action} className="inline-flex flex-col items-center gap-0.5">
+      <button type="submit" disabled={pending || !!state?.ok} className="btn btn-quiet btn-sm min-h-9 py-0 text-sm">
+        {pending ? "Sending…" : state?.ok ? "Sent" : "Send again"}
+      </button>
+      {state && !state.ok && <span className="max-w-[14rem] text-xs text-kumkum">{state.message}</span>}
     </form>
   );
 }
