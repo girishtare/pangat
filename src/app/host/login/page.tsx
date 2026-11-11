@@ -2,32 +2,29 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isDemo } from "@/lib/store";
 import { hostClient } from "@/lib/supabase/session";
-import { GoogleButton, LINK_ERRORS, OrDivider } from "../AuthBits";
+import { AuthNote, AuthShell, GoogleButton, LINK_ERRORS, OrDivider } from "../AuthBits";
 import LoginForm from "./LoginForm";
-import Logo from "../../ui/Logo";
 
 export const dynamic = "force-dynamic";
 
 export default async function HostLogin({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (isDemo()) {
     return (
-      <main className="mx-auto max-w-md px-5 py-16">
-        <h1 className="text-2xl font-bold text-kumkum">Sign in</h1>
-        <p className="mt-3">This is demo mode, so there is nothing to sign in to.</p>
-        <Link className="mt-4 inline-block text-kumkum underline" href="/host">
+      <AuthShell title="Sign in">
+        <AuthNote tone="info">This is demo mode, so there is nothing to sign in to.</AuthNote>
+        <Link className="btn btn-primary w-full" href="/host">
           Open the demo dashboard
         </Link>
-      </main>
+      </AuthShell>
     );
   }
 
   const supabase = await hostClient();
   if (!supabase) {
     return (
-      <main className="mx-auto max-w-md px-5 py-16">
-        <h1 className="text-2xl font-bold text-kumkum">Sign in</h1>
-        <p className="mt-3">Sign-in is not set up yet (SUPABASE_PUBLISHABLE_KEY is missing).</p>
-      </main>
+      <AuthShell title="Sign in">
+        <AuthNote>Sign-in is not set up yet (SUPABASE_PUBLISHABLE_KEY is missing).</AuthNote>
+      </AuthShell>
     );
   }
   const {
@@ -37,30 +34,22 @@ export default async function HostLogin({ searchParams }: { searchParams: Promis
   const { error } = await searchParams;
 
   return (
-    <main className="mx-auto max-w-md px-5 py-16">
-      <Link href="/" className="mb-6 inline-block rounded-lg" aria-label="Pangat home">
-        <Logo decorative className="h-12" />
-      </Link>
-      <h1 className="text-3xl font-bold text-kumkum">Sign in to Pangat</h1>
-      <p className="mt-2 text-lg">For hosts and co-owners of an event.</p>
-      {error && LINK_ERRORS[error] && (
-        <p role="alert" className="mt-4 rounded-xl bg-kumkum/10 px-4 py-3 text-kumkum">
-          {LINK_ERRORS[error]}
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to see who is coming. For hosts and co-owners of an event."
+      below={
+        <p>
+          New to Pangat?{" "}
+          <Link href="/host/signup" className="font-bold text-kumkum underline underline-offset-2">
+            Create a free account
+          </Link>
         </p>
-      )}
-      <div className="mt-6">
-        <GoogleButton />
-      </div>
+      }
+    >
+      {error && LINK_ERRORS[error] && <AuthNote>{LINK_ERRORS[error]}</AuthNote>}
+      <GoogleButton />
       <OrDivider />
       <LoginForm />
-      <div className="mt-6 flex flex-wrap justify-between gap-3 text-sm">
-        <Link href="/host/signup" className="font-semibold text-kumkum underline">
-          New here? Create an account
-        </Link>
-        <Link href="/host/forgot" className="text-kumkum underline">
-          Forgot your password?
-        </Link>
-      </div>
-    </main>
+    </AuthShell>
   );
 }
