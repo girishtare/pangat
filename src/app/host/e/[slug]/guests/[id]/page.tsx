@@ -103,6 +103,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
                   name: f.name.en,
                   when: shortDay(f.startsAt),
                   catered: f.catered,
+                  vegOnly: f.vegOnly,
                   current: r ? { status: r.status, heads: r.heads, veg: r.veg, arrivalSlot: r.arrivalSlot } : null,
                 };
               })}

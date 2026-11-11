@@ -59,7 +59,10 @@ function readFunction(fd: FormData): FunctionInput | string {
   if (!startsAt) return "Choose the date and time.";
   if (venue && venue.length > 200) return "The venue is too long.";
   if (mapUrl && !/^https:\/\/\S{4,500}$/.test(mapUrl)) return "The map link must start with https://";
-  return { nameEn, nameMr, startsAt, venue, mapUrl, catered: fd.get("catered") === "on" };
+  // Food: "none", "veg" (vegetarian only) or "both" (veg and non-veg).
+  const food = String(fd.get("food") ?? "both");
+  if (!["none", "veg", "both"].includes(food)) return "Choose what food is served.";
+  return { nameEn, nameMr, startsAt, venue, mapUrl, catered: food !== "none", vegOnly: food === "veg" };
 }
 
 /* ---------- Event details ---------- */

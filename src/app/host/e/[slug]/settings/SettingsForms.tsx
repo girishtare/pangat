@@ -116,7 +116,18 @@ export function EventForm(props: {
 
 /* ---------- Functions ---------- */
 
-function FunctionFields(props: { nameEn?: string; nameMr?: string | null; startsAt?: string; venue?: string | null; mapUrl?: string | null; catered?: boolean }) {
+/** Which of the three food choices a function has; new functions start on "veg and non-veg". */
+const foodOf = (p: { catered?: boolean; vegOnly?: boolean }) => (p.catered === false ? "none" : p.vegOnly ? "veg" : "both");
+
+function FunctionFields(props: {
+  nameEn?: string;
+  nameMr?: string | null;
+  startsAt?: string;
+  venue?: string | null;
+  mapUrl?: string | null;
+  catered?: boolean;
+  vegOnly?: boolean;
+}) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <label className="block">
@@ -141,10 +152,25 @@ function FunctionFields(props: { nameEn?: string; nameMr?: string | null; starts
         </span>
         <input name="mapUrl" type="url" defaultValue={props.mapUrl ?? ""} className="input" placeholder="https://maps.app.goo.gl/…" />
       </label>
-      <label className="flex min-h-11 items-center gap-3 sm:col-span-2 xl:col-span-3">
-        <input type="checkbox" name="catered" defaultChecked={props.catered ?? true} className="h-6 w-6 accent-kumkum" />
-        <span className="font-bold">Food served (asks the veg question)</span>
-      </label>
+      <fieldset className="sm:col-span-2 xl:col-span-3">
+        <legend className="label">Food</legend>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {(
+            [
+              ["both", "Veg and non-veg", "Guests say how many are vegetarian"],
+              ["veg", "Veg only", "No veg question; everyone counts as veg"],
+              ["none", "No food", "Headcount only"],
+            ] as const
+          ).map(([value, label, hint]) => (
+            <label key={value} className="choice relative flex-col items-start! gap-0 text-left">
+              <input type="radio" name="food" value={value} defaultChecked={foodOf(props) === value} />
+              <span>{label}</span>
+              <span className="text-sm font-normal opacity-80">{hint}</span>
+            </label>
+          ))}
+        </div>
+        <p className="hint mt-1.5">Changing this later doesn&apos;t change replies already in; veg-only counts everyone as veg.</p>
+      </fieldset>
     </div>
   );
 }
@@ -159,6 +185,7 @@ export function FunctionEditor(props: {
   venue: string | null;
   mapUrl: string | null;
   catered: boolean;
+  vegOnly: boolean;
   invites: number;
   replies: number;
 }) {
@@ -179,7 +206,7 @@ export function FunctionEditor(props: {
             {" · "}
             {props.when}
             {props.venue ? ` · ${props.venue}` : ""}
-            {props.catered ? " · food served" : " · no food"}
+            {!props.catered ? " · no food" : props.vegOnly ? " · veg only" : " · veg and non-veg"}
           </span>
         </span>
         <span className="btn btn-secondary btn-sm shrink-0 group-open:hidden">Edit</span>
