@@ -4,19 +4,19 @@ import { hostGate } from "@/lib/host";
 import { chunk, displayPhone, guestLink } from "@/lib/outreach";
 import { qrPath } from "@/lib/qr";
 import { publicBaseUrl } from "@/lib/site";
-import { listGuests, type GuestRow } from "@/lib/store/supabase";
+import { listGuests, type GuestRow, type SlipLang } from "@/lib/store/supabase";
 import { slipDate } from "@/lib/when";
 import type { Side } from "@/lib/types";
 import { Alert, EmptyState, PageHeader } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import PrintButton from "./PrintButton";
+import SlipLanguages from "./SlipLanguages";
 
 export const dynamic = "force-dynamic";
 
 const PER_SHEET = 8; // 2 x 4 on A4: each slip about 97 x 70 mm
 
-/** What the slips are printed in: English, Marathi, or both (English lines first, then Marathi). */
-type SlipLang = "both" | "en" | "mr";
+/** Each household's slip is printed in its own language: English, Marathi, or both (English lines first). */
 const LANG_LABEL: Record<SlipLang, string> = { both: "English and Marathi", en: "English only", mr: "Marathi only" };
 
 /*
@@ -50,18 +50,18 @@ const PRINT_CSS = `
 function Slip({
   g,
   base,
-  eventName,
+  event,
   replyBy,
   phone,
-  lang,
 }: {
   g: GuestRow;
   base: string;
-  eventName: string;
+  event: { en: string; mr: string | null };
   replyBy: { en: string; mr: string };
   phone: string | null;
-  lang: SlipLang;
 }) {
+  const lang = g.slipLang;
+  const eventName = lang === "en" ? event.en : event.mr || event.en;
   const qr = qrPath(guestLink(base, g.token, "qr", lang === "both" ? undefined : lang));
   const q = 4; // quiet zone, in modules
   const en = lang !== "mr";
@@ -156,28 +156,21 @@ export default async function Slips({
   const side: Side | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
   const ids = sp.ids ? new Set(sp.ids.split(",")) : null;
   const since = sp.since && /^\d{4}-\d{2}-\d{2}$/.test(sp.since) ? sp.since : null;
-  const lang: SlipLang = sp.lang === "en" || sp.lang === "mr" ? sp.lang : "both";
-  // The same slips in another language: keep every other choice in the link.
-  const langHref = (l: SlipLang) => {
-    const qs = new URLSearchParams();
-    if (sp.side && !host.side) qs.set("side", sp.side);
-    if (since) qs.set("since", since);
-    if (sp.ids) qs.set("ids", sp.ids);
-    if (l !== "both") qs.set("lang", l);
-    const q = qs.toString();
-    return `/host/e/${slug}/slips${q ? `?${q}` : ""}`;
-  };
-  const guests = all.filter(
+  // Optional filter: only the slips printed in one language (e.g. to print the Marathi ones on their own).
+  const lang: SlipLang | null = sp.lang === "en" || sp.lang === "mr" || sp.lang === "both" ? sp.lang : null;
+  // Before the language filter: these are the households whose language can be set here.
+  const inView = all.filter(
     (g) => (!side || g.side === side) && (!ids || ids.has(g.id)) && (!since || g.createdAt.slice(0, 10) >= since),
   );
+  const guests = lang ? inView.filter((g) => g.slipLang === lang) : inView;
 
   const base = await publicBaseUrl();
   const replyBy = slipDate(host.event.cutoffAt);
-  const eventName = lang === "en" ? host.event.name.en : host.event.name.mr || host.event.name.en;
+
   const missingPhone = (["bride", "groom"] as const).filter((s) => !host.event.contactPhone[s] && guests.some((g) => g.side === s));
-  const noMarathi = lang === "en" ? 0 : guests.filter((g) => !g.nameMr).length;
+  const noMarathi = guests.filter((g) => g.slipLang !== "en" && !g.nameMr).length;
   const sheets = chunk(guests, PER_SHEET);
-  const filtered = !!(ids || since || (side && !host.side));
+  const filtered = !!(ids || since || lang || (side && !host.side));
 
   return (
     <EventShell host={host} current="slips">
@@ -192,37 +185,19 @@ export default async function Slips({
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] print:block">
         <div className="space-y-4 print:hidden">
           <section className="card p-[18px] sm:p-[22px]" aria-labelledby="which-slips">
-            <h2 id="slip-lang" className="mb-2 text-lg font-bold">
-              Print in
-            </h2>
-            <div role="group" aria-labelledby="slip-lang" className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-paper-deep p-1">
-              {(["en", "mr", "both"] as const).map((l) => (
-                <Link
-                  key={l}
-                  href={langHref(l)}
-                  aria-current={lang === l ? "true" : undefined}
-                  title={LANG_LABEL[l]}
-                  className={`flex min-h-11 items-center justify-center rounded-lg px-2 text-center text-[0.9375rem] font-bold leading-tight ${
-                    lang === l ? "bg-kumkum text-white shadow-sm" : "text-ink hover:bg-card/70"
-                  }`}
-                >
-                  {l === "en" ? "English" : l === "mr" ? <span lang="mr">मराठी</span> : "Both"}
-                </Link>
-              ))}
-            </div>
             <h2 id="which-slips" className="mb-3 text-lg font-bold">
               Which slips
             </h2>
             {ids ? (
               <Alert tone="info">
                 Showing {guests.length === 1 ? "one household's slip" : `${guests.length} selected slips`}.{" "}
-                <Link href={`/host/e/${slug}/slips${lang !== "both" ? `?lang=${lang}` : ""}`} className="font-semibold underline">
+                <Link href={`/host/e/${slug}/slips`} className="font-semibold underline">
                   Show all slips
                 </Link>
               </Alert>
             ) : (
               <form className="space-y-4" action={`/host/e/${slug}/slips`}>
-                {lang !== "both" && <input type="hidden" name="lang" value={lang} />}
+
                 {!host.side && (
                   <label className="block">
                     <span className="label">Side</span>
@@ -234,6 +209,15 @@ export default async function Slips({
                   </label>
                 )}
                 <label className="block">
+                  <span className="label">Language</span>
+                  <select name="lang" defaultValue={lang ?? ""} className="input">
+                    <option value="">Every language</option>
+                    <option value="en">English slips only</option>
+                    <option value="mr">Marathi slips only</option>
+                    <option value="both">English-and-Marathi slips only</option>
+                  </select>
+                </label>
+                <label className="block">
                   <span className="label">
                     Only households added on or after <span className="font-normal text-ink-soft">(optional)</span>
                   </span>
@@ -244,7 +228,7 @@ export default async function Slips({
                     Show
                   </button>
                   {filtered && (
-                    <Link href={`/host/e/${slug}/slips${lang !== "both" ? `?lang=${lang}` : ""}`} className="btn btn-quiet btn-sm">
+                    <Link href={`/host/e/${slug}/slips`} className="btn btn-quiet btn-sm">
                       All slips
                     </Link>
                   )}
@@ -256,6 +240,27 @@ export default async function Slips({
               {guests.length === 1 ? "" : "s"} · <b>{sheets.length}</b> A4 sheet{sheets.length === 1 ? "" : "s"}
             </p>
           </section>
+
+          {inView.length > 0 && (
+            <section className="card p-[18px] sm:p-[22px]" aria-labelledby="slip-lang">
+              <h2 id="slip-lang" className="text-lg font-bold">
+                Language of each slip
+              </h2>
+              <p className="mb-3 text-[0.9375rem] text-ink-soft">
+                Saved for each household. Its QR code opens the reply page in the same language (Both: the guest&apos;s choice).
+              </p>
+              <SlipLanguages
+                slug={slug}
+                rows={inView.map((g) => ({
+                  id: g.id,
+                  nameEn: g.nameEn,
+                  nameMr: g.nameMr,
+                  sideLabel: host.side || side ? null : g.side === "bride" ? "Bride's side" : "Groom's side",
+                  lang: g.slipLang,
+                }))}
+              />
+            </section>
+          )}
 
           {missingPhone.map((s) => (
             <Alert key={s} tone="error">
@@ -304,7 +309,8 @@ export default async function Slips({
           ) : (
             <>
               <p className="mb-2 text-[0.9375rem] text-ink-soft print:hidden">
-                {sheets.length === 1 ? "One sheet" : `${sheets.length} sheets`} · A4 · 8 slips, each about 97 × 70 mm · {LANG_LABEL[lang]}
+                {sheets.length === 1 ? "One sheet" : `${sheets.length} sheets`} · A4 · 8 slips, each about 97 × 70 mm
+                {lang ? ` · ${LANG_LABEL[lang]} slips only` : ""}
               </p>
               <div className="overflow-hidden print:overflow-visible">
                 {sheets.map((page, i) => (
@@ -314,10 +320,9 @@ export default async function Slips({
                         key={g.id}
                         g={g}
                         base={base}
-                        eventName={eventName}
+                        event={host.event.name}
                         replyBy={replyBy}
                         phone={displayPhone(host.event.contactPhone[g.side])}
-                        lang={lang}
                       />
                     ))}
                   </div>
