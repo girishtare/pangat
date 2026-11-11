@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { signedInUser } from "@/lib/host";
 import { GoogleButton, OrDivider } from "../AuthBits";
 import { SignUpForm } from "../AuthForms";
+import Logo from "../../ui/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,9 @@ export default async function SignUp() {
   }
   return (
     <main className="mx-auto max-w-md px-5 py-16">
+      <Link href="/" className="mb-6 inline-block rounded-lg" aria-label="Pangat home">
+        <Logo decorative className="h-12" />
+      </Link>
       <h1 className="text-3xl font-bold text-kumkum">Create your Pangat account</h1>
       <p className="mt-2 text-lg">Know who is really coming. Set up your event, share each family&apos;s own link, and see the headcount.</p>
       <div className="mt-6">

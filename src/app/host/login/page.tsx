@@ -4,6 +4,7 @@ import { isDemo } from "@/lib/store";
 import { hostClient } from "@/lib/supabase/session";
 import { GoogleButton, LINK_ERRORS, OrDivider } from "../AuthBits";
 import LoginForm from "./LoginForm";
+import Logo from "../../ui/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,9 @@ export default async function HostLogin({ searchParams }: { searchParams: Promis
 
   return (
     <main className="mx-auto max-w-md px-5 py-16">
+      <Link href="/" className="mb-6 inline-block rounded-lg" aria-label="Pangat home">
+        <Logo decorative className="h-12" />
+      </Link>
       <h1 className="text-3xl font-bold text-kumkum">Sign in to Pangat</h1>
       <p className="mt-2 text-lg">For hosts and co-owners of an event.</p>
       {error && LINK_ERRORS[error] && (

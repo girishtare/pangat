@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { CircleCheck, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import type { Side } from "@/lib/types";
+import Logo from "./Logo";
 
 /* Small, restrained wedding details: the mark and a divider. */
 
@@ -34,13 +35,9 @@ export function Divider({ className = "" }: { className?: string }) {
   );
 }
 
+/** The Pangat logo (docs/brand), English. */
 export function Wordmark({ small = false }: { small?: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <Marigold className={small ? "h-6 w-6" : "h-8 w-8"} />
-      <span className={`font-display leading-none text-kumkum ${small ? "text-2xl" : "text-3xl"}`}>Pangat</span>
-    </span>
-  );
+  return <Logo className={small ? "h-10" : "h-12"} />;
 }
 
 export function WhatsAppIcon({ className = "h-5 w-5" }: { className?: string }) {
