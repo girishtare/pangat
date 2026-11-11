@@ -85,6 +85,7 @@ export const supabaseStore = {
       household: { id: row.id, side: row.side, name: { en: row.name_en, mr: row.name_mr }, softCap: row.soft_cap },
       functions,
       responses: (row.responses ?? []).map(toResponse),
+      contactPhone: (row.side === "groom" ? row.events?.contact_phone_groom : row.events?.contact_phone_bride) ?? null,
       cards: (["mr", "en"] as const).filter(
         (l) => (row.slip_lang === "both" || row.slip_lang === l) && !!row.events?.[`card_${row.side}_${l}_path`],
       ),
@@ -224,6 +225,8 @@ export interface GuestRow {
   createdAt: string;
   functionIds: string[];
   replied: string[]; // function ids with a reply
+  /** The most people in any one of their replies (0 when none): compared with the cap. */
+  maxHeads: number;
   /** The language its slip is printed in. */
   slipLang: SlipLang;
 }
@@ -234,7 +237,7 @@ export type SlipLang = "both" | "en" | "mr";
 export async function listGuests(client: SupabaseClient, eventId: string): Promise<GuestRow[]> {
   const { data, error } = await client
     .from("households")
-    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, created_at, slip_lang, invites(function_id), responses(function_id)")
+    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, created_at, slip_lang, invites(function_id), responses(function_id, heads)")
     .eq("event_id", eventId)
     .order("side")
     .order("created_at")
@@ -252,6 +255,7 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     createdAt: r.created_at,
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     replied: (r.responses ?? []).map((x: any) => x.function_id),
+    maxHeads: Math.max(0, ...(r.responses ?? []).map((x: any) => Number(x.heads) || 0)),
     slipLang: r.slip_lang === "en" || r.slip_lang === "mr" ? r.slip_lang : "both",
   }));
 }

@@ -29,7 +29,7 @@ describe("host dates", () => {
     expect(slipDate("2026-12-11T06:00:00Z").en).toBe("11th December 2026");
     expect(slipDate("2026-12-13T06:00:00Z").en).toBe("13th December 2026");
     expect(slipDate("2026-12-22T06:00:00Z").en).toBe("22nd December 2026");
-    expect(slipDate("2026-12-24T06:00:00Z").mr).toContain("२०२६");
+    expect(slipDate("2026-12-24T06:00:00Z").mr).toBe("24 डिसेंबर 2026"); // Marathi month, 0-9 digits
   });
 
   it("writes an event date with the year", () => {

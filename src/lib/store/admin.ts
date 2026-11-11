@@ -631,6 +631,8 @@ export async function loadNudges(eventId: string): Promise<Map<string, NudgeSumm
 
 export interface EffortEntry {
   id: number;
+  /** The host's name (typed in, Google name, else email). */
+  who: string | null;
   email: string | null;
   loggedOn: string;
   minutes: number;
@@ -655,9 +657,11 @@ export async function listEffort(eventId: string, hosts: HostRow[]): Promise<Eff
     .range(0, 999);
   if (error) throw new Error(`effort lookup failed: ${error.message}`);
   const email = new Map(hosts.map((h) => [h.userId, h.email]));
+  const name = new Map(hosts.map((h) => [h.userId, h.displayName]));
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   return ((data ?? []) as any[]).map((r) => ({
     id: r.id,
+    who: name.get(r.user_id) ?? null,
     email: email.get(r.user_id) ?? null,
     loggedOn: r.logged_on,
     minutes: r.minutes,
