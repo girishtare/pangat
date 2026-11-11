@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Printer } from "lucide-react";
+import { Languages, Printer } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { chunk, displayPhone, guestLink } from "@/lib/outreach";
 import { qrPath } from "@/lib/qr";
@@ -7,7 +7,7 @@ import { publicBaseUrl } from "@/lib/site";
 import { listGuests, type GuestRow, type SlipLang } from "@/lib/store/supabase";
 import { slipDate } from "@/lib/when";
 import type { Side } from "@/lib/types";
-import { Alert, EmptyState, PageHeader } from "../../../../ui/kit";
+import { Alert, EmptyState, PageHeader, PageTabs } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import PrintButton from "./PrintButton";
 import SlipLanguages from "./SlipLanguages";
@@ -144,7 +144,7 @@ export default async function Slips({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ side?: string; since?: string; ids?: string; lang?: string }>;
+  searchParams: Promise<{ side?: string; since?: string; ids?: string; lang?: string; tab?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -153,6 +153,56 @@ export default async function Slips({
   const { host } = gate;
 
   const all = await listGuests(host.client, host.event.id);
+  const tab: "print" | "language" = sp.tab === "language" ? "language" : "print";
+  const header = (
+    <div className="print:hidden">
+      <PageHeader
+        title="Slips"
+        subtitle="A small slip for each printed card, with that family's QR code and short code. Cut along the dashed lines and put one in each card."
+      />
+      <PageTabs
+        label="Slips"
+        current={tab}
+        tabs={[
+          { key: "print", label: "Print slips", href: `/host/e/${slug}/slips`, icon: Printer },
+          { key: "language", label: "Language of each slip", href: `/host/e/${slug}/slips?tab=language`, icon: Languages },
+        ]}
+      />
+    </div>
+  );
+
+  if (tab === "language") {
+    return (
+      <EventShell host={host} current="slips">
+        {header}
+        <section className="card p-[18px] sm:p-[22px]" aria-labelledby="slip-lang">
+          <h2 id="slip-lang" className="font-display text-2xl text-kumkum">
+            Language of each slip
+          </h2>
+          <p className="mb-4 mt-0.5 text-[0.9375rem] text-ink-soft">
+            Each household&apos;s slip prints in the language chosen here, saved as you tap. Its QR code opens the reply page in the same
+            language (Both: the guest picks). New households start on Both.
+          </p>
+          {all.length === 0 ? (
+            <EmptyState icon={Languages} title="No households yet">
+              Add households on the Guest list first.
+            </EmptyState>
+          ) : (
+            <SlipLanguages
+              slug={slug}
+              rows={all.map((g) => ({
+                id: g.id,
+                nameEn: g.nameEn,
+                nameMr: g.nameMr,
+                sideLabel: host.side ? null : g.side === "bride" ? "Bride's side" : "Groom's side",
+                lang: g.slipLang,
+              }))}
+            />
+          )}
+        </section>
+      </EventShell>
+    );
+  }
   const side: Side | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
   const ids = sp.ids ? new Set(sp.ids.split(",")) : null;
   const since = sp.since && /^\d{4}-\d{2}-\d{2}$/.test(sp.since) ? sp.since : null;
@@ -175,12 +225,7 @@ export default async function Slips({
   return (
     <EventShell host={host} current="slips">
       <style>{PRINT_CSS}</style>
-      <div className="print:hidden">
-        <PageHeader
-          title="Slips"
-          subtitle="A small slip for each printed card, with that family's QR code and short code. Cut along the dashed lines and put one in each card."
-        />
-      </div>
+      {header}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] print:block">
         <div className="space-y-4 print:hidden">
@@ -239,28 +284,16 @@ export default async function Slips({
               <span className="font-display text-[2.5rem] leading-none text-kumkum">{guests.length.toLocaleString("en-IN")}</span> slip
               {guests.length === 1 ? "" : "s"} · <b>{sheets.length}</b> A4 sheet{sheets.length === 1 ? "" : "s"}
             </p>
+            <p className="mt-1 text-sm text-ink-soft">
+              {(["en", "mr", "both"] as const)
+                .map((l) => `${guests.filter((g) => g.slipLang === l).length} ${l === "en" ? "English" : l === "mr" ? "Marathi" : "both languages"}`)
+                .join(" · ")}
+              .{" "}
+              <Link href={`/host/e/${slug}/slips?tab=language`} className="font-semibold text-kumkum underline">
+                Change languages
+              </Link>
+            </p>
           </section>
-
-          {inView.length > 0 && (
-            <section className="card p-[18px] sm:p-[22px]" aria-labelledby="slip-lang">
-              <h2 id="slip-lang" className="text-lg font-bold">
-                Language of each slip
-              </h2>
-              <p className="mb-3 text-[0.9375rem] text-ink-soft">
-                Saved for each household. Its QR code opens the reply page in the same language (Both: the guest&apos;s choice).
-              </p>
-              <SlipLanguages
-                slug={slug}
-                rows={inView.map((g) => ({
-                  id: g.id,
-                  nameEn: g.nameEn,
-                  nameMr: g.nameMr,
-                  sideLabel: host.side || side ? null : g.side === "bride" ? "Bride's side" : "Groom's side",
-                  lang: g.slipLang,
-                }))}
-              />
-            </section>
-          )}
 
           {missingPhone.map((s) => (
             <Alert key={s} tone="error">
