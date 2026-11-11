@@ -15,10 +15,10 @@ export interface SlipLangRow {
   lang: SlipLang;
 }
 
-const CHOICES: { value: SlipLang; label: string; title: string; lang?: "mr" }[] = [
-  { value: "en", label: "English", title: "English only" },
-  { value: "mr", label: "मराठी", title: "Marathi only", lang: "mr" },
-  { value: "both", label: "Both", title: "English and Marathi" },
+const CHOICES: { value: SlipLang; label: string; short: string; title: string; lang?: "mr" }[] = [
+  { value: "en", label: "English", short: "En", title: "English only" },
+  { value: "mr", label: "मराठी", short: "म", title: "Marathi only", lang: "mr" },
+  { value: "both", label: "Both", short: "Both", title: "English and Marathi" },
 ];
 
 const SIDES: { value: Side; label: string; short: string }[] = [
@@ -119,13 +119,27 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2 lg:justify-end" role="group" aria-label="Language">
-            <span className="text-sm font-semibold text-ink-soft">Language</span>
+            {/* Phones: no label and short chip names (En / म), so the row fits; the group is still named for screen readers. */}
+            <span className="hidden text-sm font-semibold text-ink-soft sm:inline">Language</span>
             <button type="button" onClick={() => setOnly(null)} aria-pressed={only === null} className={chip(only === null)}>
               All {inSide}
             </button>
             {CHOICES.map((c) => (
-              <button key={c.value} type="button" onClick={() => setOnly(c.value)} aria-pressed={only === c.value} className={chip(only === c.value)}>
-                <span lang={c.lang}>{c.label}</span> {counts[c.value]}
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => setOnly(c.value)}
+                aria-pressed={only === c.value}
+                aria-label={`${c.title}: ${counts[c.value]}`}
+                className={chip(only === c.value)}
+              >
+                <span lang={c.lang} className="sm:hidden">
+                  {c.short}
+                </span>
+                <span lang={c.lang} className="hidden sm:inline">
+                  {c.label}
+                </span>{" "}
+                {counts[c.value]}
               </button>
             ))}
           </div>
