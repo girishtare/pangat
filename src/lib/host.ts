@@ -20,8 +20,8 @@ export interface HostEvent {
   /** When the caterer needs the first count, and the last day it can change (YYYY-MM-DD). */
   catererDueOn: string | null;
   catererFinalOn: string | null;
-  /** Storage paths of the invitation card PDFs (null: not uploaded). */
-  cards: { en: string | null; mr: string | null };
+  /** Storage paths of the invitation card PDFs, per side and language (null: not uploaded). */
+  cards: Record<Side, { en: string | null; mr: string | null }>;
 }
 
 export interface HostContext {
@@ -69,7 +69,7 @@ export async function hostGate(slug: string): Promise<HostGate> {
 
   const { data: ev, error } = await client
     .from("events")
-    .select("id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_en_path, card_mr_path")
+    .select("id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path")
     .eq("slug", slug)
     .single();
   if (error) throw new Error(`event lookup failed: ${error.message}`);
@@ -101,7 +101,10 @@ export async function hostGate(slug: string): Promise<HostGate> {
         messageText: { invite: ev.wa_invite_text, reminder: ev.wa_reminder_text },
         catererDueOn: ev.caterer_due_on,
         catererFinalOn: ev.caterer_final_on,
-        cards: { en: ev.card_en_path ?? null, mr: ev.card_mr_path ?? null },
+        cards: {
+          bride: { en: ev.card_bride_en_path ?? null, mr: ev.card_bride_mr_path ?? null },
+          groom: { en: ev.card_groom_en_path ?? null, mr: ev.card_groom_mr_path ?? null },
+        },
       },
       functions: (fns ?? []).map((f) => ({
         id: f.id,
