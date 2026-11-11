@@ -11,13 +11,16 @@ export interface Helper {
   id: string;
   fullName: string;
   phone: string | null;
-  side: Side;
+  /** null = both sides (the event's owner). */
+  side: Side | null;
+  /** Set when this person is one of the event's hosts (owner or co-owner). */
+  hostUserId: string | null;
 }
 
 export interface Task {
   id: string;
   helperId: string;
-  side: Side;
+  side: Side | null;
   title: string;
   note: string | null;
   functionId: string | null;

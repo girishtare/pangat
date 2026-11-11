@@ -11,9 +11,11 @@ import {
   addCoOwner,
   deleteFunction,
   functionUsage,
+  hostTaskCount,
   listHosts,
   MAX_CO_OWNERS_PER_SIDE,
   removeHost,
+  setHostName,
   updateEvent,
   updateFunction,
   type FunctionInput,
@@ -133,9 +135,12 @@ export async function inviteHost(slug: string, _prev: FormState, fd: FormData): 
   if (!parsed.success) return { ok: false, message: "Enter their email address and choose a side." };
   const { email, side } = parsed.data;
   if (email === who.host.email.toLowerCase()) return { ok: false, message: "You are the owner of this event already." };
+  const fullName = text(fd.get("fullName"));
+  if (!fullName) return { ok: false, message: "Enter their full name." };
+  if (fullName.length > 120) return { ok: false, message: "That name is too long." };
 
   const base = await publicBaseUrl();
-  const r = await addCoOwner(who.host.event.id, email, side, `${base}/host`);
+  const r = await addCoOwner(who.host.event.id, email, side, fullName, `${base}/host`);
   if (!r.ok) {
     const message = {
       owner: "That person is the event's owner.",
@@ -159,6 +164,24 @@ export async function dropHost(slug: string, userId: string, _prev: FormState): 
   const target = hosts.find((h) => h.userId === userId);
   if (!target) return { ok: false, message: "That co-owner is no longer on this event." };
   if (target.role === "owner") return { ok: false, message: "The owner can't be removed." };
+  const tasks = await hostTaskCount(who.host.event.id, userId);
+  if (tasks > 0) {
+    return { ok: false, message: `${target.fullName ?? target.email} has ${tasks} task${tasks === 1 ? "" : "s"} on the To-do list. Give them to someone else first.` };
+  }
   await removeHost(who.host.event.id, userId);
   return done(`Removed ${target.email}.`);
+}
+
+/** The owner names any host (themself included). Their To-do entry follows. */
+export async function renameHost(slug: string, userId: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const hosts = await listHosts(who.host.event.id);
+  if (!hosts.some((h) => h.userId === userId)) return { ok: false, message: "That person is no longer a host of this event." };
+  const fullName = text(fd.get("fullName"));
+  if (!fullName) return { ok: false, message: "Enter their full name." };
+  if (fullName.length > 120) return { ok: false, message: "That name is too long." };
+  await setHostName(who.host.event.id, userId, fullName);
+  revalidatePath(`/host/e/${slug}/todo`);
+  return done("Name saved.");
 }

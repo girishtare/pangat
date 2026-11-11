@@ -6,7 +6,9 @@ import { loadHouseholdKeys } from "@/lib/store/supabase";
 import { longStamp, shortWhen } from "@/lib/when";
 import { Alert, PageHeader, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
-import { AddFunctionButton, EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
+import { AddFunctionButton, EventForm, FunctionEditor, HostNameForm, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
+import PopupButton from "../../../../ui/PopupButton";
+import { Pencil } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,15 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
   };
   const role = (h: (typeof hosts)[number]) =>
     h.role === "owner" ? <span className="font-bold">Owner</span> : <span className={`badge ${h.side === "groom" ? "badge-groom" : "badge-bride"}`}>Co-owner · {h.side === "groom" ? "Groom" : "Bride"}</span>;
+  const nameButton = (h: (typeof hosts)[number]) => (
+    <PopupButton
+      label={<Pencil className="h-4 w-4" aria-label={`Edit the name of ${h.fullName ?? h.email}`} />}
+      title={h.fullName ? "Edit name" : "Add name"}
+      className="btn btn-quiet btn-sm"
+    >
+      <HostNameForm slug={slug} userId={h.userId} fullName={h.fullName} />
+    </PopupButton>
+  );
   const signedIn = (h: (typeof hosts)[number]) => (!h.confirmed ? "Invited, not signed in yet" : h.lastSignInAt ? longStamp(h.lastSignInAt) : "Never");
   const viewText = (userId: string) => {
     const v = views.get(userId);
@@ -99,9 +110,10 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
           actions={<InviteCoOwner slug={slug} full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }} />}
         >
           <div className="relative hidden overflow-x-auto rounded-[14px] border border-line lg:block">
-            <table className="table-p min-w-[720px]">
+            <table className="table-p min-w-[860px]">
               <thead>
                 <tr>
+                  <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Last signed in</th>
@@ -114,10 +126,14 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
               <tbody>
                 {hosts.map((h) => (
                   <tr key={h.userId}>
-                    <td className="[overflow-wrap:anywhere]">
-                      {h.email}
-                      {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
+                    <td>
+                      <span className="inline-flex items-center gap-1">
+                        <span className={h.fullName ? "font-semibold" : "text-ink-soft"}>{h.fullName ?? "Add name"}</span>
+                        {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
+                        {nameButton(h)}
+                      </span>
                     </td>
+                    <td className="[overflow-wrap:anywhere]">{h.email}</td>
                     <td>{role(h)}</td>
                     <td>{signedIn(h)}</td>
                     <td>{viewText(h.userId)}</td>
@@ -130,10 +146,12 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
           <ul className="space-y-3 lg:hidden">
             {hosts.map((h) => (
               <li key={h.userId} className="rounded-[14px] border border-line p-3.5">
-                <p className="font-semibold [overflow-wrap:anywhere]">
-                  {h.email}
+                <p className="flex flex-wrap items-center gap-1 font-semibold">
+                  {h.fullName ?? <span className="font-normal text-ink-soft">Add name</span>}
                   {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
+                  {nameButton(h)}
                 </p>
+                <p className="text-sm [overflow-wrap:anywhere]">{h.email}</p>
                 <div className="mt-1">{role(h)}</div>
                 <p className="mt-1 text-sm text-ink-soft">
                   Last signed in: {signedIn(h)} · Dashboard visits: {viewText(h.userId)}

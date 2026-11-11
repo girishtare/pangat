@@ -124,7 +124,7 @@ export function PersonForm({
 }: {
   slug: string;
   hostSide: Side | null;
-  person?: { id: string; fullName: string; phone: string | null; side: Side };
+  person?: { id: string; fullName: string; phone: string | null; side: Side | null; hostUserId?: string | null };
 }) {
   const [state, action, pending] = useActionState(person ? editPerson.bind(null, slug, person.id) : addPerson.bind(null, slug), null);
   const form = useRef<HTMLFormElement>(null);
@@ -143,7 +143,9 @@ export function PersonForm({
         </span>
         <input name="phone" inputMode="tel" autoComplete="off" defaultValue={person?.phone ?? ""} className="input" placeholder="98765 43210" />
       </label>
-      {hostSide ? (
+      {person?.hostUserId ? (
+        <p className="hint">The side of a host follows their role in Event settings.</p>
+      ) : hostSide ? (
         <input type="hidden" name="side" value={hostSide} />
       ) : (
         <fieldset>
