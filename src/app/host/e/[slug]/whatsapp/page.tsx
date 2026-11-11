@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleCheck, Phone } from "lucide-react";
+import { CircleCheck, Clock, MessageSquareText, Users } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
 import { householdMessage } from "@/lib/hostMessages";
@@ -8,20 +8,22 @@ import { publicBaseUrl } from "@/lib/site";
 import { listEffort, listHosts, loadNudges } from "@/lib/store/admin";
 import { listGuests } from "@/lib/store/supabase";
 import { shortStamp } from "@/lib/when";
-import { Alert, EmptyState, PageHeader, ReplyBadge, SideBadge } from "../../../../ui/kit";
+import { Alert, EmptyState, PageHeader, PageTabs } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
-import { EffortForm, SendButton, TextEditor } from "./WhatsAppForms";
+import DistributionList from "./DistributionList";
+import { EffortForm, TextEditor } from "./WhatsAppForms";
 
 export const dynamic = "force-dynamic";
 
 type Show = "todo" | "all";
+type Tab = "message" | "list" | "time";
 
 export default async function WhatsApp({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ kind?: string; show?: string }>;
+  searchParams: Promise<{ kind?: string; show?: string; tab?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -30,6 +32,7 @@ export default async function WhatsApp({
   const { host } = gate;
   const kind: MessageKind = sp.kind === "reminder" ? "reminder" : "invite";
   const show: Show = sp.show === "all" ? "all" : "todo";
+  const tabNow: Tab = sp.tab === "list" || sp.tab === "time" ? sp.tab : "message";
 
   const [guests, nudges, base, hosts] = await Promise.all([
     listGuests(host.client, host.event.id),
@@ -56,9 +59,10 @@ export default async function WhatsApp({
   const hours = Math.floor(totals.minutes / 60);
   const mins = totals.minutes % 60;
   const listTitle = show === "all" ? "All households" : kind === "invite" ? "Still to send" : "Still to remind";
+  const base_ = `/host/e/${slug}/whatsapp`;
   const tab = (k: MessageKind, label: string) => (
     <Link
-      href={`/host/e/${slug}/whatsapp?kind=${k}`}
+      href={`${base_}?tab=${tabNow}&kind=${k}`}
       aria-current={kind === k ? "true" : undefined}
       className={`flex min-h-11 items-center justify-center rounded-[10px] px-3 text-center text-[0.9375rem] leading-tight sm:px-[18px] sm:text-base ${
         kind === k ? "bg-card font-bold text-kumkum shadow-[0_1px_3px_rgba(46,26,28,0.15)]" : "font-semibold text-ink hover:bg-card/60"
@@ -69,7 +73,7 @@ export default async function WhatsApp({
   );
   const filterLink = (s: Show, label: string) => (
     <Link
-      href={`/host/e/${slug}/whatsapp?kind=${kind}&show=${s}`}
+      href={`${base_}?tab=list&kind=${kind}&show=${s}`}
       aria-current={show === s ? "true" : undefined}
       className={`inline-flex min-h-11 items-center rounded-full border-2 px-4 font-bold ${
         show === s ? "border-ink bg-ink text-white" : "border-line bg-card text-ink hover:border-ink"
@@ -83,11 +87,24 @@ export default async function WhatsApp({
     <EventShell host={host} current="whatsapp">
       <PageHeader title="WhatsApp" subtitle="Each button opens WhatsApp on your phone with the message already written. You press send." />
 
-      <nav aria-label="Message type" className="mb-5 grid grid-cols-2 gap-1 rounded-[14px] bg-paper-deep p-1 sm:inline-grid">
-        {tab("invite", "Invitation (after the card)")}
-        {tab("reminder", "Reminder (to households waiting)")}
-      </nav>
+      <PageTabs
+        label="WhatsApp"
+        current={tabNow}
+        tabs={[
+          { key: "message", label: "Message", href: `${base_}?tab=message&kind=${kind}`, icon: MessageSquareText },
+          { key: "list", label: "Distribution list", href: `${base_}?tab=list&kind=${kind}`, icon: Users, count: todo.length },
+          { key: "time", label: "Time spent chasing", href: `${base_}?tab=time&kind=${kind}`, icon: Clock },
+        ]}
+      />
 
+      {tabNow !== "time" && (
+        <nav aria-label="Message type" className="mb-5 grid grid-cols-2 gap-1 rounded-[14px] bg-paper-deep p-1 sm:inline-grid">
+          {tab("invite", "Invitation (after the card)")}
+          {tab("reminder", "Reminder (to households waiting)")}
+        </nav>
+      )}
+
+      {tabNow === "message" && (
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <section className="card p-[18px] sm:p-[22px]" aria-labelledby="message-title">
           <h2 id="message-title" className="text-lg font-bold">
@@ -118,12 +135,15 @@ export default async function WhatsApp({
             <p className="hint">Add a household to see a preview.</p>
           )}
           <p className="mt-3 text-sm text-ink-soft">
-            When you tap <b>Send</b>, WhatsApp opens with this message filled in for that household. You still press send in WhatsApp.
+            When you tap <b>Send</b> on the Distribution list, WhatsApp opens with this message filled in for that household. You still press
+            send in WhatsApp.
           </p>
         </section>
       </div>
+      )}
 
-      <section className="mt-9" aria-labelledby="send-list">
+      {tabNow === "list" && (
+      <section aria-labelledby="send-list">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="send-list" className="font-display text-[1.625rem] text-kumkum">
@@ -158,97 +178,36 @@ export default async function WhatsApp({
             </EmptyState>
           </div>
         ) : (
-          <>
-            <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
-              <table className="table-p min-w-[760px]">
-                <thead>
-                  <tr>
-                    <th>Household</th>
-                    <th>Mobile</th>
-                    <th>Replied</th>
-                    <th>Invitation sent</th>
-                    <th>Reminders</th>
-                    <th>
-                      <span className="sr-only">Send</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((g) => {
-                    const n = nudges.get(g.id);
-                    const href = whatsappLink(g.mobile, message(g));
-                    const sent = !!sentKey(g.id);
-                    return (
-                      <tr key={g.id}>
-                        <td className="max-w-[16rem]">
-                          <Link href={`/host/e/${slug}/guests/${g.id}`} className="wrap-names font-bold text-ink hover:text-kumkum hover:underline">
-                            {g.nameEn}
-                          </Link>
-                          {!host.side && (
-                            <div className="mt-1">
-                              <SideBadge side={g.side} />
-                            </div>
-                          )}
-                        </td>
-                        <td className="whitespace-nowrap">{g.mobile ? displayPhone(g.mobile) : <span className="font-bold text-kumkum">No mobile</span>}</td>
-                        <td>
-                          <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
-                        </td>
-                        <td className="whitespace-nowrap">{n?.invite ? shortStamp(n.invite) : "—"}</td>
-                        <td className="whitespace-nowrap">{n?.reminders ? `${n.reminders}, last ${shortStamp(n.reminder!)}` : "0"}</td>
-                        <td>
-                          {href ? <SendButton slug={slug} householdId={g.id} kind={kind} href={href} sentBefore={sent} /> : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <ul className="mt-4 space-y-3 lg:hidden">
-              {rows.map((g) => {
-                const n = nudges.get(g.id);
-                const href = whatsappLink(g.mobile, message(g));
-                return (
-                  <li key={g.id} className="card p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <Link href={`/host/e/${slug}/guests/${g.id}`} className="wrap-names min-w-0 font-bold text-ink">
-                        {g.nameEn}
-                      </Link>
-                      <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
-                    </div>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
-                      {!host.side && <SideBadge side={g.side} />}
-                      {g.mobile ? (
-                        <span className="inline-flex items-center gap-1 font-semibold text-ink">
-                          <Phone className="h-4 w-4" aria-hidden="true" />
-                          {displayPhone(g.mobile)}
-                        </span>
-                      ) : (
-                        <span className="font-bold text-kumkum">No mobile</span>
-                      )}
-                    </p>
-                    <p className="mt-1 text-xs text-ink-soft">
-                      Invitation: {n?.invite ? shortStamp(n.invite) : "not yet"} · Reminders: {n?.reminders ?? 0}
-                    </p>
-                    {href && (
-                      <div className="mt-3">
-                        <SendButton slug={slug} householdId={g.id} kind={kind} href={href} sentBefore={!!sentKey(g.id)} full />
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </>
+          <DistributionList
+            slug={slug}
+            kind={kind}
+            showSide={!host.side}
+            rows={rows.map((g) => {
+              const n = nudges.get(g.id);
+              return {
+                id: g.id,
+                nameEn: g.nameEn,
+                side: g.side,
+                mobile: g.mobile ? displayPhone(g.mobile) : null,
+                replied: g.replied.length,
+                invited: g.functionIds.length,
+                invitationSent: n?.invite ? shortStamp(n.invite) : null,
+                reminders: n?.reminders ? `${n.reminders}, last ${shortStamp(n.reminder!)}` : "0",
+                href: whatsappLink(g.mobile, message(g)),
+                sentBefore: !!sentKey(g.id),
+              };
+            })}
+          />
         )}
         <p className="hint mt-3">
           &quot;Invitation sent&quot; and &quot;Reminders&quot; record when the message was opened in WhatsApp from here; Pangat can&apos;t see
           whether it was actually sent.
         </p>
       </section>
+      )}
 
-      <section className="card mt-8 p-[18px] sm:p-7" aria-labelledby="effort-title">
+      {tabNow === "time" && (
+      <section className="card p-[18px] sm:p-7" aria-labelledby="effort-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1 basis-60">
             <h2 id="effort-title" className="font-display text-2xl text-kumkum">
@@ -315,6 +274,7 @@ export default async function WhatsApp({
           </>
         )}
       </section>
+      )}
     </EventShell>
   );
 }
