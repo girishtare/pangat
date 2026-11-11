@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Check, Plus, Save } from "lucide-react";
+import { Check, Save } from "lucide-react";
 import type { MessageKind } from "@/lib/outreach";
 import { Alert, WhatsAppIcon } from "../../../../ui/kit";
 import { logEffort, recordSend, saveText, type FormState } from "./actions";
@@ -56,12 +56,12 @@ export function TextEditor({ slug, kind, text, canEdit, isDefault }: { slug: str
   return (
     <form action={action} className="space-y-3">
       <label className="block">
-        <span className="label">Message</span>
-        <textarea name="text" defaultValue={text} rows={10} maxLength={1500} className="input text-[0.9375rem]" />
+        <span className="sr-only">Message</span>
+        <textarea name="text" defaultValue={text} rows={12} maxLength={1500} className="input text-[0.9375rem]" />
       </label>
       <Message state={state} />
       <div className="flex flex-wrap items-center gap-2">
-        <button type="submit" disabled={pending} className="btn btn-primary">
+        <button type="submit" disabled={pending} className="btn btn-secondary">
           <Save className="h-5 w-5" aria-hidden="true" />
           {pending ? "Saving…" : "Save message"}
         </button>
@@ -79,30 +79,30 @@ export function EffortForm({ slug, today }: { slug: string; today: string }) {
   const [state, action, pending] = useActionState(logEffort.bind(null, slug), null);
   return (
     <form action={action} className="space-y-3">
-      <p className="label">Log a follow-up</p>
-      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-[10rem_8rem_8rem_minmax(0,1fr)]">
+      <div className="grid items-end gap-3 sm:grid-cols-3 lg:grid-cols-[11rem_8rem_8rem_minmax(0,1fr)_auto]">
         <label className="block">
-          <span className="hint mb-1 block">Date</span>
+          <span className="label">Date</span>
           <input type="date" name="loggedOn" defaultValue={today} required className="input" />
         </label>
         <label className="block">
-          <span className="hint mb-1 block">Minutes</span>
+          <span className="label">Minutes</span>
           <input name="minutes" inputMode="numeric" className="input" placeholder="30" />
         </label>
         <label className="block">
-          <span className="hint mb-1 block">Calls</span>
+          <span className="label">Phone calls</span>
           <input name="calls" inputMode="numeric" className="input" placeholder="5" />
         </label>
         <label className="block sm:col-span-3 lg:col-span-1">
-          <span className="hint mb-1 block">Note (optional)</span>
-          <input name="note" maxLength={300} className="input" placeholder="Called pending relatives" />
+          <span className="label">
+            Note <span className="font-normal text-ink-soft">(optional)</span>
+          </span>
+          <input name="note" maxLength={300} className="input" placeholder="Reminders to the groom's side" />
         </label>
+        <button type="submit" disabled={pending} className="btn btn-primary w-full sm:col-span-3 lg:col-span-1 lg:w-auto lg:px-8">
+          {pending ? "Saving…" : "Log it"}
+        </button>
       </div>
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
-        <Plus className="h-5 w-5" aria-hidden="true" />
-        {pending ? "Saving…" : "Add to the log"}
-      </button>
     </form>
   );
 }

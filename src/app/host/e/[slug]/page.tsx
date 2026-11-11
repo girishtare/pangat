@@ -54,7 +54,6 @@ export default async function EventDashboard({
     <EventShell host={host} current="dashboard">
       <div className="flex flex-col gap-3.5 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between lg:gap-4">
         <PageHeader
-          large
           title="How many are coming"
           subtitle={`Updated just now · replies ${closed ? "closed" : "close"} on ${formatDay(host.event.cutoffAt, "en")}`}
         />
