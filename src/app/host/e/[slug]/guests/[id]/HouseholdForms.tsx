@@ -47,7 +47,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
   const [coming, setComing] = useState<"yes" | "no" | "">(f.current?.status ?? "");
   const [heads, setHeads] = useState(f.current?.status === "yes" ? f.current.heads : 2);
   const [veg, setVeg] = useState(f.current?.status === "yes" ? f.current.veg : 0);
-  const num = "input min-h-12 w-20 px-3 text-lg font-bold tabular-nums";
+  const num = "input min-h-12 w-full min-w-0 px-3 text-lg font-bold tabular-nums sm:w-20";
   return (
     <fieldset className="min-w-0 rounded-[14px] border border-line px-4 pb-4 pt-1">
       <legend className="px-1.5 font-bold">
@@ -68,7 +68,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
       {coming === "yes" && (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 items-center gap-3 sm:flex sm:flex-wrap sm:gap-x-6">
-            <label className="flex items-center gap-2.5">
+            <label className="flex min-w-0 items-center gap-2.5">
               <span className="text-ink-soft">People</span>
               <input
                 name={`heads_${f.id}`}
@@ -87,7 +87,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
               />
             </label>
             {f.catered && (
-              <label className="flex items-center gap-2.5">
+              <label className="flex min-w-0 items-center gap-2.5">
                 <span className="text-ink-soft">Veg</span>
                 <input
                   name={`veg_${f.id}`}
