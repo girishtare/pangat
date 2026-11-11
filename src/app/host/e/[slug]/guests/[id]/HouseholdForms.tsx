@@ -53,13 +53,13 @@ function ReplyRow({ f }: { f: ReplyFn }) {
       <legend className="px-1.5 font-bold">
         {f.name} · {f.when}
       </legend>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <label className="choice relative min-h-12 px-5">
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <label className="choice relative min-h-12 px-3 sm:px-5">
           <input type="radio" name={`coming_${f.id}`} value="yes" checked={coming === "yes"} onChange={() => setComing("yes")} />
           {coming === "yes" && <Check className="h-4 w-4" aria-hidden="true" />}
           Coming
         </label>
-        <label className="choice choice-no relative min-h-12 px-5">
+        <label className="choice choice-no relative min-h-12 px-3 sm:px-5">
           <input type="radio" name={`coming_${f.id}`} value="no" checked={coming === "no"} onChange={() => setComing("no")} />
           {coming === "no" && <Check className="h-4 w-4" aria-hidden="true" />}
           Can&apos;t come
@@ -67,7 +67,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
       </div>
       {coming === "yes" && (
         <div className="mt-3 space-y-3">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="grid grid-cols-2 items-center gap-3 sm:flex sm:flex-wrap sm:gap-x-6">
             <label className="flex items-center gap-2.5">
               <span className="text-ink-soft">People</span>
               <input
@@ -99,13 +99,14 @@ function ReplyRow({ f }: { f: ReplyFn }) {
                   onChange={(e) => setVeg(Math.min(heads, Math.max(0, Number(e.target.value) || 0)))}
                   className={num}
                 />
-                <span className="text-sm text-ink-soft">non-veg {heads - veg}</span>
+                <span className="hidden text-sm text-ink-soft sm:inline">non-veg {heads - veg}</span>
               </label>
             )}
           </div>
-          <fieldset className="flex flex-wrap items-center gap-2">
+          {f.catered && <p className="text-sm text-ink-soft sm:hidden">Non-veg: {heads - veg}</p>}
+          <fieldset className="grid grid-cols-3 items-center gap-2 sm:flex sm:flex-wrap">
             <legend className="sr-only">Arrival</legend>
-            <span className="mr-1 text-ink-soft" aria-hidden="true">
+            <span className="col-span-3 text-ink-soft sm:mr-1" aria-hidden="true">
               Arrival:
             </span>
             {(
@@ -115,7 +116,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
                 ["late", "A little late"],
               ] as const
             ).map(([value, label]) => (
-              <label key={value} className="choice choice-sky relative min-h-11 px-3.5 text-[0.9375rem]">
+              <label key={value} className="choice choice-sky relative min-h-11 px-2 text-[0.9375rem] leading-tight sm:px-3.5">
                 <input type="radio" name={`arrival_${f.id}`} value={value} defaultChecked={f.current?.arrivalSlot === value} />
                 {label}
               </label>
