@@ -17,7 +17,7 @@ Read `README.md` for how to run it and what is and isn't built.
 - About 400 printed cards (200 per side, bride and groom). The family expects 700 to 800 people to turn up; the invited total has not been counted.
 - Cards are already printed, so each named card gets a separately printed slip with that household's QR code and short code, in English and Marathi.
 - First cards go out Friday 13 November to close family, without slips. Those households are entered by hand.
-- **Caterer's final count is due 15 December 2026.** The tool's number is needed by 14 December.
+- **Caterer's first count is due 20 December 2026; the caterer accepts changes until 25 December** (owner confirmed 11 Nov; set in Event settings). The tool's number is frozen the day before, 19 December. (Planned as 15 and 24 Dec until 11 Nov.)
 
 ## Timeline
 
@@ -27,18 +27,18 @@ Read `README.md` for how to run it and what is and isn't built.
 - 23 to 24 Nov: dry run with ten relatives, at least two over 65.
 - 25 Nov: slips printed; remaining cards go out with them, each followed by the WhatsApp link.
 - 6 Dec: first nudge to pending households. 12 Dec: phone round.
-- 14 Dec: expected headcount set beside the family's baseline.
+- 19 Dec: Pangat's number frozen beside the family's baseline (Caterer numbers). 20 Dec: first count to the caterer. 25 Dec: last change to the caterer.
 - 28 Dec: arrivals counted per function. 3 Jan 2027: review.
 
 ## How the pilot is judged
 
-Three numbers: **baseline** (what the family would have ordered anyway), **predicted** (the tool's figure on 14 December) and **actual** (counted on the day). The tool has earned its place only if predicted is closer to actual than baseline is.
+Three numbers: **baseline** (what the family would have ordered anyway), **predicted** (the tool's figure frozen on 19 December) and **actual** (counted on the day). The tool has earned its place only if predicted is closer to actual than baseline is.
 
 ## Decided
 
 - 10 Nov: **open sign-up** for commercial use. Google and email/password now; phone OTP later (needs an SMS provider and DLT registration). Email: the owner's Gmail via SMTP for the pilot (no domain yet); Resend once a domain is bought. Each event has one **owner** (its creator) and up to **3 co-owners per side**; co-owners work on their side only. Event kinds: wedding only for now (`events.kind`). Setup steps: `docs/auth-setup.md`. Verified live 10 Nov: Google sign-in links to the existing email account; a co-owner invitation (groom side) was accepted and the invitee signed in. Supabase Site URL must be the production URL, or email links point at localhost. Owner also confirmed: self sign-up by email (confirmation email via Gmail) and password reset both work. Before charging: Vercel Pro (Hobby is non-commercial).
 
-- If the tool's number and the parents' number disagree on 14 December, **the higher of the two goes to the caterer**. So this wedding cannot show a saving; it is a measurement run. Record both numbers and the actual count, and judge the tool on accuracy only.
+- If the tool's number and the parents' number disagree on 19 December, **the higher of the two goes to the caterer**. So this wedding cannot show a saving; it is a measurement run. Record both numbers and the actual count, and judge the tool on accuracy only.
 
 - 11 Nov (owner): co-owner view tested by the owner, all good. Marathi wording on the guest page and in WhatsApp messages accepted as is. The family's baseline per function has been discussed with them. "Coming soon" event kinds on Create an event: decide in December (for now Wedding only). Supabase: the owner keeps the project active so it doesn't pause. Vercel Pro and commercial launch only after this wedding.
 
@@ -66,7 +66,7 @@ The owner will decide after 3 January whether the product is sold on savings or 
 1. ~~Which functions get their own headcount, and which are catered?~~ Answered 10 Nov: hosts set this per event on the page (each function has its own headcount and a "food served" flag).
 2. Is the groom's side in the tool with its own login, or do they hand over one number?
 3. ~~Does each card map to one household, and is there a soft cap on heads per card?~~ Answered 10 Nov: one card = one household, with an optional soft cap (Cap column). The cap is stored but not yet enforced on the guest form.
-4. ~~How far can the caterer's count move after 15 December, and at what cost?~~ Answered 10 Nov: the caterer accepts changes until **24 December**. The pilot is still judged on the tool's number frozen on 14 December; a later update to the caterer (up to 24 Dec) is frozen separately as the "revised count" on the Caterer numbers tab (migration 0010); the caterer then gets the higher of baseline and the revised number. Caterer dates are Event settings.
+4. ~~How far can the caterer's count move after 15 December, and at what cost?~~ Answered 10 Nov; dates moved 11 Nov: the caterer accepts changes until **25 December**. The pilot is still judged on the tool's number frozen on 19 December; a later update to the caterer (up to 25 Dec) is frozen separately as the "revised count" on the Caterer numbers tab (migration 0010); the caterer then gets the higher of baseline and the revised number. Caterer dates are Event settings.
 5. ~~Is the menu all-vegetarian? If so, drop the diet question.~~ Answered 10 Nov: both veg and non-veg are served, so the vegetarian question stays.
 
 ## v1 scope
@@ -81,7 +81,7 @@ Out: space, chairs, vendors, seating; WhatsApp Business API; ads; payments; nati
 2. Guest list import from a sheet, add a late household, token and short-code generation (`src/lib/token.ts`). **Code written 10 Nov: `/host/guests`, `src/lib/guestlist.ts`, migration 0004 (atomic `import_households`, service role only). Import function tested in SQL; the page not yet used live.**
    Also (owner's call, 10 Nov: "everything that needs a change should be on page"): events are created on the page with Haldi/Wedding/Reception by default; functions, event details, show rates and hosts are edited on Event settings (hosts of both sides only). Routes are per event: `/host/e/<slug>`. Migration 0005; `PANGAT_EVENT_SLUG` is gone.
    Excel (owner, 10 Nov): per-event template at `/host/e/<slug>/guests/template` (exceljs, writing only) and `.xlsx` upload (read-excel-file, reading untrusted files), both feeding the same check step. Only the "Guests" sheet is imported. Owner confirmed 10 Nov: template dropdowns and upload work in both Excel and Google Sheets.
-3. Mark on behalf (source `on_behalf`, `updated_by` = host). **Built 10 Nov on the household page, with edit/delete household and guest-list search. Pilot record built too: Caterer numbers tab (baseline, freeze on 14 Dec, to caterer, actual, verdict), migration 0006. Still to build for the evidence list: hours/calls chasing log, dashboard-view tracking.**
+3. Mark on behalf (source `on_behalf`, `updated_by` = host). **Built 10 Nov on the household page, with edit/delete household and guest-list search. Pilot record built too: Caterer numbers tab (baseline, freeze on 19 Dec, to caterer, actual, verdict), migration 0006. Still to build for the evidence list: hours/calls chasing log, dashboard-view tracking.**
 4. Printable slips: household name, QR to `/r/<token>?s=q`, short code, English and Marathi. **Built 10 Nov: Slips tab (8 per A4), side contact numbers in Event settings. Owner confirmed: printed slip QR scans to the right reply page.**
 5. "Not us" mobile lookup and approval queue. **Built 10 Nov: guest leaves a mobile (no match revealed), host queue on the Guest list with one-tap WhatsApp send or dismiss; migration 0008. Language choice now remembered (cookie).**
 6. WhatsApp nudge links (`https://wa.me/<number>?text=...`) for pending households. **Built 10 Nov: WhatsApp tab with invitation and reminder texts (editable), sends recorded in `nudges`; effort log and dashboard-view tracking for the review. Migration 0007. Owner confirmed: the WhatsApp button opens the prefilled message and the link works.**
