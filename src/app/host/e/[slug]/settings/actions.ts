@@ -166,7 +166,7 @@ export async function dropHost(slug: string, userId: string, _prev: FormState): 
   if (target.role === "owner") return { ok: false, message: "The owner can't be removed." };
   const tasks = await hostTaskCount(who.host.event.id, userId);
   if (tasks > 0) {
-    return { ok: false, message: `${target.fullName ?? target.email} has ${tasks} task${tasks === 1 ? "" : "s"} on the To-do list. Give them to someone else first.` };
+    return { ok: false, message: `${target.displayName} has ${tasks} task${tasks === 1 ? "" : "s"} on the To-do list. Give them to someone else first.` };
   }
   await removeHost(who.host.event.id, userId);
   return done(`Removed ${target.email}.`);
