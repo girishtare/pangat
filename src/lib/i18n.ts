@@ -6,6 +6,9 @@ const strings = {
   en: {
     switchLang: "मराठी",
     invitedBy: "You are invited",
+    viewCard: "View the invitation card",
+    cardEn: "Invitation card (English)",
+    cardMr: "Invitation card (Marathi)",
     isThisYou: "Is this invitation for you?",
     yesThatsUs: "Yes, that's us",
     notUs: "No, this isn't us",
@@ -49,6 +52,9 @@ const strings = {
   mr: {
     switchLang: "English",
     invitedBy: "आपणांस सस्नेह निमंत्रण",
+    viewCard: "निमंत्रण पत्रिका पहा",
+    cardEn: "निमंत्रण पत्रिका (इंग्रजी)",
+    cardMr: "निमंत्रण पत्रिका (मराठी)",
     isThisYou: "हे निमंत्रण आपल्यासाठी आहे का?",
     yesThatsUs: "हो, आम्हीच",
     notUs: "नाही, हे आमचे नाही",

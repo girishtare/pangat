@@ -68,7 +68,7 @@ export const supabaseStore = {
   async getHouseholdByToken(token: string): Promise<HouseholdView | null> {
     const { data, error } = await db()
       .from("households")
-      .select("id, side, name_en, name_mr, soft_cap, events(*), invites(functions(*)), responses(*)")
+      .select("id, side, name_en, name_mr, soft_cap, slip_lang, events(*), invites(functions(*)), responses(*)")
       .eq("token", token)
       .maybeSingle();
     if (error) throw new Error(`households lookup failed: ${error.message}`);
@@ -84,6 +84,9 @@ export const supabaseStore = {
       household: { id: row.id, side: row.side, name: { en: row.name_en, mr: row.name_mr }, softCap: row.soft_cap },
       functions,
       responses: (row.responses ?? []).map(toResponse),
+      cards: (["mr", "en"] as const).filter(
+        (l) => (row.slip_lang === "both" || row.slip_lang === l) && !!(l === "en" ? row.events?.card_en_path : row.events?.card_mr_path),
+      ),
     };
   },
 

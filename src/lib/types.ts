@@ -50,6 +50,8 @@ export interface HouseholdView {
   household: HouseholdInfo;
   functions: FunctionInfo[]; // only the functions this household is invited to
   responses: ResponseRecord[];
+  /** Invitation cards to offer: the household's slip language(s) the event has a PDF for (Marathi first). */
+  cards?: Lang[];
 }
 
 /** One household x function pair, as the forecast and dashboard see it. */

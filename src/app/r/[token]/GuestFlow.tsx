@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, ChevronLeft, CircleAlert, Lock } from "lucide-react";
+import { Check, ChevronLeft, CircleAlert, FileText, Lock } from "lucide-react";
 import { formatDay, formatWhen, t } from "@/lib/i18n";
 import { eventDays, splitLead } from "@/lib/text";
 import { pick, type ArrivalSlot, type HouseholdView, type Lang } from "@/lib/types";
@@ -119,6 +119,7 @@ export default function GuestFlow({
             <p className="text-[15px] font-bold text-maroon">{t(lang, "invitedBy")}</p>
             <p className={`${heading} wrap-names mt-1 text-[36px] leading-[1.35] text-maroon`}>{eventName}</p>
             {days && <p className="text-base text-ink-e-soft">{days}</p>}
+            <CardLinks token={token} cards={view.cards ?? []} lang={lang} className="mt-4" />
           </div>
           <div className={`${card} mx-4 mt-[18px] rounded-2xl p-[18px] text-center`}>
             <p className={`${heading} wrap-names text-[26px] leading-[1.4] text-ink-e`}>{householdName}</p>
@@ -271,6 +272,7 @@ export default function GuestFlow({
               })}
             </ul>
           </section>
+          <CardLinks token={token} cards={view.cards ?? []} lang={lang} className="mx-4 mt-[18px]" />
           {closed ? (
             <p className={`${infoBox} mx-4 mt-[18px] flex items-start gap-2`}>
               <Lock className="mt-1 h-4 w-4 shrink-0 text-sky-ink" aria-hidden="true" />
@@ -497,4 +499,25 @@ function dietSplit(heads: number, veg: number, lang: Lang): string {
   if (veg >= heads) return t(lang, "allVeg");
   if (veg <= 0) return t(lang, "allNonVeg");
   return `${veg} ${t(lang, "veg")}, ${heads - veg} ${t(lang, "nonVegShort")}`;
+}
+
+/** "View the invitation card" (or one button per language when both are offered); opens the PDF. */
+function CardLinks({ token, cards, lang, className = "" }: { token: string; cards: Lang[]; lang: Lang; className?: string }) {
+  if (cards.length === 0) return null;
+  return (
+    <div className={`flex flex-col gap-2 ${className}`}>
+      {cards.map((l) => (
+        <a
+          key={l}
+          href={`/r/${encodeURIComponent(token)}/card?l=${l}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-maroon bg-card-e px-4 text-base font-bold text-maroon no-underline hover:bg-cream"
+        >
+          <FileText className="h-5 w-5 shrink-0" aria-hidden="true" />
+          {cards.length === 1 ? t(lang, "viewCard") : t(lang, l === "en" ? "cardEn" : "cardMr")}
+        </a>
+      ))}
+    </div>
+  );
 }

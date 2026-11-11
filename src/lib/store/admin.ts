@@ -924,3 +924,52 @@ export async function deleteEvent(eventId: string): Promise<void> {
   const { error } = await admin().from("events").delete().eq("id", eventId);
   if (error) throw new Error(`deleting the event failed: ${error.message}`);
 }
+
+/* ---------- Invitation card (PDF) ---------- */
+
+export type CardLang = "en" | "mr";
+const CARDS = "cards"; // private Storage bucket (migration 0015)
+export const CARD_MAX_BYTES = 20 * 1024 * 1024;
+
+/** A one-time link the owner's browser uploads the PDF to, straight to Storage (no size limit from our server). */
+export async function cardUploadTarget(eventId: string, lang: CardLang): Promise<{ path: string; url: string }> {
+  const path = `${eventId}/${lang}-${Date.now()}.pdf`;
+  const { data, error } = await admin().storage.from(CARDS).createSignedUploadUrl(path);
+  if (error || !data) throw new Error(`card upload link failed: ${error?.message}`);
+  return { path, url: data.signedUrl };
+}
+
+/** Records an uploaded card on the event, and deletes the file it replaces. */
+export async function setCard(eventId: string, lang: CardLang, path: string | null): Promise<void> {
+  const column = lang === "en" ? "card_en_path" : "card_mr_path";
+  const { data: ev, error: readError } = await admin().from("events").select(column).eq("id", eventId).single();
+  if (readError) throw new Error(`card lookup failed: ${readError.message}`);
+  const old = (ev as Record<string, string | null>)[column];
+  const { error } = await admin().from("events").update({ [column]: path }).eq("id", eventId);
+  if (error) throw new Error(`saving card failed: ${error.message}`);
+  if (old && old !== path) await admin().storage.from(CARDS).remove([old]);
+}
+
+/** Is there a file at this path? (The browser says it uploaded; check before recording it.) */
+export async function cardExists(path: string): Promise<boolean> {
+  const slash = path.lastIndexOf("/");
+  const { data, error } = await admin().storage.from(CARDS).list(path.slice(0, slash), { search: path.slice(slash + 1) });
+  if (error) throw new Error(`card check failed: ${error.message}`);
+  return (data ?? []).some((f) => f.name === path.slice(slash + 1));
+}
+
+/** A link to the PDF that works for an hour. */
+export async function cardSignedUrl(path: string): Promise<string> {
+  const { data, error } = await admin().storage.from(CARDS).createSignedUrl(path, 3600);
+  if (error || !data) throw new Error(`card link failed: ${error?.message}`);
+  return data.signedUrl;
+}
+
+/** A guest's card, by their household's token: the path for that language, if the event has it. */
+export async function cardPathForGuest(token: string, lang: CardLang): Promise<string | null> {
+  const { data, error } = await admin().from("households").select("events(card_en_path, card_mr_path)").eq("token", token).maybeSingle();
+  if (error) throw new Error(`card lookup failed: ${error.message}`);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const ev = (data as any)?.events;
+  return (lang === "en" ? ev?.card_en_path : ev?.card_mr_path) ?? null;
+}

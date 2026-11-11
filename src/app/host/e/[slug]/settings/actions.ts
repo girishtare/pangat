@@ -12,6 +12,10 @@ import type { Side } from "@/lib/types";
 import {
   addFunction,
   addCoOwner,
+  CARD_MAX_BYTES,
+  cardExists,
+  cardUploadTarget,
+  type CardLang,
   deleteAccountIfUnused,
   deleteEvent,
   deleteFunction,
@@ -21,6 +25,7 @@ import {
   MAX_CO_OWNERS_PER_SIDE,
   removeHost,
   resendInvite,
+  setCard,
   updateEvent,
   updateHost,
   updateFunction,
@@ -313,4 +318,45 @@ export async function removeEvent(slug: string): Promise<FormState> {
   await deleteEvent(who.host.event.id);
   revalidatePath("/host", "layout");
   return { ok: true, message: "Deleted." };
+}
+
+/* ---------- Invitation card (PDF) ---------- */
+
+const cardLang = (v: string): CardLang | null => (v === "en" || v === "mr" ? v : null);
+
+/** Step 1 of an upload: a one-time link the browser sends the PDF to (owner only). */
+export async function cardUploadStart(
+  slug: string,
+  lang: string,
+  size: number,
+  type: string,
+): Promise<{ ok: true; url: string; path: string } | { ok: false; message: string }> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const l = cardLang(lang);
+  if (!l) return { ok: false, message: "Choose English or Marathi." };
+  if (type !== "application/pdf") return { ok: false, message: "Please choose a PDF file." };
+  if (!(size > 0 && size <= CARD_MAX_BYTES)) return { ok: false, message: "The PDF must be under 20 MB." };
+  const t = await cardUploadTarget(who.host.event.id, l);
+  return { ok: true, url: t.url, path: t.path };
+}
+
+/** Step 2: the browser has uploaded it; record it on the event (the old file is deleted). */
+export async function cardUploadDone(slug: string, lang: string, path: string): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const l = cardLang(lang);
+  if (!l || !path.startsWith(`${who.host.event.id}/${l}-`) || !path.endsWith(".pdf")) return { ok: false, message: "That upload doesn't belong to this event." };
+  if (!(await cardExists(path))) return { ok: false, message: "The upload didn't arrive. Please try again." };
+  await setCard(who.host.event.id, l, path);
+  return done(l === "en" ? "English card saved." : "Marathi card saved.");
+}
+
+export async function cardRemove(slug: string, lang: string): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const l = cardLang(lang);
+  if (!l) return { ok: false, message: "Choose English or Marathi." };
+  await setCard(who.host.event.id, l, null);
+  return done("Card removed.");
 }
