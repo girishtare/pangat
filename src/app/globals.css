@@ -63,6 +63,8 @@
   --font-heading-e: var(--font-rozha-one), "Nirmala UI", Georgia, serif; /* = font-display */
   /* Trial on the landing page only (src/app/page.tsx loads it). */
   --font-playfair: var(--font-playfair-display), Georgia, serif;
+  /* Trial: Marathi in the host page header (src/app/fonts.ts). */
+  --font-marathi: var(--font-tiro-marathi), "Nirmala UI", serif;
 }
 
 html {
