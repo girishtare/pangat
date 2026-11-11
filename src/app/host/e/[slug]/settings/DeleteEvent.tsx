@@ -85,7 +85,8 @@ export default function DeleteEvent({ slug, eventName, households }: { slug: str
         </div>
         <div className="space-y-3 p-5">
           <p>
-            <b>{eventName}</b> will be deleted for everyone, with all its {households === 1 ? "household" : `${households.toLocaleString("en-IN")} households`},
+            <b>{eventName}</b> will be deleted for everyone, with{" "}
+            {households === 0 ? "its" : households === 1 ? "its one household and" : `all ${households.toLocaleString("en-IN")} households and`}{" "}
             replies, functions, slips, WhatsApp records, tasks, people helping and caterer numbers. Co-owners lose access.
           </p>
           <p className="rounded-xl border-2 border-kumkum bg-kumkum-soft px-4 py-3 font-bold text-kumkum">
