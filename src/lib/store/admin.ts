@@ -595,3 +595,81 @@ export async function resolveLookup(eventId: string, id: number, status: "sent" 
     .eq("status", "pending");
   if (error) throw new Error(`resolving lookup failed: ${error.message}`);
 }
+
+/* ---------- To-do list writes (callers check the host's side first) ---------- */
+
+export async function findHelper(eventId: string, id: string): Promise<{ id: string; side: Side; fullName: string } | null> {
+  const { data, error } = await admin().from("helpers").select("id, side, full_name").eq("event_id", eventId).eq("id", id).maybeSingle();
+  if (error) throw new Error(`helper lookup failed: ${error.message}`);
+  return data ? { id: data.id, side: data.side, fullName: data.full_name } : null;
+}
+
+export async function addHelper(eventId: string, userId: string, h: { fullName: string; phone: string | null; side: Side }) {
+  const { error } = await admin().from("helpers").insert({ event_id: eventId, full_name: h.fullName, phone: h.phone, side: h.side, created_by: userId });
+  if (error) throw new Error(`saving helper failed: ${error.message}`);
+}
+
+export async function updateHelper(eventId: string, id: string, h: { fullName: string; phone: string | null; side: Side }) {
+  const { error } = await admin().from("helpers").update({ full_name: h.fullName, phone: h.phone, side: h.side }).eq("event_id", eventId).eq("id", id);
+  if (error) throw new Error(`saving helper failed: ${error.message}`);
+}
+
+/** False when the helper still has tasks (they must be reassigned or deleted first). */
+export async function deleteHelper(eventId: string, id: string): Promise<boolean> {
+  const { count, error: countError } = await admin().from("tasks").select("id", { count: "exact", head: true }).eq("helper_id", id);
+  if (countError) throw new Error(`task count failed: ${countError.message}`);
+  if ((count ?? 0) > 0) return false;
+  const { error } = await admin().from("helpers").delete().eq("event_id", eventId).eq("id", id);
+  if (error) throw new Error(`deleting helper failed: ${error.message}`);
+  return true;
+}
+
+export async function findTask(eventId: string, id: string): Promise<{ id: string; side: Side; title: string } | null> {
+  const { data, error } = await admin().from("tasks").select("id, side, title").eq("event_id", eventId).eq("id", id).maybeSingle();
+  if (error) throw new Error(`task lookup failed: ${error.message}`);
+  return data ? { id: data.id, side: data.side, title: data.title } : null;
+}
+
+export interface TaskInput {
+  helperId: string;
+  title: string;
+  note: string | null;
+  functionId: string | null;
+  dueOn: string;
+  status: "todo" | "doing" | "done";
+}
+
+export async function addTask(eventId: string, userId: string, t: TaskInput) {
+  const { error } = await admin()
+    .from("tasks")
+    .insert({
+      event_id: eventId,
+      helper_id: t.helperId,
+      side: "bride", // replaced by the trigger with the helper's side
+      title: t.title,
+      note: t.note,
+      function_id: t.functionId,
+      due_on: t.dueOn,
+      status: t.status,
+      created_by: userId,
+      updated_by: userId,
+    });
+  if (error) throw new Error(`saving task failed: ${error.message}`);
+}
+
+export async function updateTask(eventId: string, id: string, userId: string, t: Partial<TaskInput>) {
+  const row: Record<string, unknown> = { updated_by: userId };
+  if (t.helperId !== undefined) row.helper_id = t.helperId;
+  if (t.title !== undefined) row.title = t.title;
+  if (t.note !== undefined) row.note = t.note;
+  if (t.functionId !== undefined) row.function_id = t.functionId;
+  if (t.dueOn !== undefined) row.due_on = t.dueOn;
+  if (t.status !== undefined) row.status = t.status;
+  const { error } = await admin().from("tasks").update(row).eq("event_id", eventId).eq("id", id);
+  if (error) throw new Error(`saving task failed: ${error.message}`);
+}
+
+export async function deleteTask(eventId: string, id: string) {
+  const { error } = await admin().from("tasks").delete().eq("event_id", eventId).eq("id", id);
+  if (error) throw new Error(`deleting task failed: ${error.message}`);
+}
