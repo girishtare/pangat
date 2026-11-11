@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Lock, Save } from "lucide-react";
 import { Alert } from "../../../../ui/kit";
 import { freezePredicted, freezeRevised, saveActuals, saveBaselines, type FormState } from "./actions";
+import { useFormAction } from "../../../../ui/useFormAction";
 
 const num = "input min-h-[52px] text-[1.375rem] tabular-nums";
 
@@ -18,9 +19,9 @@ interface Fn {
 }
 
 export function BaselineForm({ slug, functions, values }: { slug: string; functions: Fn[]; values: Record<string, number | null> }) {
-  const [state, action, pending] = useActionState(saveBaselines.bind(null, slug), null);
+  const [state, action, pending] = useFormAction(saveBaselines.bind(null, slug));
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3.5">
         {functions.map((f) => (
           <label key={f.id} className="block">
@@ -78,10 +79,10 @@ export function ActualForm({
   functions: Fn[];
   values: Record<string, { actual: number | null; veg: number | null; nonveg: number | null }>;
 }) {
-  const [state, action, pending] = useActionState(saveActuals.bind(null, slug), null);
+  const [state, action, pending] = useFormAction(saveActuals.bind(null, slug));
   const box = "input mt-1 min-h-12 px-2 text-[1.1875rem] tabular-nums";
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
         {functions.map((f) => (
           <fieldset key={f.id} className="min-w-0 rounded-[14px] border border-line px-3.5 pb-3.5 pt-2">

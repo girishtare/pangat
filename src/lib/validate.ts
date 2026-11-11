@@ -36,6 +36,27 @@ export type NormaliseResult =
  * Check a guest's answers against the functions they are invited to and turn
  * them into rows. Every invited function must be answered exactly once.
  */
+/** One saved reply, as the database holds it. */
+export interface SavedReply {
+  status: string;
+  heads: number;
+  veg: number;
+  nonveg: number;
+  arrival_slot: string | null;
+}
+
+/** True when a reply differs from what is saved (or nothing is saved yet). */
+export function replyChanged(saved: SavedReply | undefined, next: SavedReply): boolean {
+  return (
+    !saved ||
+    saved.status !== next.status ||
+    saved.heads !== next.heads ||
+    saved.veg !== next.veg ||
+    saved.nonveg !== next.nonveg ||
+    (saved.arrival_slot ?? null) !== (next.arrival_slot ?? null)
+  );
+}
+
 export function normalise(answers: Submission["answers"], invited: FunctionInfo[]): NormaliseResult {
   const byId = new Map(invited.map((f) => [f.id, f]));
   const seen = new Set<string>();

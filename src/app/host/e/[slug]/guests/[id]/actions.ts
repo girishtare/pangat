@@ -62,7 +62,7 @@ export async function recordReply(slug: string, id: string, _prev: FormState, fd
     return { ok: false, message };
   }
   await saveOnBehalf(hh.id, result.answers, host.userId);
-  return done("Reply saved, marked as entered by a host.");
+  return done("Reply saved. What you changed is marked as entered by a host.");
 }
 
 export async function saveHousehold(slug: string, id: string, _prev: FormState, fd: FormData): Promise<FormState> {

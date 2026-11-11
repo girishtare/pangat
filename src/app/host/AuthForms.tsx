@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
 import { MailCheck } from "lucide-react";
 import { MIN_PASSWORD } from "@/lib/auth";
 import { requestPasswordReset, setPassword, signUp } from "./actions";
+import { useFormAction } from "../ui/useFormAction";
 
 /** An error, in maroon, right under the fields it is about. */
 function FieldError({ id, text }: { id: string; text: string }) {
@@ -60,7 +60,7 @@ function PasswordFields({ first, hint, error }: { first: string; hint?: string; 
 }
 
 export function SignUpForm() {
-  const [state, action, pending] = useActionState(signUp, null);
+  const [state, action, pending] = useFormAction(signUp);
   if (state && "sent" in state) {
     return (
       <Sent>
@@ -70,7 +70,7 @@ export function SignUpForm() {
     );
   }
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <label className="block">
         <span className="label">Email</span>
         <input name="email" type="email" autoComplete="email" required className="input" placeholder="you@example.com" />
@@ -85,13 +85,13 @@ export function SignUpForm() {
 }
 
 export function ResetForm() {
-  const [state, action, pending] = useActionState(requestPasswordReset, null);
+  const [state, action, pending] = useFormAction(requestPasswordReset);
   if (state && "sent" in state) {
     return <Sent>If that email has a Pangat account, a link to choose a new password is on its way. It works once and expires after an hour.</Sent>;
   }
   const error = state && "error" in state ? state.error : null;
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <label className="block">
         <span className="label">Email</span>
         <input
@@ -114,9 +114,9 @@ export function ResetForm() {
 }
 
 export function SetPasswordForm() {
-  const [state, action, pending] = useActionState(setPassword, null);
+  const [state, action, pending] = useFormAction(setPassword);
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={action} className="space-y-4">
       <PasswordFields first="New password" error={state?.error} />
       <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-lg">
         {pending ? "Saving…" : "Save and continue"}

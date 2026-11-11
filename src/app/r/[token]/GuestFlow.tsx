@@ -59,12 +59,15 @@ export default function GuestFlow({
     // Remember the choice on this phone, so the page opens in it next time.
     document.cookie = `pangat_lang=${next}; path=/; max-age=31536000; samesite=lax`;
   };
-  const [step, setStep] = useState<Step>(hasReplied || closed ? "done" : "confirm");
+  // Replied to some functions but not all (one was added later): open the form, not the thank-you page.
+  const unanswered = view.functions.some((f) => !view.responses.some((r) => r.functionId === f.id));
+  const [step, setStep] = useState<Step>(closed ? "done" : hasReplied ? (unanswered ? "form" : "done") : "confirm");
   const [answers, setAnswers] = useState(() => initialAnswers(view));
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const update = (id: string, patch: Partial<Answer>) =>
+  const update = (id: string, patch: Partial<Answer>) => {
+    setError(null); // an earlier "answer every function" no longer applies once they answer
     setAnswers((prev) => {
       const next = { ...prev[id], ...patch };
       next.heads = Math.min(Math.max(next.heads, 1), MAX_HEADS);
@@ -73,6 +76,7 @@ export default function GuestFlow({
       next.veg = Math.min(Math.max(next.veg, 0), next.heads);
       return { ...prev, [id]: next };
     });
+  };
 
   const submit = () => {
     if (view.functions.some((f) => answers[f.id].coming === null)) {

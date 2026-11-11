@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Trash } from "lucide-react";
 import { STATUS_LABEL, TASK_STATUSES, type TaskStatus } from "@/lib/todo";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../ui/kit";
 import { addPerson, addTodo, editPerson, editTodo, removePerson, removeTodo, setTodoStatus, type FormState } from "./actions";
+import { useFormAction } from "../../../../ui/useFormAction";
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -45,7 +46,7 @@ export function TaskForm({
   functions: FunctionOption[];
   task?: TaskValues;
 }) {
-  const [state, action, pending] = useActionState(task ? editTodo.bind(null, slug, task.id) : addTodo.bind(null, slug), null);
+  const [state, action, pending] = useFormAction(task ? editTodo.bind(null, slug, task.id) : addTodo.bind(null, slug));
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok && !task) form.current?.reset();
@@ -54,7 +55,7 @@ export function TaskForm({
     return <p className="mt-4">Add a person first: every task is given to someone.</p>;
   }
   return (
-    <form ref={form} action={action} className="mt-4 space-y-4">
+    <form ref={form} onSubmit={action} className="mt-4 space-y-4">
       <label className="block">
         <span className="label">What needs doing</span>
         <input name="title" required maxLength={200} defaultValue={task?.title ?? ""} className="input" placeholder="Book the band for the wedding" />
@@ -126,13 +127,13 @@ export function PersonForm({
   hostSide: Side | null;
   person?: { id: string; fullName: string; phone: string | null; side: Side | null; hostUserId?: string | null };
 }) {
-  const [state, action, pending] = useActionState(person ? editPerson.bind(null, slug, person.id) : addPerson.bind(null, slug), null);
+  const [state, action, pending] = useFormAction(person ? editPerson.bind(null, slug, person.id) : addPerson.bind(null, slug));
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok && !person) form.current?.reset();
   }, [state, person]);
   return (
-    <form ref={form} action={action} className="mt-4 space-y-4">
+    <form ref={form} onSubmit={action} className="mt-4 space-y-4">
       <label className="block">
         <span className="label">Full name</span>
         <input name="fullName" required maxLength={120} defaultValue={person?.fullName ?? ""} className="input" placeholder="Rajesh (Raju) Joshi" />
