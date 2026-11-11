@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { DEFAULT_FUNCTIONS, defaultFunctions } from "@/lib/events";
+import { MarathiInput } from "../../ui/MarathiInput";
 import { shortWhen } from "@/lib/when";
 import { createEventAction } from "./actions";
 import { useFormAction } from "../../ui/useFormAction";
@@ -30,10 +31,7 @@ export default function NewEventForm() {
           <span className="label">Event name in English</span>
           <input name="nameEn" required maxLength={120} className="input" placeholder="e.g. Riya & Arjun's Wedding" />
         </label>
-        <label className="block">
-          <span className="label">Event name in Marathi</span>
-          <input name="nameMr" lang="mr" maxLength={120} className="input" placeholder="उदा. रिया आणि अर्जुन यांचा विवाह सोहळा" />
-        </label>
+        <MarathiInput label="Event name in Marathi" kind="event" from="nameEn" placeholder="उदा. रिया आणि अर्जुन यांचा विवाह सोहळा" />
         <label className="block">
           <span className="label">Wedding date</span>
           <input name="weddingDate" type="date" required className="input" value={weddingDate} onChange={(e) => setWeddingDate(e.target.value)} />

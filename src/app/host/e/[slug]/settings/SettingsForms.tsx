@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
 import { Alert, WhatsAppIcon } from "../../../../ui/kit";
+import { MarathiInput } from "../../../../ui/MarathiInput";
 import { createFunction, dropHost, editHost, inviteHost, removeFunction, resendHostInvite, saveEvent, saveFunction, type FormState } from "./actions";
 import { useFormAction } from "../../../../ui/useFormAction";
 
@@ -34,10 +35,7 @@ export function EventForm(props: {
           <span className="label">Event name in English</span>
           <input name="nameEn" required maxLength={120} defaultValue={props.nameEn} className="input" />
         </label>
-        <label className="block">
-          <span className="label">Event name in Marathi</span>
-          <input name="nameMr" lang="mr" maxLength={120} defaultValue={props.nameMr ?? ""} className="input" />
-        </label>
+        <MarathiInput label="Event name in Marathi" kind="event" from="nameEn" defaultValue={props.nameMr} />
         <label className="block">
           <span className="label">Replies close on</span>
           <input name="cutoff" type="datetime-local" required defaultValue={props.cutoff} className="input" />
@@ -134,10 +132,7 @@ function FunctionFields(props: {
         <span className="label">Name in English</span>
         <input name="nameEn" required maxLength={60} defaultValue={props.nameEn ?? ""} className="input" placeholder="Sangeet" />
       </label>
-      <label className="block">
-        <span className="label">Name in Marathi</span>
-        <input name="nameMr" lang="mr" maxLength={60} defaultValue={props.nameMr ?? ""} className="input" placeholder="संगीत" />
-      </label>
+      <MarathiInput label="Name in Marathi" kind="function" from="nameEn" defaultValue={props.nameMr} placeholder="संगीत" />
       <label className="block">
         <span className="label">Date and time</span>
         <input name="startsAt" type="datetime-local" required defaultValue={props.startsAt ?? ""} className="input" />
