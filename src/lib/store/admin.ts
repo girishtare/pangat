@@ -923,10 +923,16 @@ export async function deleteAccountIfUnused(userId: string): Promise<"deleted" |
  */
 export async function deleteEvent(eventId: string): Promise<void> {
   // Storage files don't cascade: note the invitation cards first, delete them after.
-  const { data: ev } = await admin().from("events").select("card_en_path, card_mr_path").eq("id", eventId).maybeSingle();
+  const { data: ev } = await admin()
+    .from("events")
+    .select("card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path")
+    .eq("id", eventId)
+    .maybeSingle();
   const { error } = await admin().from("events").delete().eq("id", eventId);
   if (error) throw new Error(`deleting the event failed: ${error.message}`);
-  const files = [ev?.card_en_path, ev?.card_mr_path].filter((p): p is string => !!p);
+  const files = [ev?.card_bride_en_path, ev?.card_bride_mr_path, ev?.card_groom_en_path, ev?.card_groom_mr_path].filter(
+    (p): p is string => !!p,
+  );
   if (files.length) {
     const { error: fileError } = await admin().storage.from("cards").remove(files);
     if (fileError) console.error("card files not deleted", fileError.message);
@@ -940,19 +946,19 @@ const CARDS = "cards"; // private Storage bucket (migration 0015)
 export const CARD_MAX_BYTES = 20 * 1024 * 1024;
 
 /** A one-time link the owner's browser uploads the PDF to, straight to Storage (no size limit from our server). */
-export async function cardUploadTarget(eventId: string, lang: CardLang): Promise<{ path: string; url: string }> {
-  const path = `${eventId}/${lang}-${Date.now()}.pdf`;
+export async function cardUploadTarget(eventId: string, side: Side, lang: CardLang): Promise<{ path: string; url: string }> {
+  const path = `${eventId}/${side}-${lang}-${Date.now()}.pdf`;
   const { data, error } = await admin().storage.from(CARDS).createSignedUploadUrl(path);
   if (error || !data) throw new Error(`card upload link failed: ${error?.message}`);
   return { path, url: data.signedUrl };
 }
 
 /** Records an uploaded card on the event, and deletes the file it replaces. */
-export async function setCard(eventId: string, lang: CardLang, path: string | null): Promise<void> {
-  const column = lang === "en" ? "card_en_path" : "card_mr_path";
+export async function setCard(eventId: string, side: Side, lang: CardLang, path: string | null): Promise<void> {
+  const column = `card_${side}_${lang}_path`;
   const { data: ev, error: readError } = await admin().from("events").select(column).eq("id", eventId).single();
   if (readError) throw new Error(`card lookup failed: ${readError.message}`);
-  const old = (ev as Record<string, string | null>)[column];
+  const old = (ev as unknown as Record<string, string | null>)[column];
   const { error } = await admin().from("events").update({ [column]: path }).eq("id", eventId);
   if (error) throw new Error(`saving card failed: ${error.message}`);
   if (old && old !== path) await admin().storage.from(CARDS).remove([old]);
@@ -973,11 +979,15 @@ export async function cardSignedUrl(path: string): Promise<string> {
   return data.signedUrl;
 }
 
-/** A guest's card, by their household's token: the path for that language, if the event has it. */
+/** A guest's card, by their household's token: their own side's card in that language, if the event has it. */
 export async function cardPathForGuest(token: string, lang: CardLang): Promise<string | null> {
-  const { data, error } = await admin().from("households").select("events(card_en_path, card_mr_path)").eq("token", token).maybeSingle();
+  const { data, error } = await admin()
+    .from("households")
+    .select("side, events(card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path)")
+    .eq("token", token)
+    .maybeSingle();
   if (error) throw new Error(`card lookup failed: ${error.message}`);
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const ev = (data as any)?.events;
-  return (lang === "en" ? ev?.card_en_path : ev?.card_mr_path) ?? null;
+  const row = data as any;
+  return row?.events?.[`card_${row.side}_${lang}_path`] ?? null;
 }

@@ -138,11 +138,18 @@ export default async function EventSettings({
         <Section
           className="mt-5"
           title="Invitation card"
-          subtitle="Upload the wedding card as a PDF, in English and in Marathi. Guests get a link to it in the WhatsApp message and a button on their reply page, in their household's language (Slips → Language of each slip). Only you can upload it."
+          subtitle="Each side's own wedding card, as a PDF in English and in Marathi. A guest gets their side's card: a link in the WhatsApp message and a button on their reply page, in their household's language (Slips → Language of each slip). Only you can upload them."
         >
-          <div className="grid gap-3 md:grid-cols-2">
-            <CardUpload slug={slug} lang="mr" has={!!host.event.cards.mr} />
-            <CardUpload slug={slug} lang="en" has={!!host.event.cards.en} />
+          <div className="space-y-5">
+            {(["bride", "groom"] as const).map((sd) => (
+              <div key={sd}>
+                <h3 className="mb-2 font-bold">{sd === "bride" ? "Bride's side" : "Groom's side"}</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <CardUpload slug={slug} side={sd} lang="mr" has={!!host.event.cards[sd].mr} />
+                  <CardUpload slug={slug} side={sd} lang="en" has={!!host.event.cards[sd].en} />
+                </div>
+              </div>
+            ))}
           </div>
         </Section>
       )}

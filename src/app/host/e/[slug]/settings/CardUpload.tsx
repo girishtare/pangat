@@ -10,21 +10,22 @@ import { cardRemove, cardUploadDone, cardUploadStart } from "./actions";
  * or remove it. The file goes straight from the browser to Pangat's private
  * Storage through a one-time link, then the server records it.
  */
-export default function CardUpload({ slug, lang, has }: { slug: string; lang: "en" | "mr"; has: boolean }) {
+export default function CardUpload({ slug, side, lang, has }: { slug: string; side: "bride" | "groom"; lang: "en" | "mr"; has: boolean }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [busy, start] = useTransition();
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const label = lang === "en" ? "English card" : "Marathi card";
+  const fullLabel = `${side === "bride" ? "bride's side" : "groom's side"} ${label}`;
 
   const upload = (file: File) =>
     start(async () => {
       setStatus({ ok: true, text: "Uploading…" });
-      const s = await cardUploadStart(slug, lang, file.size, file.type);
+      const s = await cardUploadStart(slug, side, lang, file.size, file.type);
       if (!s.ok) return setStatus({ ok: false, text: s.message });
       const put = await fetch(s.url, { method: "PUT", body: file, headers: { "content-type": "application/pdf", "x-upsert": "false" } });
       if (!put.ok) return setStatus({ ok: false, text: "The upload didn't go through. Check your connection and try again." });
-      const d = await cardUploadDone(slug, lang, s.path);
+      const d = await cardUploadDone(slug, side, lang, s.path);
       setStatus(d ? { ok: d.ok, text: d.message } : null);
       router.refresh();
     });
@@ -50,7 +51,7 @@ export default function CardUpload({ slug, lang, has }: { slug: string; lang: "e
         type="file"
         accept="application/pdf"
         className="sr-only"
-        aria-label={`Choose the ${label} PDF`}
+        aria-label={`Choose the ${fullLabel} PDF`}
         onChange={(e) => {
           const f = e.target.files?.[0];
           e.target.value = "";
@@ -64,16 +65,16 @@ export default function CardUpload({ slug, lang, has }: { slug: string; lang: "e
         </button>
         {has && (
           <>
-            <a href={`/host/e/${slug}/card?l=${lang}`} target="_blank" rel="noopener noreferrer" className="btn btn-quiet btn-sm">
+            <a href={`/host/e/${slug}/card?side=${side}&l=${lang}`} target="_blank" rel="noopener noreferrer" className="btn btn-quiet btn-sm">
               View
             </a>
             <button
               type="button"
               disabled={busy}
               onClick={() => {
-                if (!confirm(`Remove the ${label}? Guests will no longer see it.`)) return;
+                if (!confirm(`Remove the ${fullLabel}? Guests on that side will no longer see it.`)) return;
                 start(async () => {
-                  const r = await cardRemove(slug, lang);
+                  const r = await cardRemove(slug, side, lang);
                   setStatus(r ? { ok: r.ok, text: r.message } : null);
                   router.refresh();
                 });
