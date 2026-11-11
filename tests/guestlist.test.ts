@@ -40,6 +40,8 @@ describe("normaliseMobile", () => {
     expect(normaliseMobile("  ")).toEqual({ ok: true, value: null });
     expect(normaliseMobile("12345")).toEqual({ ok: false });
     expect(normaliseMobile("+91 12345 67890")).toEqual({ ok: false });
+    expect(normaliseMobile("+00000000")).toEqual({ ok: false });
+    expect(normaliseMobile("0000000000")).toEqual({ ok: false });
     expect(normaliseMobile("call uncle")).toEqual({ ok: false });
   });
 });

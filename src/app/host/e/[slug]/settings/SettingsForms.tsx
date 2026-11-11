@@ -2,8 +2,8 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
-import { Alert } from "../../../../ui/kit";
-import { createFunction, dropHost, inviteHost, removeFunction, renameHost, saveEvent, saveFunction, type FormState } from "./actions";
+import { Alert, WhatsAppIcon } from "../../../../ui/kit";
+import { createFunction, dropHost, editHost, inviteHost, removeFunction, saveEvent, saveFunction, type FormState } from "./actions";
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -265,13 +265,15 @@ export function NewFunctionForm({ slug, households }: { slug: string; households
 
 /* ---------- Co-owners ---------- */
 
-/** "Invite co-owner" button; the form opens in a dialog. */
-export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boolean; groom: boolean } }) {
+type Full = { bride: boolean; groom: boolean };
+
+/** "Invite co-owner" button; the form opens in a dialog, fresh and empty each time. */
+export function InviteCoOwner({ slug, full }: { slug: string; full: Full }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [formKey, setFormKey] = useState(0);
   const bothFull = full.bride && full.groom;
   const open = () => {
-    setFormKey((k) => k + 1); // a fresh, empty form every time
+    setFormKey((k) => k + 1);
     dialog.current?.showModal();
   };
   return (
@@ -289,7 +291,7 @@ export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boo
       <dialog
         ref={dialog}
         aria-labelledby="invite-title"
-        className="card m-auto w-[calc(100%-2rem)] max-w-lg p-0 open:flex open:flex-col"
+        className="card m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto p-0 outline-none open:flex open:flex-col"
         onClick={(e) => {
           if (e.target === dialog.current) dialog.current?.close(); // click on the backdrop
         }}
@@ -310,48 +312,143 @@ export function InviteCoOwner({ slug, full }: { slug: string; full: { bride: boo
   );
 }
 
-function InviteForm({ slug, full, onDone }: { slug: string; full: { bride: boolean; groom: boolean }; onDone: () => void }) {
-  const [state, action, pending] = useActionState(inviteHost.bind(null, slug), null);
-  const form = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    if (state?.ok) form.current?.reset();
-  }, [state]);
+type SideChoice = "both" | "bride" | "groom";
+
+/** Name, email, mobile and side: shared by Invite a co-owner and Edit co-owner. */
+function HostFields({
+  full,
+  values,
+  isOwner = false,
+}: {
+  full: Full;
+  /** Edit: the person's current details (their email can't change). */
+  values?: { fullName: string | null; email: string; phone: string | null; side: "bride" | "groom" | null };
+  isOwner?: boolean;
+}) {
+  // A full side can't be chosen, unless this person is already counted on it.
+  const current: SideChoice | null = values ? (values.side ?? "both") : null;
+  const countedOn = (s: "bride" | "groom") => current === s || current === "both";
+  const blocked: Record<SideChoice, boolean> = {
+    both: (full.bride && !countedOn("bride")) || (full.groom && !countedOn("groom")),
+    bride: full.bride && !countedOn("bride"),
+    groom: full.groom && !countedOn("groom"),
+  };
+  const choices: [SideChoice, string][] = [
+    ["both", "Both sides"],
+    ["bride", "Bride's side"],
+    ["groom", "Groom's side"],
+  ];
+  const picked = current ?? choices.map(([k]) => k).find((k) => !blocked[k]);
   return (
-    <form ref={form} action={action} className="space-y-4">
+    <>
       <label className="block">
-        <span className="label">Their full name</span>
-        <input name="fullName" required maxLength={120} autoComplete="off" autoFocus className="input" placeholder="Sunita Kale" />
+        <span className="label">Full name</span>
+        <input name="fullName" required maxLength={120} autoComplete="off" autoFocus defaultValue={values?.fullName ?? ""} className="input" placeholder="Sunita Kale" />
       </label>
       <label className="block">
-        <span className="label">Their email</span>
-        <input name="email" type="email" required autoComplete="off" className="input" placeholder="name@example.com" />
+        <span className="label">Email</span>
+        {values ? (
+          <>
+            <input type="email" value={values.email} readOnly disabled className="input bg-paper-deep/60 text-ink-soft" />
+            <span className="hint mt-1 block">The address they sign in with. To use another, remove them and invite the new address.</span>
+          </>
+        ) : (
+          <input name="email" type="email" required autoComplete="off" className="input" placeholder="name@example.com" />
+        )}
       </label>
-      <fieldset>
-        <legend className="label">Side</legend>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="choice relative">
-            <input type="radio" name="side" value="bride" required defaultChecked={!full.bride} disabled={full.bride} />
-            Bride&apos;s side{full.bride ? " (full)" : ""}
-          </label>
-          <label className="choice relative">
-            <input type="radio" name="side" value="groom" defaultChecked={full.bride && !full.groom} disabled={full.groom} />
-            Groom&apos;s side{full.groom ? " (full)" : ""}
-          </label>
+      <label className="block">
+        <span className="label">
+          Mobile <span className="font-normal text-ink-soft">(for WhatsApp)</span>
+        </span>
+        <input name="phone" type="tel" inputMode="tel" required autoComplete="off" defaultValue={values?.phone ?? ""} className="input" placeholder="98765 43210" />
+      </label>
+      {isOwner ? (
+        <div>
+          <p className="label">Side</p>
+          <p className="flex flex-wrap items-center gap-2">
+            <span className="badge badge-no">Both sides</span>
+            <span className="hint">The owner always has both sides.</span>
+          </p>
         </div>
-      </fieldset>
+      ) : (
+        <fieldset>
+          <legend className="label">Side</legend>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {choices.map(([value, label]) => (
+              <label key={value} className="choice relative">
+                <input type="radio" name="side" value={value} required defaultChecked={picked === value} disabled={blocked[value]} />
+                {label}
+                {blocked[value] ? " (full)" : ""}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+    </>
+  );
+}
+
+function InviteForm({ slug, full, onDone }: { slug: string; full: Full; onDone: () => void }) {
+  const [state, action, pending] = useActionState(inviteHost.bind(null, slug), null);
+  if (state?.ok) {
+    return (
+      <div className="space-y-4">
+        <Message state={state} />
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onDone} className="btn btn-secondary">
+            Done
+          </button>
+          {state.whatsapp && (
+            <a href={state.whatsapp} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp">
+              <WhatsAppIcon className="h-5 w-5" />
+              Tell them on WhatsApp
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <form action={action} className="space-y-4">
+      <HostFields full={full} />
       <p className="hint">
-        They get an email to set a password, or can sign in with Google using this address. A co-owner sees and works on their side only.
+        Pangat emails them: a link to set a password if they are new to Pangat, or a note that they&apos;ve been added. They can also
+        sign in with Google using this address. A co-owner of one side sees and works on that side only; of both sides, on everything
+        except Event settings and the caterer numbers.
       </p>
       <Message state={state} />
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button type="button" onClick={onDone} className="btn btn-secondary">
-          {state?.ok ? "Done" : "Cancel"}
+          Cancel
         </button>
         <button type="submit" disabled={pending} className="btn btn-primary">
           <Send className="h-5 w-5" aria-hidden="true" />
           {pending ? "Inviting…" : "Send invitation"}
         </button>
       </div>
+    </form>
+  );
+}
+
+/** Inside "Edit co-owner" (or "Edit owner"): the invite form, filled in. */
+export function EditHostForm({
+  slug,
+  full,
+  host,
+}: {
+  slug: string;
+  full: Full;
+  host: { userId: string; fullName: string | null; email: string; phone: string | null; side: "bride" | "groom" | null; role: "owner" | "co_owner" };
+}) {
+  const [state, action, pending] = useActionState(editHost.bind(null, slug, host.userId), null);
+  return (
+    <form action={action} className="mt-4 space-y-4">
+      <HostFields full={full} values={host} isOwner={host.role === "owner"} />
+      <Message state={state} />
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">
+        <Save className="h-5 w-5" aria-hidden="true" />
+        {pending ? "Saving…" : "Save changes"}
+      </button>
     </form>
   );
 }
@@ -370,23 +467,6 @@ export function RemoveHostButton({ slug, userId, email }: { slug: string; userId
         {pending ? "Removing…" : "Remove"}
       </button>
       {state && !state.ok && <span className="text-sm text-kumkum">{state.message}</span>}
-    </form>
-  );
-}
-
-/** The owner names a host; the name also shows on the To-do list. */
-export function HostNameForm({ slug, userId, fullName }: { slug: string; userId: string; fullName: string | null }) {
-  const [state, action, pending] = useActionState(renameHost.bind(null, slug, userId), null);
-  return (
-    <form action={action} className="mt-4 space-y-4">
-      <label className="block">
-        <span className="label">Full name</span>
-        <input name="fullName" required maxLength={120} defaultValue={fullName ?? ""} className="input" placeholder="Sunita Kale" />
-      </label>
-      <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary w-full">
-        {pending ? "Saving…" : "Save name"}
-      </button>
     </form>
   );
 }

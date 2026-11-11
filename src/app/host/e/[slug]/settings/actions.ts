@@ -5,7 +5,10 @@ import { z } from "zod";
 import { istInputToIso, isValidDate } from "@/lib/events";
 import { normaliseMobile } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
+import { sendMail } from "@/lib/mail";
+import { whatsappLink } from "@/lib/outreach";
 import { publicBaseUrl } from "@/lib/site";
+import type { Side } from "@/lib/types";
 import {
   addFunction,
   addCoOwner,
@@ -15,8 +18,8 @@ import {
   listHosts,
   MAX_CO_OWNERS_PER_SIDE,
   removeHost,
-  setHostName,
   updateEvent,
+  updateHost,
   updateFunction,
   type FunctionInput,
 } from "@/lib/store/admin";
@@ -123,38 +126,106 @@ export async function createFunction(slug: string, _prev: FormState, fd: FormDat
 
 /* ---------- Hosts ---------- */
 
-const coOwnerSchema = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
-  side: z.enum(["bride", "groom"]),
-});
+/** "both" is stored as side null: the co-owner covers both sides. */
+const sideField = z.enum(["both", "bride", "groom"]).transform((v) => (v === "both" ? null : v));
+const sideWords = (side: Side | null) => (side === "bride" ? "the bride's side" : side === "groom" ? "the groom's side" : "both sides");
 
-export async function inviteHost(slug: string, _prev: FormState, fd: FormData): Promise<FormState> {
+/** Name, mobile (and for a co-owner, side): all required. */
+function readHostFields(fd: FormData, withSide: boolean): { fullName: string; phone: string; side: Side | null } | string {
+  const fullName = text(fd.get("fullName"));
+  if (!fullName) return "Enter their full name.";
+  if (fullName.length > 120) return "That name is too long.";
+  const mobile = normaliseMobile(text(fd.get("phone")));
+  if (!mobile.ok) return "That mobile number doesn't look right. Use 10 digits, or + and the country code.";
+  if (!mobile.value) return "Enter their mobile number.";
+  if (!withSide) return { fullName, phone: mobile.value, side: null };
+  const side = sideField.safeParse(fd.get("side"));
+  if (!side.success) return "Choose a side: both, the bride's or the groom's.";
+  return { fullName, phone: mobile.value, side: side.data };
+}
+
+export type InviteState = (NonNullable<FormState> & { whatsapp?: string | null }) | null;
+
+export async function inviteHost(slug: string, _prev: InviteState, fd: FormData): Promise<InviteState> {
   const who = await manager(slug);
   if ("error" in who) return { ok: false, message: who.error };
-  const parsed = coOwnerSchema.safeParse({ email: fd.get("email"), side: fd.get("side") });
-  if (!parsed.success) return { ok: false, message: "Enter their email address and choose a side." };
-  const { email, side } = parsed.data;
-  if (email === who.host.email.toLowerCase()) return { ok: false, message: "You are the owner of this event already." };
-  const fullName = text(fd.get("fullName"));
-  if (!fullName) return { ok: false, message: "Enter their full name." };
-  if (fullName.length > 120) return { ok: false, message: "That name is too long." };
+  const fields = readHostFields(fd, true);
+  if (typeof fields === "string") return { ok: false, message: fields };
+  const email = z.string().trim().toLowerCase().pipe(z.email().max(254)).safeParse(fd.get("email"));
+  if (!email.success) return { ok: false, message: "Enter their email address." };
+  if (email.data === who.host.email.toLowerCase()) return { ok: false, message: "You are the owner of this event already." };
+  const { fullName, phone, side } = fields;
 
   const base = await publicBaseUrl();
-  const r = await addCoOwner(who.host.event.id, email, side, fullName, `${base}/host`);
+  const signIn = `${base}/host`;
+  const r = await addCoOwner(who.host.event.id, email.data, side, fullName, phone, signIn);
   if (!r.ok) {
     const message = {
       owner: "That person is the event's owner.",
-      limit: `The ${side === "bride" ? "bride's" : "groom's"} side already has ${MAX_CO_OWNERS_PER_SIDE} co-owners. Remove one first.`,
+      already: "That person is a co-owner already. Use the pencil next to their name to change their details.",
+      limit:
+        side === null
+          ? `A side already has ${MAX_CO_OWNERS_PER_SIDE} co-owners, and someone on both sides counts on each. Remove one first, or choose one side.`
+          : `The ${side === "bride" ? "bride's" : "groom's"} side already has ${MAX_CO_OWNERS_PER_SIDE} co-owners. Remove one first.`,
       rate_limited: "Too many invitations just now. Please try again in an hour.",
       invite_failed: "The invitation email couldn't be sent. Check the email address, or try again later.",
     }[r.error];
     return { ok: false, message };
   }
-  return done(
-    r.invited
-      ? `Invited ${email}. They'll get an email to set a password, or they can sign in with Google using this address.`
-      : `Added ${email}. They already have a Pangat account and will see this event when they sign in.`,
+
+  const eventName = who.host.event.name.en;
+  const whatsapp = whatsappLink(
+    phone,
+    `Hello ${fullName}, I've added you as a co-owner of ${eventName} on Pangat, for ${sideWords(side)}. ` +
+      `Sign in at ${signIn} with ${email.data}${r.invited ? " (check your email to set a password, or use Google)" : ""}.`,
   );
+  revalidatePath("/host", "layout");
+  if (r.invited) {
+    return {
+      ok: true,
+      whatsapp,
+      message: `Invited ${fullName}. Pangat has emailed ${email.data} a link to set a password; they can also sign in with Google using this address.`,
+    };
+  }
+  // They already have an account, so Supabase sends nothing: we send a note ourselves.
+  const mail = await sendMail(
+    email.data,
+    `You've been added to ${eventName} on Pangat`,
+    `Hello ${fullName},
+
+You've been added as a co-owner of ${eventName} on Pangat, for ${sideWords(side)}.
+
+` +
+      `Sign in with this email address (${email.data}) to see it:
+${signIn}
+
+Pangat`,
+  );
+  const note =
+    mail === "sent"
+      ? `We've emailed ${email.data} to let them know.`
+      : mail === "not_set_up"
+        ? "Pangat's own email isn't set up yet, so no email went out: let them know on WhatsApp."
+        : "The email to let them know couldn't be sent: let them know on WhatsApp.";
+  return { ok: true, whatsapp, message: `Added ${fullName}. They already have a Pangat account and will see this event when they sign in. ${note}` };
+}
+
+/** Edit a host: name and mobile; a co-owner's side too. */
+export async function editHost(slug: string, userId: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const hosts = await listHosts(who.host.event.id);
+  const target = hosts.find((h) => h.userId === userId);
+  if (!target) return { ok: false, message: "That person is no longer a host of this event." };
+  const isOwner = target.role === "owner";
+  const fields = readHostFields(fd, !isOwner);
+  if (typeof fields === "string") return { ok: false, message: fields };
+  const r = await updateHost(who.host.event.id, userId, isOwner ? { fullName: fields.fullName, phone: fields.phone } : fields);
+  if (!r.ok) {
+    return { ok: false, message: `That would put more than ${MAX_CO_OWNERS_PER_SIDE} co-owners on one side (someone on both sides counts on each).` };
+  }
+  revalidatePath(`/host/e/${slug}/todo`);
+  return done("Saved.");
 }
 
 export async function dropHost(slug: string, userId: string, _prev: FormState): Promise<FormState> {
@@ -170,18 +241,4 @@ export async function dropHost(slug: string, userId: string, _prev: FormState): 
   }
   await removeHost(who.host.event.id, userId);
   return done(`Removed ${target.email}.`);
-}
-
-/** The owner names any host (themself included). Their To-do entry follows. */
-export async function renameHost(slug: string, userId: string, _prev: FormState, fd: FormData): Promise<FormState> {
-  const who = await manager(slug);
-  if ("error" in who) return { ok: false, message: who.error };
-  const hosts = await listHosts(who.host.event.id);
-  if (!hosts.some((h) => h.userId === userId)) return { ok: false, message: "That person is no longer a host of this event." };
-  const fullName = text(fd.get("fullName"));
-  if (!fullName) return { ok: false, message: "Enter their full name." };
-  if (fullName.length > 120) return { ok: false, message: "That name is too long." };
-  await setHostName(who.host.event.id, userId, fullName);
-  revalidatePath(`/host/e/${slug}/todo`);
-  return done("Name saved.");
 }

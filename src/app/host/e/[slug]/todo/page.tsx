@@ -4,6 +4,7 @@ import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
 import { displayPhone, whatsappLink } from "@/lib/outreach";
 import { scopeLabel } from "@/lib/sides";
+import { hostRoles } from "@/lib/store/admin";
 import { listHelpers, listTasks } from "@/lib/store/supabase";
 import { isOverdue, sortTasks, taskMessage, todayIst, type Helper, type Task } from "@/lib/todo";
 import type { Side as SideType } from "@/lib/types";
@@ -31,7 +32,13 @@ export default async function Todo({
   const { host } = gate;
 
   // Read as the host: a co-owner only gets their own side's people and tasks.
-  const [helpers, allTasks] = await Promise.all([listHelpers(host.client, host.event.id), listTasks(host.client, host.event.id)]);
+  const [helpers, allTasks, roles] = await Promise.all([
+    listHelpers(host.client, host.event.id),
+    listTasks(host.client, host.event.id),
+    hostRoles(host.event.id),
+  ]);
+  const roleOf = (h: Helper) => (h.hostUserId && roles.get(h.hostUserId) === "owner" ? "Owner" : "Co-owner");
+  const rank = (h: Helper) => (h.hostUserId ? (roles.get(h.hostUserId) === "owner" ? 0 : 1) : 2);
   const tab: "tasks" | "people" = sp.tab === "people" ? "people" : "tasks";
   const show: Show = sp.show === "done" || sp.show === "all" ? sp.show : "open";
   const side: SideType | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
@@ -363,15 +370,7 @@ export default async function Todo({
   );
 }
 
-function rank(h: Helper): number {
-  return h.hostUserId ? (h.side === null ? 0 : 1) : 2;
-}
-
-function roleOf(h: Helper): string {
-  return h.side === null ? "Owner" : "Co-owner";
-}
-
-/** Side badge; the owner (no side) shows as both sides. */
+/** Side badge; no side (the owner, or a co-owner of both sides) shows as both sides. */
 function Side({ side }: { side: SideType | null }) {
   return side ? <SideBadge side={side} /> : <span className="badge badge-no">Both sides</span>;
 }
