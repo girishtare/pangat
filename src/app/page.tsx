@@ -4,8 +4,8 @@ import { DEMO_TOKENS } from "@/lib/store/demo";
 import { paletteEFonts } from "./fonts";
 import { Mark } from "./ui/kit";
 
-// Rozha has one weight; font-normal stops the browser faking bold. Use it at 20 px and above only.
-const display = "font-heading-e font-normal";
+// Headings in Playfair Display (bold); text in Libre Baskerville. Both come from the root layout.
+const display = "font-playfair font-bold [font-synthesis-weight:none]";
 const wrap = "mx-auto max-w-[1200px] px-4 md:px-6";
 
 const btn = "inline-flex items-center justify-center rounded-xl border-2 font-bold no-underline transition-colors";

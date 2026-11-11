@@ -96,7 +96,7 @@ export function formatWhen(iso: string, lang: Lang): string {
     weekday: "short",
     day: "numeric",
     month: "short",
-    hour: "numeric",
+    hour: "2-digit", // hh:mm am/pm everywhere
     minute: "2-digit",
     timeZone: "Asia/Kolkata",
   }).format(new Date(iso));

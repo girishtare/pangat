@@ -21,8 +21,8 @@ interface Answer {
 
 const SLOTS: ArrivalSlot[] = ["early", "on_time", "late"];
 
-/* Palette E pieces shared by the screens. Rozha One (font-heading-e) has one weight: always font-normal, 20 px and up. */
-const heading = "font-heading-e font-normal";
+/* Pieces shared by the screens. Headings: Playfair Display bold (Marathi in Tiro, never fake-bolded). */
+const heading = "font-heading-e font-bold [font-synthesis-weight:none]";
 const card = "rounded-[18px] border border-sand bg-card-e";
 const infoBox = "rounded-[14px] border border-sky bg-[#dfe8ef] px-3.5 py-3 text-base text-ink-e";
 const dashedRow = "border-t border-dashed border-sand";

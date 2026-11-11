@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { LayoutList, Menu, X } from "lucide-react";
 import { NavIcon, type NavItem } from "./navIcons";
 
 /** Phone and tablet: a top bar with the event name and a menu button. */
@@ -47,7 +47,7 @@ export default function MobileNav({
         </div>
       </div>
       {open && (
-        <nav id="event-menu" aria-label="Event" className="border-t border-line bg-card px-4 pb-4 pt-2 shadow-lg">
+        <nav id="event-menu" aria-label="Event" className="border-t border-line bg-card px-4 pb-4 pt-3 shadow-lg">
           <ul className="space-y-1">
             {items.map((item) => (
               <li key={item.href}>
@@ -64,15 +64,14 @@ export default function MobileNav({
               </li>
             ))}
           </ul>
-          <div className="mt-3 space-y-2 border-t border-line pt-3 text-sm">
-            <p className="text-ink-soft">{who}</p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link href="/host?all=1" className="btn btn-quiet btn-sm">
-                All events
-              </Link>
-              {signOut}
-            </div>
+          <div className="mt-3 border-y border-line py-1">
+            <Link href="/host?all=1" className="flex min-h-12 items-center gap-3 rounded-xl px-3.5 font-semibold text-ink hover:bg-paper">
+              <LayoutList className="h-5 w-5 shrink-0" aria-hidden="true" />
+              All events
+            </Link>
           </div>
+          <p className="mt-3 px-3.5 text-sm text-ink-soft [overflow-wrap:anywhere]">{who}</p>
+          <div className="px-2">{signOut}</div>
         </nav>
       )}
     </div>

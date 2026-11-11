@@ -6,7 +6,7 @@ import { formatDay } from "@/lib/i18n";
 import { closer, EMPTY_NUMBERS, latestToCaterer, toCaterer, type FunctionNumbers } from "@/lib/pilot";
 import { loadNumbers } from "@/lib/store/admin";
 import { supabaseStore } from "@/lib/store/supabase";
-import { shortStamp } from "@/lib/when";
+import { longStamp, shortStamp } from "@/lib/when";
 import { Alert, EmptyState, PageHeader, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { ActualForm, BaselineForm, FreezeButton } from "./NumbersForms";
@@ -15,8 +15,7 @@ export const dynamic = "force-dynamic";
 
 // The UI says "family's guess"; code, database and tests keep "baseline".
 
-const when = (iso: string) =>
-  new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(iso));
+const when = longStamp;
 const show = (n: number | null) => (n === null ? "—" : n.toLocaleString("en-IN"));
 const pair = (veg: number | null, nonveg: number | null) => (veg === null ? "—" : `${show(veg)} · ${show(nonveg)}`);
 
@@ -39,7 +38,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
   if (!host.canManage) {
     return (
       <EventShell host={host} current="numbers">
-        <PageHeader large title="Caterer numbers" />
+        <PageHeader title="Caterer numbers" />
         <Alert tone="info">Only the event&apos;s owner records the caterer numbers.</Alert>
       </EventShell>
     );
@@ -69,7 +68,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
   if (host.functions.length === 0) {
     return (
       <EventShell host={host} current="numbers">
-        <PageHeader large title="Caterer numbers" />
+        <PageHeader title="Caterer numbers" />
         <EmptyState icon={ChefHat} title="No functions yet">
           Add the event&apos;s functions in{" "}
           <Link href={`/host/e/${slug}/settings`} className="font-semibold text-kumkum underline">
@@ -92,7 +91,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
 
   return (
     <EventShell host={host} current="numbers">
-      <PageHeader large title="Caterer numbers" subtitle="Did Pangat beat the family's own guess? Only you, as the owner, see this page." />
+      <PageHeader title="Caterer numbers" subtitle="Did Pangat beat the family's own guess? Only you, as the owner, see this page." />
 
       <div className="space-y-[18px]">
         {anyActual && verdictCard}
