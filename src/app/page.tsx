@@ -154,7 +154,7 @@ function InviteCard() {
   return (
     <div className={`${cardFrame} px-3 pb-6 pt-5`}>
       <div className="text-xs font-bold text-maroon">You are warmly invited</div>
-      <div className={`${display} text-[28px] leading-[1.3] text-maroon`}>Priya &amp; Rohan</div>
+      <div className={`${display} text-[28px] leading-[1.3] text-maroon`}>Manali &amp; Anish</div>
       <div className="text-xs text-ink-e-soft">Sunday, 28 December · Pune</div>
     </div>
   );
@@ -173,15 +173,17 @@ function ExpectedBar() {
 function PhoneMockup() {
   return (
     <div aria-hidden="true" className="relative mx-auto hidden w-full max-w-[484px] justify-center pb-10 pt-2.5 md:flex">
-      <div className="w-[290px] overflow-hidden rounded-[40px] border-[10px] border-ink-e bg-cream shadow-[0_40px_70px_-40px_rgba(46,26,28,0.55)]">
-        <div className="flex flex-col gap-3 px-3.5 pb-5 pt-4">
+      {/* Shaped like a current phone (iPhone 17: 71.5 x 149.6 mm; Galaxy S25: 70.5 x 146.9 mm), with the camera pill and home bar. */}
+      <div className="flex aspect-[71.5/149.6] w-[290px] flex-col overflow-hidden rounded-[46px] border-[10px] border-ink-e bg-cream shadow-[0_40px_70px_-40px_rgba(46,26,28,0.55)]">
+        <div className="mx-auto mt-2.5 h-[22px] w-[84px] shrink-0 rounded-full bg-ink-e" />
+        <div className="flex flex-col gap-3 px-3.5 pb-3 pt-2">
           <div className="flex justify-end">
             <span className="rounded-full bg-maroon px-2.5 py-0.5 text-xs font-bold text-white">English</span>
           </div>
           <InviteCard />
           <div className="rounded-[14px] border border-sand bg-card-e p-3 text-center">
             <div className="text-xs text-ink-e-soft">This invitation is for</div>
-            <div className="text-[17px] font-bold">Shri. Anil Joshi &amp; family</div>
+            <div className="text-[17px] font-bold">Shri. Anil Kini &amp; family</div>
           </div>
           <div className="text-center text-[15px] font-bold">Is this invitation for you?</div>
           <div className="flex min-h-[46px] items-center justify-center rounded-xl bg-maroon font-bold text-white">Yes, that&apos;s us</div>
@@ -189,6 +191,7 @@ function PhoneMockup() {
             No, this isn&apos;t us
           </div>
         </div>
+        <div className="mx-auto mb-2 mt-auto h-[5px] w-[110px] shrink-0 rounded-full bg-ink-e/70" />
       </div>
       <div className="absolute bottom-0 right-0 w-[230px] rounded-2xl border border-sand bg-card-e px-[18px] py-4 shadow-[0_24px_50px_-24px_rgba(121,13,22,0.35)]">
         <div className="text-[13px] font-bold text-ink-e-soft">Wedding · expected</div>
