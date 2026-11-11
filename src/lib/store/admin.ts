@@ -154,6 +154,9 @@ export interface HostRow {
   fullName: string | null;
   /** What the app shows: the typed name, else their Google name, else their email (kept on their to-do entry). */
   displayName: string;
+  /** Mobile, kept on their to-do entry (helpers.phone). */
+  phone: string | null;
+  /** Null: both sides (always for the owner; a co-owner may cover both too). */
   side: Side | null;
   role: "owner" | "co_owner";
   lastSignInAt: string | null;
@@ -165,19 +168,21 @@ export async function listHosts(eventId: string): Promise<HostRow[]> {
   const [{ data, error }, names, shown] = await Promise.all([
     admin().rpc("event_hosts", { p_event: eventId }),
     admin().from("hosts").select("user_id, full_name").eq("event_id", eventId),
-    admin().from("helpers").select("host_user_id, full_name").eq("event_id", eventId).not("host_user_id", "is", null),
+    admin().from("helpers").select("host_user_id, full_name, phone").eq("event_id", eventId).not("host_user_id", "is", null),
   ]);
   if (error) throw new Error(`hosts lookup failed: ${error.message}`);
   if (names.error) throw new Error(`host names lookup failed: ${names.error.message}`);
   if (shown.error) throw new Error(`host names lookup failed: ${shown.error.message}`);
   const nameOf = new Map((names.data ?? []).map((r) => [r.user_id as string, r.full_name as string | null]));
   const shownOf = new Map((shown.data ?? []).map((r) => [r.host_user_id as string, r.full_name as string]));
+  const phoneOf = new Map((shown.data ?? []).map((r) => [r.host_user_id as string, r.phone as string | null]));
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   return ((data ?? []) as any[]).map((r) => ({
     userId: r.user_id,
     email: r.email,
     fullName: nameOf.get(r.user_id) ?? null,
     displayName: nameOf.get(r.user_id) ?? shownOf.get(r.user_id) ?? r.email,
+    phone: phoneOf.get(r.user_id) ?? null,
     side: r.side,
     role: r.role === "owner" ? "owner" : "co_owner",
     lastSignInAt: r.last_sign_in_at,
@@ -196,14 +201,23 @@ export async function ownedEventCount(userId: string): Promise<number> {
 
 export type AddCoOwnerResult =
   | { ok: true; invited: boolean }
-  | { ok: false; error: "owner" | "limit" | "invite_failed" | "rate_limited" };
+  | { ok: false; error: "owner" | "already" | "limit" | "invite_failed" | "rate_limited" };
 
 /**
- * Makes someone a co-owner of one side. If they have no Pangat account yet,
- * Supabase emails them an invitation (they can also just sign in with Google
- * using that email). Never touches the owner's row.
+ * Makes someone a co-owner of one side, or of both (side null). If they have
+ * no Pangat account yet, Supabase emails them an invitation (they can also
+ * just sign in with Google using that email); `invited` says so. Someone who
+ * already has an account gets no email from Supabase: the caller sends one.
+ * Never touches the owner's row, nor an existing co-owner's (edit them).
  */
-export async function addCoOwner(eventId: string, email: string, side: Side, fullName: string | null, inviteRedirect: string): Promise<AddCoOwnerResult> {
+export async function addCoOwner(
+  eventId: string,
+  email: string,
+  side: Side | null,
+  fullName: string,
+  phone: string,
+  inviteRedirect: string,
+): Promise<AddCoOwnerResult> {
   const db = admin();
   const { data: existingId, error: lookupErr } = await db.rpc("user_id_by_email", { p_email: email });
   if (lookupErr) throw new Error(`user lookup failed: ${lookupErr.message}`);
@@ -222,14 +236,49 @@ export async function addCoOwner(eventId: string, email: string, side: Side, ful
 
   const { data: current } = await db.from("hosts").select("role").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
   if (current?.role === "owner") return { ok: false, error: "owner" };
-  const { error } = current
-    ? await db.from("hosts").update({ side, ...(fullName ? { full_name: fullName } : {}) }).eq("event_id", eventId).eq("user_id", userId)
-    : await db.from("hosts").insert({ event_id: eventId, user_id: userId, side, role: "co_owner", full_name: fullName });
+  if (current) return { ok: false, error: "already" };
+  const { error } = await db.from("hosts").insert({ event_id: eventId, user_id: userId, side, role: "co_owner", full_name: fullName });
   if (error) {
     if (error.code === "23514") return { ok: false, error: "limit" }; // check_violation from the 3-per-side trigger
     throw new Error(`add co-owner failed: ${error.message}`);
   }
+  await setHostPhone(eventId, userId, phone); // their to-do entry was made by trigger on insert
   return { ok: true, invited };
+}
+
+/**
+ * Edits a host's name and mobile, and a co-owner's side (null = both sides).
+ * The owner's side never changes. Their to-do entry follows (name and side by
+ * trigger, mobile here).
+ */
+export async function updateHost(
+  eventId: string,
+  userId: string,
+  v: { fullName: string; phone: string; side?: Side | null },
+): Promise<{ ok: true } | { ok: false; error: "limit" }> {
+  const { error } = await admin()
+    .from("hosts")
+    .update({ full_name: v.fullName, ...(v.side !== undefined ? { side: v.side } : {}) })
+    .eq("event_id", eventId)
+    .eq("user_id", userId);
+  if (error) {
+    if (error.code === "23514") return { ok: false, error: "limit" };
+    throw new Error(`saving host failed: ${error.message}`);
+  }
+  await setHostPhone(eventId, userId, v.phone);
+  return { ok: true };
+}
+
+async function setHostPhone(eventId: string, userId: string, phone: string | null) {
+  const { error } = await admin().from("helpers").update({ phone }).eq("event_id", eventId).eq("host_user_id", userId);
+  if (error) throw new Error(`saving host mobile failed: ${error.message}`);
+}
+
+/** Owner or co-owner, by user id (the to-do list labels hosts with it). */
+export async function hostRoles(eventId: string): Promise<Map<string, "owner" | "co_owner">> {
+  const { data, error } = await admin().from("hosts").select("user_id, role").eq("event_id", eventId);
+  if (error) throw new Error(`host roles lookup failed: ${error.message}`);
+  return new Map((data ?? []).map((r) => [r.user_id as string, r.role === "owner" ? "owner" : "co_owner"]));
 }
 
 /** A host's name (owner or co-owner). Their to-do list entry follows by trigger. */

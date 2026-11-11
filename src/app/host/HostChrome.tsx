@@ -41,7 +41,7 @@ export function SignOutButton({ compact = false, variant = "button" }: { compact
 }
 
 function roleLabel(host: HostContext): string {
-  return host.role === "owner" ? "Owner" : `Co-owner · ${host.side ? scopeLabel(host.side) : ""}`;
+  return host.role === "owner" ? "Owner" : `Co-owner · ${scopeLabel(host.side ?? "both")}`;
 }
 
 function navItems(host: HostContext, current: NavKey): NavItem[] {
@@ -62,7 +62,7 @@ function navItems(host: HostContext, current: NavKey): NavItem[] {
 
 /** "You are the owner", or the co-owner's side, for the rail's event card. */
 function roleLine(host: HostContext): string {
-  return host.role === "owner" ? "You are the owner" : `Co-owner · ${host.side ? scopeLabel(host.side) : ""}`;
+  return host.role === "owner" ? "You are the owner" : `Co-owner · ${scopeLabel(host.side ?? "both")}`;
 }
 
 /**

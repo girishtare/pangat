@@ -51,10 +51,11 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
    - `SUPABASE_URL`: the project URL.
    - `SUPABASE_PUBLISHABLE_KEY`: the publishable (anon) key. Used only for host sessions; row-level security applies.
    - `SUPABASE_SERVICE_ROLE_KEY`: the secret key. Mark it **Sensitive**. Server-only; bypasses row-level security.
+   - `SMTP_USER`, `SMTP_PASS` (optional): the Gmail address and its app password (the same pair as Supabase's SMTP settings). Mark `SMTP_PASS` **Sensitive**. Pangat uses them to email someone who already has an account when they're added as a co-owner (new people get Supabase's invitation email). Unset: no such email; the invite pop-up offers a WhatsApp message instead. `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM` default to Gmail (smtp.gmail.com, 465, "Pangat <SMTP_USER>").
 
    Leave both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` unset to run in demo mode. None of these use the `NEXT_PUBLIC_` prefix: no browser code talks to Supabase.
 
 ## Adding a co-owner
 
-The event's owner opens **Event settings → Owner and co-owners**, enters the person's email and side. If they already have a Pangat account they are added at once; otherwise they get an invitation email (or can sign in with Google using that address). Up to 3 per side.
+The event's owner opens **Event settings → Owner and co-owners → Invite co-owner** and enters the person's full name, email, mobile and side (both sides, the bride's or the groom's). New people get Supabase's invitation email to set a password; someone who already has a Pangat account is added at once and gets a short email from Pangat (needs `SMTP_USER` and `SMTP_PASS`). Either way they can sign in with Google using that address, and the pop-up offers a WhatsApp message to them. Up to 3 per side; a co-owner of both sides counts on each. The pencil next to Remove edits a host's name, mobile and side.
 
