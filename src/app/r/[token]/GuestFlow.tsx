@@ -258,7 +258,7 @@ export default function GuestFlow({
                         ) : a.coming ? (
                           <>
                             {t(lang, "coming")} · {a.heads} {t(lang, "people")}
-                            {f.catered && <span className="font-normal text-ink-e-soft">{` (${a.veg} ${t(lang, "veg")})`}</span>}
+                            {f.catered && <span className="font-normal text-ink-e-soft">{` (${dietSplit(a.heads, a.veg, lang)})`}</span>}
                           </>
                         ) : (
                           <span className="text-ink-e-soft">{t(lang, "notComing")}</span>
@@ -490,4 +490,11 @@ function Choice({ children, selected, onClick, tone }: { children: React.ReactNo
       {children}
     </button>
   );
+}
+
+/** "all veg", "all non-veg", or "2 veg, 1 non-veg", in the guest's language. */
+function dietSplit(heads: number, veg: number, lang: Lang): string {
+  if (veg >= heads) return t(lang, "allVeg");
+  if (veg <= 0) return t(lang, "allNonVeg");
+  return `${veg} ${t(lang, "veg")}, ${heads - veg} ${t(lang, "nonVegShort")}`;
 }
