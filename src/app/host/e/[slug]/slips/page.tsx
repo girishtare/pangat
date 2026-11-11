@@ -190,13 +190,8 @@ export default async function Slips({
           ) : (
             <SlipLanguages
               slug={slug}
-              rows={all.map((g) => ({
-                id: g.id,
-                nameEn: g.nameEn,
-                nameMr: g.nameMr,
-                sideLabel: host.side ? null : g.side === "bride" ? "Bride's side" : "Groom's side",
-                lang: g.slipLang,
-              }))}
+              showSide={!host.side}
+              rows={all.map((g) => ({ id: g.id, nameEn: g.nameEn, nameMr: g.nameMr, side: g.side, lang: g.slipLang }))}
             />
           )}
         </section>
