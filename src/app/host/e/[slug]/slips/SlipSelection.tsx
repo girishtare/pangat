@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { Printer } from "lucide-react";
+import { Printer, Search } from "lucide-react";
 
 /*
  * Which slips to print. Every slip on screen has a tick box in its top-left
@@ -13,7 +13,8 @@ interface Selection {
   ids: string[];
   ticked: Set<string>;
   toggle: (id: string) => void;
-  setAll: (on: boolean) => void;
+  /** Tick or untick these slips, leaving the rest as they are. */
+  setMany: (ids: string[], on: boolean) => void;
 }
 
 const Ctx = createContext<Selection | null>(null);
@@ -47,7 +48,15 @@ function SelectionState({ ids, children }: { ids: string[]; children: ReactNode 
           else n.add(id);
           return n;
         }),
-      setAll: (on) => setTicked(on ? new Set(ids) : new Set()),
+      setMany: (some, on) =>
+        setTicked((t) => {
+          const n = new Set(t);
+          for (const id of some) {
+            if (on) n.add(id);
+            else n.delete(id);
+          }
+          return n;
+        }),
     }),
     [ids, ticked],
   );
@@ -73,36 +82,73 @@ const chunk = <T,>(items: T[], n: number): T[][] => {
 };
 
 /**
- * The sheets. On screen: every slip, with its tick box (unticked ones faded).
- * In print: only the ticked slips, packed into as few sheets as they need.
+ * The sheets. On screen: every slip (or those matching the search), with its
+ * tick box (unticked ones faded). In print: only the ticked slips, whatever the
+ * search, packed into as few sheets as they need.
  */
-export function SlipSheets({ items, perSheet }: { items: { id: string; name: string; slip: ReactNode }[]; perSheet: number }) {
-  const { ids, ticked, toggle, setAll } = useSelection();
+export function SlipSheets({
+  items,
+  perSheet,
+}: {
+  items: { id: string; name: string; nameMr: string | null; code: string; slip: ReactNode }[];
+  perSheet: number;
+}) {
+  const { ids, ticked, toggle, setMany } = useSelection();
+  const [query, setQuery] = useState("");
   const chosen = items.filter((it) => ticked.has(it.id));
   const printSheets = chunk(chosen, perSheet).length;
-  const all = ticked.size === ids.length;
+
+  // Search by English or Marathi name, or the slip's code.
+  const q = query.trim();
+  const ql = q.toLowerCase();
+  const shown = q
+    ? items.filter((it) => it.name.toLowerCase().includes(ql) || (it.nameMr ?? "").includes(q) || it.code.toLowerCase().includes(ql))
+    : items;
+  const shownIds = shown.map((it) => it.id);
+  const allShownTicked = shownIds.every((id) => ticked.has(id));
+  const noneShownTicked = !shownIds.some((id) => ticked.has(id));
 
   return (
     <>
+      <label className="relative mb-3 block print:hidden">
+        <span className="sr-only">Search slips</span>
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name or code"
+          className="input pl-10"
+        />
+      </label>
+
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl bg-paper-deep px-3 py-2 print:hidden">
         <p className="font-semibold">
           {ticked.size === 0
             ? "No slips ticked"
             : `${ticked.size.toLocaleString("en-IN")} of ${ids.length.toLocaleString("en-IN")} ticked · prints on ${printSheets} sheet${printSheets === 1 ? "" : "s"}`}
         </p>
+        {/* With a search, these act on the slips found only. */}
         <div className="flex gap-2">
-          <button type="button" onClick={() => setAll(true)} disabled={all} className="btn btn-secondary btn-sm min-h-10">
-            Tick all
+          <button type="button" onClick={() => setMany(shownIds, true)} disabled={allShownTicked} className="btn btn-secondary btn-sm min-h-10">
+            {q ? "Tick these" : "Tick all"}
           </button>
-          <button type="button" onClick={() => setAll(false)} disabled={ticked.size === 0} className="btn btn-secondary btn-sm min-h-10">
-            Untick all
+          <button type="button" onClick={() => setMany(shownIds, false)} disabled={noneShownTicked} className="btn btn-secondary btn-sm min-h-10">
+            {q ? "Untick these" : "Untick all"}
           </button>
         </div>
       </div>
+      {q && (
+        <p className="mb-3 text-[0.9375rem] text-ink-soft print:hidden">
+          {shown.length === 0
+            ? `No slip matches "${q}".`
+            : `${shown.length} slip${shown.length === 1 ? "" : "s"} found. Printing still uses every ticked slip, found or not.`}
+        </p>
+      )}
 
-      {/* Screen: every slip with its tick box. */}
+      {/* Screen: every slip (or the ones found) with its tick box. */}
       <div className="overflow-hidden print:hidden">
-        {chunk(items, perSheet).map((page, i) => (
+        {chunk(shown, perSheet).map((page, i) => (
           <div key={i} className="sheet">
             {page.map((it) => {
               const on = ticked.has(it.id);

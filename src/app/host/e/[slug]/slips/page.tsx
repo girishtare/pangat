@@ -349,6 +349,8 @@ export default async function Slips({
                 items={guests.map((g) => ({
                   id: g.id,
                   name: g.nameEn,
+                  nameMr: g.nameMr,
+                  code: g.shortCode,
                   slip: <Slip g={g} base={base} event={host.event.name} replyBy={replyBy} phone={displayPhone(host.event.contactPhone[g.side])} />,
                 }))}
               />
