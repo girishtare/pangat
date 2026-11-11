@@ -52,6 +52,7 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
    - `SUPABASE_PUBLISHABLE_KEY`: the publishable (anon) key. Used only for host sessions; row-level security applies.
    - `SUPABASE_SERVICE_ROLE_KEY`: the secret key. Mark it **Sensitive**. Server-only; bypasses row-level security.
    - `SMTP_USER`, `SMTP_PASS` (optional): the Gmail address and its app password (the same pair as Supabase's SMTP settings). Mark `SMTP_PASS` **Sensitive**. Pangat uses them to email someone who already has an account when they're added as a co-owner (new people get Supabase's invitation email). Unset: no such email; the invite pop-up offers a WhatsApp message instead. `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM` default to Gmail (smtp.gmail.com, 465, "Pangat <SMTP_USER>").
+   - `ANTHROPIC_API_KEY` (optional, **Sensitive**): a Claude API key from console.anthropic.com. Powers the **Suggest** button next to every Marathi name field (event, functions, households): Claude writes the Marathi from the English (names spelt in Devanagari, words like Haldi translated), fills the field, and the host checks it before saving. Unset: the button says suggestions aren't set up.
 
    Leave both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` unset to run in demo mode. None of these use the `NEXT_PUBLIC_` prefix: no browser code talks to Supabase.
 

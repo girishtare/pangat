@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Check, Copy, Save, Trash } from "lucide-react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../../ui/kit";
+import { MarathiInput } from "../../../../../ui/MarathiInput";
 import { recordReply, removeHousehold, saveHousehold, type FormState } from "./actions";
 import { useFormAction } from "../../../../../ui/useFormAction";
 
@@ -170,10 +171,7 @@ export function DetailsForm(props: {
         <span className="label">Name in English</span>
         <input name="nameEn" required maxLength={120} defaultValue={props.nameEn} className="input" />
       </label>
-      <label className="block">
-        <span className="label">Name in Marathi</span>
-        <input name="nameMr" lang="mr" maxLength={120} defaultValue={props.nameMr ?? ""} className="input" />
-      </label>
+      <MarathiInput label="Name in Marathi" kind="household" from="nameEn" defaultValue={props.nameMr} />
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="label">Mobile</span>

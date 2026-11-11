@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../ui/kit";
+import { MarathiInput } from "../../../../ui/MarathiInput";
 import { addHousehold } from "./actions";
 import { useFormAction } from "../../../../ui/useFormAction";
 
@@ -19,12 +20,16 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
         <span className="label">Name in English</span>
         <input name="name" required maxLength={120} className="input" placeholder="Shri. A. Joshi & family" />
       </label>
-      <label className="block">
-        <span className="label">
-          Name in Marathi <span className="font-normal text-ink-soft">(optional)</span>
-        </span>
-        <input name="nameMr" lang="mr" maxLength={120} className="input" placeholder="श्री. अ. जोशी सहपरिवार" />
-      </label>
+      <MarathiInput
+        label={
+          <>
+            Name in Marathi <span className="font-normal text-ink-soft">(optional)</span>
+          </>
+        }
+        kind="household"
+        from="name"
+        placeholder="श्री. अ. जोशी सहपरिवार"
+      />
       {hostSide ? (
         <input type="hidden" name="side" value={hostSide} />
       ) : (
