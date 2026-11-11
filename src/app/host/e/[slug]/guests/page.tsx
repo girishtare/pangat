@@ -12,6 +12,7 @@ import { Alert, EmptyState, PageHeader, ReplyBadge, SideBadge } from "../../../.
 import { EventShell, GateMessage } from "../../../HostChrome";
 import AddHouseholdForm from "./AddHouseholdForm";
 import ImportForm from "./ImportForm";
+import PopupButton from "../../../../ui/PopupButton";
 import LookupQueue, { type LookupItem } from "./LookupQueue";
 
 export const dynamic = "force-dynamic";
@@ -82,12 +83,16 @@ export default async function GuestList({
         actions={
           canAdd ? (
             <>
-              <a href="#add" className="btn btn-primary">
-                + Add a household
-              </a>
-              <a href="#import" className="btn btn-secondary">
-                Import from Excel
-              </a>
+              <PopupButton label="+ Add a household" title="Add one household">
+                <AddHouseholdForm slug={slug} hostSide={host.side} functions={host.functions.map((f) => ({ id: f.id, name: f.name.en }))} />
+              </PopupButton>
+              <PopupButton label="Import from Excel" title="Import from Excel" className="btn btn-secondary">
+                <ImportForm slug={slug} />
+                <p className="hint mt-4">
+                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Functions (blank = all), Cap. Households already on
+                  the list are skipped, so the same file can be uploaded again after adding rows.
+                </p>
+              </PopupButton>
             </>
           ) : undefined
         }
@@ -121,26 +126,7 @@ export default async function GuestList({
             before adding guests.
           </Alert>
         </div>
-      ) : (
-        <div className="mt-6 grid items-start gap-5 lg:grid-cols-2">
-          <section id="add" aria-labelledby="add-title" className="card scroll-mt-24 p-[18px] sm:p-[22px]">
-            <h2 id="add-title" className="font-display text-2xl text-kumkum">
-              Add one household
-            </h2>
-            <AddHouseholdForm slug={slug} hostSide={host.side} functions={host.functions.map((f) => ({ id: f.id, name: f.name.en }))} />
-          </section>
-          <section id="import" aria-labelledby="import-title" className="card scroll-mt-24 p-[18px] sm:p-[22px]">
-            <h2 id="import-title" className="font-display text-2xl text-kumkum">
-              Import from Excel
-            </h2>
-            <ImportForm slug={slug} />
-            <p className="hint mt-4">
-              Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Functions (blank = all), Cap. Households already on the
-              list are skipped, so the same file can be uploaded again after adding rows.
-            </p>
-          </section>
-        </div>
-      )}
+      ) : null}
 
       <section className="mt-9" aria-labelledby="households">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -187,7 +173,7 @@ export default async function GuestList({
           </div>
         ) : (
           <>
-            <div className="mt-4 hidden overflow-x-auto rounded-[1.25rem] border border-line bg-card lg:block">
+            <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
               <table className="table-p min-w-[820px]">
                 <thead>
                   <tr>

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { hostGate } from "@/lib/host";
-import { formatDay } from "@/lib/i18n";
 import { chunk, displayPhone, guestLink } from "@/lib/outreach";
 import { qrPath } from "@/lib/qr";
 import { publicBaseUrl } from "@/lib/site";
 import { listGuests, type GuestRow } from "@/lib/store/supabase";
+import { slipDate } from "@/lib/when";
 import type { Side } from "@/lib/types";
 import { Alert, EmptyState, PageHeader } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
@@ -78,13 +78,12 @@ function Slip({
               </div>
             )}
             <div className="mt-[2mm]" style={{ fontSize: "7.5pt", lineHeight: 1.35 }}>
-              <div lang="mr" className="font-bold">
+              <div className="font-bold">Scan to tell us who&apos;s coming.</div>
+              <div>Reply by {replyBy.en}.</div>
+              <div lang="mr" className="mt-[1.6mm] font-bold">
                 QR स्कॅन करून कोण कोण येणार ते कळवा.
               </div>
-              <div>Scan to tell us who&apos;s coming.</div>
-              <div className="mt-[0.8mm]">
-                <span lang="mr">{replyBy.mr} पर्यंत</span> · Reply by {replyBy.en}
-              </div>
+              <div lang="mr">{replyBy.mr} पर्यंत.</div>
             </div>
           </div>
           <div className="flex flex-none flex-col items-center">
@@ -108,7 +107,8 @@ function Slip({
         </div>
         {phone && (
           <div className="mt-[1.5mm] border-t border-line pt-[1.2mm]" style={{ fontSize: "6.6pt", lineHeight: 1.3 }}>
-            <span lang="mr">स्मार्टफोन नाही? {phone} वर फोन करून कोड सांगा.</span> No smartphone? Call {phone} and give your code.
+            <div>No smartphone? Call {phone} and give your code.</div>
+            <div lang="mr">स्मार्टफोन नाही? {phone} वर फोन करून कोड सांगा.</div>
           </div>
         )}
       </div>
@@ -138,7 +138,7 @@ export default async function Slips({
   );
 
   const base = await publicBaseUrl();
-  const replyBy = { en: formatDay(host.event.cutoffAt, "en"), mr: formatDay(host.event.cutoffAt, "mr") };
+  const replyBy = slipDate(host.event.cutoffAt);
   const eventName = host.event.name.mr || host.event.name.en;
   const missingPhone = (["bride", "groom"] as const).filter((s) => !host.event.contactPhone[s] && guests.some((g) => g.side === s));
   const noMarathi = guests.filter((g) => !g.nameMr).length;

@@ -159,7 +159,7 @@ export default async function WhatsApp({
           </div>
         ) : (
           <>
-            <div className="mt-4 hidden overflow-x-auto rounded-[1.25rem] border border-line bg-card lg:block">
+            <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
               <table className="table-p min-w-[760px]">
                 <thead>
                   <tr>

@@ -48,7 +48,6 @@ export default function MobileNav({
       </div>
       {open && (
         <nav id="event-menu" aria-label="Event" className="border-t border-line bg-card px-4 pb-4 pt-3 shadow-lg">
-          <p className="mb-2 px-1 text-sm text-ink-soft [overflow-wrap:anywhere]">{who}</p>
           <ul className="space-y-1">
             {items.map((item) => (
               <li key={item.href}>
@@ -71,7 +70,8 @@ export default function MobileNav({
               All events
             </Link>
           </div>
-          <div className="mt-2 px-2">{signOut}</div>
+          <p className="mt-3 px-3.5 text-sm text-ink-soft [overflow-wrap:anywhere]">{who}</p>
+          <div className="px-2">{signOut}</div>
         </nav>
       )}
     </div>
