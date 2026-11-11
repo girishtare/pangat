@@ -42,6 +42,26 @@ export function suggestPrompt(kind: SuggestKind, english: string): string {
   return `This is ${KIND_LABEL[kind]}.\n<english>${clean}</english>`;
 }
 
+/**
+ * The answer text from a Gemini generateContent response, or null when the
+ * prompt or answer was blocked or there is no text. Thought parts are skipped.
+ */
+export function geminiReplyText(body: unknown): string | null {
+  const b = body as {
+    promptFeedback?: { blockReason?: string };
+    candidates?: { finishReason?: string; content?: { parts?: { text?: unknown; thought?: unknown }[] } }[];
+  } | null;
+  if (!b || b.promptFeedback?.blockReason) return null;
+  const c = b.candidates?.[0];
+  if (!c || (c.finishReason && c.finishReason !== "STOP" && c.finishReason !== "MAX_TOKENS")) return null;
+  const text = (c.content?.parts ?? [])
+    .filter((p) => p.thought !== true && typeof p.text === "string")
+    .map((p) => p.text as string)
+    .join("")
+    .trim();
+  return text || null;
+}
+
 const DEVANAGARI = /[ऀ-ॿ]/;
 const LATIN = /[A-Za-z]/;
 

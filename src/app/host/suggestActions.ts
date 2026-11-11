@@ -17,7 +17,7 @@ export async function suggestMarathiAction(kind: string, english: string): Promi
 
   const r = await suggestMarathi(kind, text);
   if (r.ok) return r;
-  if (r.reason === "not_set_up") return { ok: false, message: "Marathi suggestions aren't set up yet (ANTHROPIC_API_KEY)." };
+  if (r.reason === "not_set_up") return { ok: false, message: "Marathi suggestions aren't set up yet (GEMINI_API_KEY)." };
   if (r.reason === "unusable") return { ok: false, message: "No good suggestion this time. Type it in, or try again." };
   return { ok: false, message: "Couldn't get a suggestion. Try again." };
 }
