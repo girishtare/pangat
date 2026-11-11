@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { Search } from "lucide-react";
 import type { SlipLang } from "@/lib/store/supabase";
 import { saveSlipLang } from "./actions";
 
@@ -13,15 +14,16 @@ export interface SlipLangRow {
   lang: SlipLang;
 }
 
-const CHOICES: { value: SlipLang; label: string; lang?: "mr" }[] = [
-  { value: "en", label: "English" },
-  { value: "mr", label: "मराठी", lang: "mr" },
-  { value: "both", label: "Both" },
+const CHOICES: { value: SlipLang; label: string; short: string; title: string; lang?: "mr" }[] = [
+  { value: "en", label: "English", short: "English", title: "English only" },
+  { value: "mr", label: "मराठी", short: "मराठी", title: "Marathi only", lang: "mr" },
+  { value: "both", label: "Both", short: "Both", title: "English and Marathi" },
 ];
 
 /**
  * The language each household's slip is printed in, saved on the household.
- * One tap changes one household; tick several (or all) to change them at once.
+ * Search or filter the list; one tap changes one household; tick several (or
+ * every one shown) to change them at once.
  */
 export default function SlipLanguages({ slug, rows }: { slug: string; rows: SlipLangRow[] }) {
   const router = useRouter();
@@ -30,6 +32,8 @@ export default function SlipLanguages({ slug, rows }: { slug: string; rows: Slip
   // Shown at once; the server copy follows on refresh.
   const [local, setLocal] = useState<Record<string, SlipLang>>({});
   const [ticked, setTicked] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState("");
+  const [only, setOnly] = useState<SlipLang | null>(null);
   const langOf = (r: SlipLangRow) => local[r.id] ?? r.lang;
 
   const counts = useMemo(() => {
@@ -37,6 +41,11 @@ export default function SlipLanguages({ slug, rows }: { slug: string; rows: Slip
     for (const r of rows) c[local[r.id] ?? r.lang] += 1;
     return c;
   }, [rows, local]);
+
+  const q = query.trim().toLowerCase();
+  const shown = rows.filter(
+    (r) => (!only || langOf(r) === only) && (!q || r.nameEn.toLowerCase().includes(q) || (r.nameMr ?? "").includes(query.trim())),
+  );
 
   const save = (ids: string[], lang: SlipLang) => {
     if (ids.length === 0) return;
@@ -49,7 +58,8 @@ export default function SlipLanguages({ slug, rows }: { slug: string; rows: Slip
     });
   };
 
-  const allTicked = rows.length > 0 && ticked.size === rows.length;
+  const shownTicked = shown.filter((r) => ticked.has(r.id));
+  const allShownTicked = shown.length > 0 && shownTicked.length === shown.length;
   const toggle = (id: string) =>
     setTicked((t) => {
       const n = new Set(t);
@@ -57,89 +67,143 @@ export default function SlipLanguages({ slug, rows }: { slug: string; rows: Slip
       else n.add(id);
       return n;
     });
+  const toggleShown = () =>
+    setTicked((t) => {
+      const n = new Set(t);
+      for (const r of shown) {
+        if (allShownTicked) n.delete(r.id);
+        else n.add(r.id);
+      }
+      return n;
+    });
+
+  const chip = (active: boolean) =>
+    `inline-flex min-h-10 items-center gap-1.5 rounded-full px-3.5 text-sm font-bold ${active ? "bg-kumkum text-white" : "bg-paper-deep text-ink hover:bg-sand"}`;
 
   return (
     <div>
-      <p className="text-[0.9375rem] text-ink-soft">
-        English <b className="text-ink">{counts.en}</b> · <span lang="mr">मराठी</span> <b className="text-ink">{counts.mr}</b> · Both{" "}
-        <b className="text-ink">{counts.both}</b>
-      </p>
+      {/* Search and filter */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <label className="relative block md:w-80">
+          <span className="sr-only">Search households</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name" className="input pl-10" />
+        </label>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Show">
+          <button type="button" onClick={() => setOnly(null)} aria-pressed={only === null} className={chip(only === null)}>
+            All {rows.length}
+          </button>
+          {CHOICES.map((c) => (
+            <button key={c.value} type="button" onClick={() => setOnly(c.value)} aria-pressed={only === c.value} className={chip(only === c.value)}>
+              <span lang={c.lang}>{c.label}</span> {counts[c.value]}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Change many at once */}
-      <div className="mt-3 rounded-xl bg-paper-deep p-2.5">
-        <label className="flex min-h-10 items-center gap-2.5 px-1 font-semibold">
-          <input
-            type="checkbox"
-            checked={allTicked}
-            onChange={() => setTicked(allTicked ? new Set() : new Set(rows.map((r) => r.id)))}
-            className="h-5 w-5 accent-kumkum"
-          />
-          {ticked.size ? `${ticked.size} ticked` : "Tick all"}
-        </label>
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+      <div className="mt-4 flex flex-col gap-2 rounded-xl bg-paper-deep px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <span className="font-semibold">
+          {ticked.size ? `${ticked.size} ticked: set them to` : "Tick households to change several at once"}
+        </span>
+        <div className="grid grid-cols-3 gap-1.5 sm:flex">
           {CHOICES.map((c) => (
             <button
               key={c.value}
               type="button"
               disabled={pending || ticked.size === 0}
               onClick={() => save([...ticked], c.value)}
-              className="btn btn-secondary btn-sm min-h-10 px-1.5 text-sm"
+              aria-label={`Set ticked households to ${c.title}`}
+              className="btn btn-secondary btn-sm min-h-10 px-3 text-sm"
             >
               <span lang={c.lang}>{c.label}</span>
             </button>
           ))}
         </div>
-        <p className="mt-1.5 px-1 text-xs text-ink-soft">Tick households, then choose a language for all of them.</p>
       </div>
 
       {error && <p className="mt-2 text-sm font-semibold text-kumkum">{error}</p>}
 
-      <ul className="mt-3 max-h-[26rem] divide-y divide-line overflow-y-auto rounded-xl border border-line bg-card" aria-busy={pending}>
-        {rows.map((r) => {
-          const now = langOf(r);
-          return (
-            <li key={r.id} className="flex items-center gap-2 px-2.5 py-2">
-              <input
-                type="checkbox"
-                checked={ticked.has(r.id)}
-                onChange={() => toggle(r.id)}
-                aria-label={`Tick ${r.nameEn}`}
-                className="h-5 w-5 shrink-0 accent-kumkum"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-semibold" title={r.nameEn}>
-                  {r.nameEn}
-                </span>
-                {(r.nameMr || r.sideLabel) && (
-                  <span className="block truncate text-xs text-ink-soft">
-                    {r.nameMr && <span lang="mr">{r.nameMr}</span>}
-                    {r.nameMr && r.sideLabel ? " · " : ""}
-                    {r.sideLabel}
-                  </span>
-                )}
-              </span>
-              <span role="group" aria-label={`Slip language for ${r.nameEn}`} className="inline-flex shrink-0 gap-0.5 rounded-lg bg-paper-deep p-0.5">
-                {CHOICES.map((c) => {
-                  const on = now === c.value;
-                  return (
-                    <button
-                      key={c.value}
-                      type="button"
-                      aria-pressed={on}
-                      disabled={pending && !on}
-                      onClick={() => !on && save([r.id], c.value)}
-                      title={c.value === "en" ? "English only" : c.value === "mr" ? "Marathi only" : "English and Marathi"}
-                      className={`min-h-9 rounded-md px-2 text-xs font-bold ${on ? "bg-kumkum text-white" : "text-ink hover:bg-card/70"}`}
-                    >
-                      <span lang={c.lang}>{c.value === "en" ? "En" : c.value === "mr" ? "म" : "Both"}</span>
-                    </button>
-                  );
-                })}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      {/* The list: scrolls inside its box, header row pinned */}
+      <div className="table-scroll mt-4 rounded-[1.25rem] border border-line bg-card" aria-busy={pending}>
+        <table className="table-p">
+          <thead>
+            <tr>
+              <th className="w-12">
+                <input
+                  type="checkbox"
+                  checked={allShownTicked}
+                  onChange={toggleShown}
+                  disabled={shown.length === 0}
+                  aria-label={allShownTicked ? "Untick every household shown" : "Tick every household shown"}
+                  className="h-5 w-5 align-middle accent-kumkum"
+                />
+              </th>
+              <th className="text-left!">Household</th>
+              <th>Slip language</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="py-6 text-center! text-ink-soft">
+                  No households match.
+                </td>
+              </tr>
+            ) : (
+              shown.map((r) => {
+                const now = langOf(r);
+                return (
+                  <tr key={r.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={ticked.has(r.id)}
+                        onChange={() => toggle(r.id)}
+                        aria-label={`Tick ${r.nameEn}`}
+                        className="h-5 w-5 align-middle accent-kumkum"
+                      />
+                    </td>
+                    <td className="text-left!">
+                      <span className="block font-semibold">{r.nameEn}</span>
+                      {(r.nameMr || r.sideLabel) && (
+                        <span className="block text-sm text-ink-soft">
+                          {r.nameMr && <span lang="mr">{r.nameMr}</span>}
+                          {r.nameMr && r.sideLabel ? " · " : ""}
+                          {r.sideLabel}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span role="group" aria-label={`Slip language for ${r.nameEn}`} className="inline-flex gap-0.5 rounded-lg bg-paper-deep p-0.5">
+                        {CHOICES.map((c) => {
+                          const on = now === c.value;
+                          return (
+                            <button
+                              key={c.value}
+                              type="button"
+                              aria-pressed={on}
+                              disabled={pending && !on}
+                              onClick={() => !on && save([r.id], c.value)}
+                              title={c.title}
+                              className={`min-h-10 rounded-md px-2.5 text-sm font-bold sm:px-3.5 ${on ? "bg-kumkum text-white" : "text-ink hover:bg-card/70"}`}
+                            >
+                              <span lang={c.lang}>{c.short}</span>
+                            </button>
+                          );
+                        })}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-sm text-ink-soft">
+        {shown.length === rows.length ? `${rows.length} households` : `${shown.length} of ${rows.length} households shown`}
+      </p>
     </div>
   );
 }
