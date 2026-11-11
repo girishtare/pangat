@@ -155,8 +155,10 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
 
       {error && <p className="mt-2 text-sm font-semibold text-kumkum">{error}</p>}
 
-      {/* The list: scrolls inside its box, header row pinned. Columns after the tick-box share the width evenly. */}
-      <div className="table-scroll mt-4 rounded-[1.25rem] border border-line bg-card" aria-busy={pending}>
+      {/* The list: scrolls inside its box, header row pinned. Columns after the tick-box share the width evenly.
+          The box is a size container: the three language buttons show only when the table is wide enough for
+          them (56rem); narrower (phone, tablet, a narrow window) each row gets a drop-down, so it never scrolls sideways. */}
+      <div className="table-scroll @container mt-4 rounded-[1.25rem] border border-line bg-card" aria-busy={pending}>
         <table className="table-p table-fixed max-sm:text-sm">
           <colgroup>
             <col className="w-11 sm:w-14" />
@@ -223,13 +225,13 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
                       </td>
                     )}
                     <td className="max-sm:px-1.5!">
-                      {/* Phones: a drop-down, so the row keeps room for the name. */}
+                      {/* Narrow table: a drop-down, so the row keeps room for the name. */}
                       <select
                         value={now}
                         disabled={pending}
                         onChange={(e) => save([r.id], e.target.value as SlipLang)}
                         aria-label={`Slip language for ${r.nameEn}`}
-                        className="min-h-10 w-full rounded-lg border-2 border-line bg-white px-1.5 text-sm font-semibold text-ink sm:hidden"
+                        className="min-h-10 w-full max-w-40 rounded-lg border-2 border-line bg-white px-1.5 text-sm font-semibold text-ink @4xl:hidden"
                       >
                         {CHOICES.map((c) => (
                           <option key={c.value} value={c.value}>
@@ -237,11 +239,11 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
                           </option>
                         ))}
                       </select>
-                      {/* Larger screens: three buttons, one tap. */}
+                      {/* Wide table: three buttons, one tap. */}
                       <span
                         role="group"
                         aria-label={`Slip language for ${r.nameEn}`}
-                        className="hidden gap-0.5 rounded-lg bg-paper-deep p-0.5 sm:inline-flex"
+                        className="hidden gap-0.5 rounded-lg bg-paper-deep p-0.5 @4xl:inline-flex"
                       >
                         {CHOICES.map((c) => {
                           const on = now === c.value;
