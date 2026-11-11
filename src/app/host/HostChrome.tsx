@@ -126,8 +126,8 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
                 <span className="text-xl text-kumkum" aria-hidden="true">
                   ·
                 </span>
-                {/* Same size and colour as the English name; Tiro Devanagari Marathi (trial). */}
-                <span lang="mr" className="truncate font-marathi text-xl leading-tight text-kumkum">
+                {/* Same size, colour and weight as the English name (the heading font falls through to Noto Sans Devanagari). */}
+                <span lang="mr" className="truncate font-display text-xl leading-tight text-kumkum">
                   {host.event.name.mr}
                 </span>
               </>
