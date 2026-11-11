@@ -15,8 +15,8 @@ export interface SlipLangRow {
 }
 
 const CHOICES: { value: SlipLang; label: string; short: string; title: string; lang?: "mr" }[] = [
-  { value: "en", label: "English", short: "English", title: "English only" },
-  { value: "mr", label: "मराठी", short: "मराठी", title: "Marathi only", lang: "mr" },
+  { value: "en", label: "English", short: "En", title: "English only" },
+  { value: "mr", label: "मराठी", short: "म", title: "Marathi only", lang: "mr" },
   { value: "both", label: "Both", short: "Both", title: "English and Marathi" },
 ];
 
@@ -174,7 +174,7 @@ export default function SlipLanguages({ slug, rows }: { slug: string; rows: Slip
                         </span>
                       )}
                     </td>
-                    <td>
+                    <td className="whitespace-nowrap max-sm:px-1.5!">
                       <span role="group" aria-label={`Slip language for ${r.nameEn}`} className="inline-flex gap-0.5 rounded-lg bg-paper-deep p-0.5">
                         {CHOICES.map((c) => {
                           const on = now === c.value;
@@ -186,9 +186,15 @@ export default function SlipLanguages({ slug, rows }: { slug: string; rows: Slip
                               disabled={pending && !on}
                               onClick={() => !on && save([r.id], c.value)}
                               title={c.title}
-                              className={`min-h-10 rounded-md px-2.5 text-sm font-bold sm:px-3.5 ${on ? "bg-kumkum text-white" : "text-ink hover:bg-card/70"}`}
+                              className={`min-h-10 min-w-9 rounded-md px-2 text-sm font-bold sm:px-3.5 ${on ? "bg-kumkum text-white" : "text-ink hover:bg-card/70"}`}
                             >
-                              <span lang={c.lang}>{c.short}</span>
+                              {/* Phones: En / म / Both, so the row fits without scrolling sideways. */}
+                              <span lang={c.lang} className="sm:hidden">
+                                {c.short}
+                              </span>
+                              <span lang={c.lang} className="hidden sm:inline">
+                                {c.label}
+                              </span>
                             </button>
                           );
                         })}
