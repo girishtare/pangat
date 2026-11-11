@@ -917,12 +917,20 @@ export async function deleteAccountIfUnused(userId: string): Promise<"deleted" |
  * Deletes an event and everything in it, in one statement: functions,
  * households, invitations, replies and their history, slips' codes, WhatsApp
  * records, effort log, tasks, people helping, caterer numbers and host links
- * all go with it (foreign keys cascade; checked 11 Nov). Cannot be undone.
+ * all go with it (foreign keys cascade; checked 11 Nov), and its invitation
+ * card PDFs are deleted from Storage. Cannot be undone.
  * People's Pangat accounts stay.
  */
 export async function deleteEvent(eventId: string): Promise<void> {
+  // Storage files don't cascade: note the invitation cards first, delete them after.
+  const { data: ev } = await admin().from("events").select("card_en_path, card_mr_path").eq("id", eventId).maybeSingle();
   const { error } = await admin().from("events").delete().eq("id", eventId);
   if (error) throw new Error(`deleting the event failed: ${error.message}`);
+  const files = [ev?.card_en_path, ev?.card_mr_path].filter((p): p is string => !!p);
+  if (files.length) {
+    const { error: fileError } = await admin().storage.from("cards").remove(files);
+    if (fileError) console.error("card files not deleted", fileError.message);
+  }
 }
 
 /* ---------- Invitation card (PDF) ---------- */
