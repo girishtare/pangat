@@ -152,6 +152,8 @@ export interface HostRow {
   email: string;
   /** Typed in by the owner; null until then. */
   fullName: string | null;
+  /** What the app shows: the typed name, else their Google name, else their email (kept on their to-do entry). */
+  displayName: string;
   side: Side | null;
   role: "owner" | "co_owner";
   lastSignInAt: string | null;
@@ -160,18 +162,22 @@ export interface HostRow {
 }
 
 export async function listHosts(eventId: string): Promise<HostRow[]> {
-  const [{ data, error }, names] = await Promise.all([
+  const [{ data, error }, names, shown] = await Promise.all([
     admin().rpc("event_hosts", { p_event: eventId }),
     admin().from("hosts").select("user_id, full_name").eq("event_id", eventId),
+    admin().from("helpers").select("host_user_id, full_name").eq("event_id", eventId).not("host_user_id", "is", null),
   ]);
   if (error) throw new Error(`hosts lookup failed: ${error.message}`);
   if (names.error) throw new Error(`host names lookup failed: ${names.error.message}`);
+  if (shown.error) throw new Error(`host names lookup failed: ${shown.error.message}`);
   const nameOf = new Map((names.data ?? []).map((r) => [r.user_id as string, r.full_name as string | null]));
+  const shownOf = new Map((shown.data ?? []).map((r) => [r.host_user_id as string, r.full_name as string]));
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   return ((data ?? []) as any[]).map((r) => ({
     userId: r.user_id,
     email: r.email,
     fullName: nameOf.get(r.user_id) ?? null,
+    displayName: nameOf.get(r.user_id) ?? shownOf.get(r.user_id) ?? r.email,
     side: r.side,
     role: r.role === "owner" ? "owner" : "co_owner",
     lastSignInAt: r.last_sign_in_at,

@@ -43,11 +43,11 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     h.role === "owner" ? <span className="font-bold">Owner</span> : <span className={`badge ${h.side === "groom" ? "badge-groom" : "badge-bride"}`}>Co-owner · {h.side === "groom" ? "Groom" : "Bride"}</span>;
   const nameButton = (h: (typeof hosts)[number]) => (
     <PopupButton
-      label={<Pencil className="h-4 w-4" aria-label={`Edit the name of ${h.fullName ?? h.email}`} />}
-      title={h.fullName ? "Edit name" : "Add name"}
+      label={<Pencil className="h-4 w-4" aria-label={`Edit the name of ${h.displayName}`} />}
+      title={h.displayName !== h.email ? "Edit name" : "Add name"}
       className="btn btn-quiet btn-sm"
     >
-      <HostNameForm slug={slug} userId={h.userId} fullName={h.fullName} />
+      <HostNameForm slug={slug} userId={h.userId} fullName={h.displayName !== h.email ? h.displayName : null} />
     </PopupButton>
   );
   const signedIn = (h: (typeof hosts)[number]) => (!h.confirmed ? "Invited, not signed in yet" : h.lastSignInAt ? longStamp(h.lastSignInAt) : "Never");
@@ -126,14 +126,14 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
               <tbody>
                 {hosts.map((h) => (
                   <tr key={h.userId}>
-                    <td>
+                    <td className="whitespace-nowrap">
                       <span className="inline-flex items-center gap-1">
-                        <span className={h.fullName ? "font-semibold" : "text-ink-soft"}>{h.fullName ?? "Add name"}</span>
+                        <span className={h.displayName !== h.email ? "font-semibold" : "text-ink-soft"}>{h.displayName !== h.email ? h.displayName : "Add name"}</span>
                         {h.userId === host.userId && <span className="text-ink-soft"> (you)</span>}
                         {nameButton(h)}
                       </span>
                     </td>
-                    <td className="[overflow-wrap:anywhere]">{h.email}</td>
+                    <td className="whitespace-nowrap">{h.email}</td>
                     <td>{role(h)}</td>
                     <td>{signedIn(h)}</td>
                     <td>{viewText(h.userId)}</td>
@@ -147,7 +147,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             {hosts.map((h) => (
               <li key={h.userId} className="rounded-[14px] border border-line p-3.5">
                 <p className="flex flex-wrap items-center gap-1 font-semibold">
-                  {h.fullName ?? <span className="font-normal text-ink-soft">Add name</span>}
+                  {h.displayName !== h.email ? h.displayName : <span className="font-normal text-ink-soft">Add name</span>}
                   {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
                   {nameButton(h)}
                 </p>
