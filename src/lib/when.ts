@@ -41,7 +41,8 @@ export function slipDate(iso: string): { en: string; mr: string } {
   const d = Number(en.day);
   const suffix = d % 100 >= 11 && d % 100 <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[d % 10] ?? "th";
   const mr: Record<string, string> = {};
-  for (const p of new Intl.DateTimeFormat("mr-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).formatToParts(new Date(iso)))
+  // Marathi month name, with 0-9 digits like the rest of the slip.
+  for (const p of new Intl.DateTimeFormat("mr-IN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).formatToParts(new Date(iso)))
     mr[p.type] = p.value;
   return { en: `${d}${suffix} ${en.month} ${en.year}`, mr: `${mr.day} ${mr.month} ${mr.year}` };
 }

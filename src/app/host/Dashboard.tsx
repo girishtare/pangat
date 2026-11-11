@@ -27,9 +27,8 @@ export default function Dashboard({
   const facts = factsFor(scope, data.facts);
   const per = data.functions.map((fn) => ({ fn, f: forecast(facts.filter((x) => x.functionId === fn.id), rates) }));
 
-  // The average the forecast uses for silent households: people per "yes" reply.
+  // Any "yes" yet? (Until then each function assumes 2 people per household.)
   const yes = facts.filter((x) => x.status === "yes");
-  const avgHeads = yes.length ? yes.reduce((s, x) => s + x.heads, 0) / yes.length : 2;
 
   const footnote = "Invited, yes, no and waiting count households (one card each). Confirmed, veg and non-veg count people.";
 
@@ -92,8 +91,8 @@ export default function Dashboard({
       <div className="mt-6 rounded-2xl bg-sand px-5 py-[18px] lg:mt-8">
         <h2 className="mb-1 text-lg font-bold">How &quot;Expected&quot; is worked out</h2>
         <p className="text-base">
-          Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + households not replied yet ×{" "}
-          <strong>{oneDecimal(avgHeads)}</strong> people on average × <strong>{pct(rates.pendingShowRate)}</strong>.{" "}
+          Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + households not replied yet × the
+          function&apos;s average people per &quot;yes&quot; × <strong>{pct(rates.pendingShowRate)}</strong>.{" "}
           {settingsHref ? (
             <>
               You can change both percentages in{" "}
@@ -106,8 +105,20 @@ export default function Dashboard({
             "The event's owner can change both percentages."
           )}
         </p>
-        <p className="mt-1 text-sm text-ink-soft">
-          The average is people per &quot;yes&quot; so far{yes.length ? "" : " (2 until the first yes comes in)"}; each function uses its own.
+        {/* Each function's own numbers, so the cards can be checked by hand. */}
+        <ul className="mt-3 space-y-1 text-[0.9375rem]">
+          {per.map(({ fn, f }) => (
+            <li key={fn.id} className="flex flex-wrap items-baseline justify-between gap-x-3 rounded-lg bg-card/70 px-3 py-1.5">
+              <span className="font-bold">{fn.name.en}</span>
+              <span className="tabular-nums text-ink-soft">
+                {n(f.confirmedHeads)} × {pct(rates.yesShowRate)} + {n(f.pendingHouseholds)} × {oneDecimal(f.avgHeadsPerYes)} ×{" "}
+                {pct(rates.pendingShowRate)} = <strong className="text-kumkum">{n(f.expected)}</strong>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-sm text-ink-soft">
+          The average is people per &quot;yes&quot; for that function so far{yes.length ? "" : " (2 until the first yes comes in)"}.
         </p>
       </div>
 

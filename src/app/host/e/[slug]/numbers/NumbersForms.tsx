@@ -16,6 +16,8 @@ function Message({ state }: { state: FormState }) {
 interface Fn {
   id: string;
   name: string;
+  /** Food served (asks veg / non-veg). */
+  catered?: boolean;
 }
 
 export function BaselineForm({ slug, functions, values }: { slug: string; functions: Fn[]; values: Record<string, number | null> }) {
@@ -87,19 +89,25 @@ export function ActualForm({
         {functions.map((f) => (
           <fieldset key={f.id} className="min-w-0 rounded-[14px] border border-line px-3.5 pb-3.5 pt-2">
             <legend className="px-1.5 font-bold">{f.name}</legend>
-            <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className={`grid gap-2 text-sm ${f.catered === false ? "grid-cols-1" : "grid-cols-3"}`}>
               <label className="block min-w-0">
                 Total
                 <input name={`actual_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.actual ?? ""} className={`${box} font-bold`} />
               </label>
-              <label className="block min-w-0">
-                Veg
-                <input name={`actualVeg_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.veg ?? ""} className={box} />
-              </label>
-              <label className="block min-w-0">
-                Non-veg
-                <input name={`actualNonveg_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.nonveg ?? ""} className={box} />
-              </label>
+              {f.catered === false ? (
+                <p className="text-ink-soft">No food served, so no veg / non-veg split.</p>
+              ) : (
+                <>
+                  <label className="block min-w-0">
+                    Veg
+                    <input name={`actualVeg_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.veg ?? ""} className={box} />
+                  </label>
+                  <label className="block min-w-0">
+                    Non-veg
+                    <input name={`actualNonveg_${f.id}`} inputMode="numeric" defaultValue={values[f.id]?.nonveg ?? ""} className={box} />
+                  </label>
+                </>
+              )}
             </div>
           </fieldset>
         ))}

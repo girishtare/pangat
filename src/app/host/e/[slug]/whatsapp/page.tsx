@@ -251,7 +251,7 @@ export default async function WhatsApp({
                   {effort.slice(0, 50).map((e) => (
                     <tr key={e.id}>
                       <td className="whitespace-nowrap">{formatDay(`${e.loggedOn}T12:00:00+05:30`, "en")}</td>
-                      <td className="[overflow-wrap:anywhere]">{e.email ?? "—"}</td>
+                      <td className="[overflow-wrap:anywhere]">{e.who ?? "—"}</td>
                       <td>{e.minutes}</td>
                       <td>{e.calls}</td>
                       <td>{e.note ?? ""}</td>
@@ -267,7 +267,7 @@ export default async function WhatsApp({
                     {formatDay(`${e.loggedOn}T12:00:00+05:30`, "en")} · {e.minutes} min · {e.calls} calls
                   </p>
                   {e.note && <p>{e.note}</p>}
-                  {e.email && <p className="text-xs text-ink-soft [overflow-wrap:anywhere]">{e.email}</p>}
+                  {e.who && <p className="text-xs text-ink-soft [overflow-wrap:anywhere]">{e.who}</p>}
                 </li>
               ))}
             </ul>

@@ -1,4 +1,5 @@
 import type { Lang } from "./types";
+import { MR_LOCALE } from "./i18n";
 
 /**
  * Splits a message after its first sentence, so a screen can show it as a
@@ -16,7 +17,7 @@ export function eventDays(startTimes: string[], lang: Lang): string | null {
   const sorted = startTimes.map((s) => new Date(s)).sort((a, b) => a.getTime() - b.getTime());
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
-  const locale = lang === "mr" ? "mr-IN" : "en-IN";
+  const locale = lang === "mr" ? MR_LOCALE : "en-IN";
   const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(d);
   if (dayKey(first) === dayKey(last)) {
     return new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" }).format(first);

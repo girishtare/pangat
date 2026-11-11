@@ -52,6 +52,8 @@ export interface HouseholdView {
   responses: ResponseRecord[];
   /** Invitation cards to offer: the household's slip language(s) the event has a PDF for (Marathi first). */
   cards?: Lang[];
+  /** The number this household's side asks guests to call (Event settings), if set. */
+  contactPhone?: string | null;
 }
 
 /** One household x function pair, as the forecast and dashboard see it. */

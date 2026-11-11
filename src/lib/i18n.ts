@@ -42,6 +42,7 @@ const strings = {
     change: "Change our reply",
     changeUntil: "You can change this until",
     closed: "Replies are now closed. Please call the family for any change.",
+    closedCall: "Replies are now closed. For any change, please call the family on",
     answerAll: "Please answer for every function.",
     error: "Something went wrong. Please try again.",
     notFound: "This link isn't valid. Please check the invitation or call the family.",
@@ -88,6 +89,7 @@ const strings = {
     change: "उत्तर बदला",
     changeUntil: "आपण हे उत्तर या तारखेपर्यंत बदलू शकता:",
     closed: "उत्तरे स्वीकारणे आता बंद झाले आहे. बदलासाठी कृपया कुटुंबाशी संपर्क साधा.",
+    closedCall: "उत्तरे स्वीकारणे आता बंद झाले आहे. बदलासाठी कृपया या क्रमांकावर कुटुंबाला फोन करा:",
     answerAll: "कृपया प्रत्येक कार्यक्रमासाठी उत्तर द्या.",
     error: "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा.",
     notFound: "ही लिंक वैध नाही. कृपया निमंत्रण तपासा किंवा कुटुंबाशी संपर्क साधा.",
@@ -103,19 +105,28 @@ export function t(lang: Lang, key: StringKey): string {
   return strings[lang][key];
 }
 
+/**
+ * Marathi dates use the same digits as everything else on the page (phone
+ * numbers, codes, headcounts): 0-9, not Devanagari numerals. Owner, 11 Nov.
+ */
+export const MR_LOCALE = "mr-IN-u-nu-latn";
+const locale = (lang: Lang) => (lang === "mr" ? MR_LOCALE : "en-IN");
+/** Times as "10:00 am" in both languages. */
+const lowerAmPm = (s: string) => s.replace(/\bAM\b/g, "am").replace(/\bPM\b/g, "pm");
+
 export function formatWhen(iso: string, lang: Lang): string {
-  return new Intl.DateTimeFormat(lang === "mr" ? "mr-IN" : "en-IN", {
+  return lowerAmPm(new Intl.DateTimeFormat(locale(lang), {
     weekday: "short",
     day: "numeric",
     month: "short",
     hour: "2-digit", // hh:mm am/pm everywhere
     minute: "2-digit",
     timeZone: "Asia/Kolkata",
-  }).format(new Date(iso));
+  }).format(new Date(iso)));
 }
 
 export function formatDay(iso: string, lang: Lang): string {
-  return new Intl.DateTimeFormat(lang === "mr" ? "mr-IN" : "en-IN", {
+  return new Intl.DateTimeFormat(locale(lang), {
     day: "numeric",
     month: "long",
     timeZone: "Asia/Kolkata",

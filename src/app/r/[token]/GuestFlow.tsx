@@ -6,6 +6,7 @@ import { formatDay, formatWhen, t } from "@/lib/i18n";
 import { eventDays, splitLead } from "@/lib/text";
 import { pick, type ArrivalSlot, type HouseholdView, type Lang } from "@/lib/types";
 import { MAX_HEADS } from "@/lib/validate";
+import { displayPhone } from "@/lib/outreach";
 import Stepper from "../../ui/Stepper";
 import { reportNotUs, submitReply } from "./actions";
 import Logo from "../../ui/Logo";
@@ -280,7 +281,17 @@ export default function GuestFlow({
           {closed ? (
             <p className={`${infoBox} mx-4 mt-[18px] flex items-start gap-2`}>
               <Lock className="mt-1 h-4 w-4 shrink-0 text-sky-ink" aria-hidden="true" />
-              {t(lang, "closed")}
+              {view.contactPhone ? (
+                <span>
+                  {t(lang, "closedCall")}{" "}
+                  <a href={`tel:${view.contactPhone}`} className="whitespace-nowrap font-bold text-maroon underline underline-offset-2">
+                    {displayPhone(view.contactPhone)}
+                  </a>
+                  .
+                </span>
+              ) : (
+                t(lang, "closed")
+              )}
             </p>
           ) : (
             <>

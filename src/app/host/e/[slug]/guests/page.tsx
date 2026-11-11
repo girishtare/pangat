@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, Search, Settings, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, Search, Settings, TriangleAlert, Users } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { householdWhatsApp } from "@/lib/hostMessages";
+import { parseSort, sortGuests, type GuestSort, type SortDir } from "@/lib/guestSort";
 import { canNameMatch, canSeeLookup } from "@/lib/lookup";
 import { displayPhone } from "@/lib/outreach";
 import { publicBaseUrl } from "@/lib/site";
@@ -22,10 +23,12 @@ export default async function GuestList({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; dir?: string }>;
 }) {
   const { slug } = await params;
-  const q = ((await searchParams).q ?? "").trim().slice(0, 60);
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim().slice(0, 60);
+  const { sort, dir } = parseSort(sp.sort, sp.dir);
   const gate = await hostGate(slug);
   if (!gate.ok) return <GateMessage gate={gate} title="Guest list" />;
 
@@ -58,7 +61,7 @@ export default async function GuestList({
   const noMarathi = guests.filter((g) => !g.nameMr).length;
   const qLower = q.toLowerCase();
   const qDigits = q.replace(/\D/g, "");
-  const shown = q
+  const found = q
     ? guests.filter(
         (g) =>
           g.nameEn.toLowerCase().includes(qLower) ||
@@ -67,7 +70,20 @@ export default async function GuestList({
           (qDigits.length >= 4 && (g.mobile ?? "").includes(qDigits)),
       )
     : guests;
+  const shown = sortGuests(found, sort, dir);
   const link = (id: string) => `/host/e/${slug}/guests/${id}`;
+  // Replied with more people than the card's cap (the cap is a guide; guests aren't stopped).
+  const overCap = (g: (typeof guests)[number]) => g.softCap !== null && g.maxHeads > g.softCap;
+  const overCount = guests.filter(overCap).length;
+  // Links that sort by a column: first click ascending, second click descending; the search stays.
+  const sortHref = (col: GuestSort) => {
+    const qs = new URLSearchParams();
+    if (q) qs.set("q", q);
+    qs.set("sort", col);
+    qs.set("dir", sort === col && dir === "asc" ? "desc" : "asc");
+    return `/host/e/${slug}/guests?${qs}`;
+  };
+  const th = (col: GuestSort, label: string) => <SortHeader key={col} label={label} active={sort === col} dir={dir} href={sortHref(col)} />;
   // In date order, like the functions themselves.
   const invitedTo = (ids: string[]) => host.functions.filter((f) => ids.includes(f.id)).map((f) => f.name.en).join(" · ");
 
@@ -98,7 +114,7 @@ export default async function GuestList({
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={`grid gap-3 sm:grid-cols-2 ${overCount ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         <CountCard
           value={n(guests.length)}
           label="households"
@@ -106,6 +122,11 @@ export default async function GuestList({
         />
         <CountCard value={n(noMobile)} label="have no mobile" sub="They can only reply by QR or phone" />
         <CountCard value={n(noMarathi)} label="have no Marathi name" sub="Their slip shows the English name" />
+        {overCount > 0 && (
+          <Link href={`/host/e/${slug}/guests?sort=cap&dir=desc`} className="block rounded-[1.25rem] hover:opacity-90">
+            <CountCard value={n(overCount)} label="over their cap" sub="Replied with more people than the card allows. Check with them." warn />
+          </Link>
+        )}
       </div>
 
       <div id="wrong-link" className="scroll-mt-24">
@@ -150,7 +171,7 @@ export default async function GuestList({
         </div>
         {q && (
           <p className="mt-2 text-sm">
-            {shown.length} of {guests.length} households match &quot;{q}&quot;.{" "}
+            {found.length} of {guests.length} households match &quot;{q}&quot;.{" "}
             <Link href={`/host/e/${slug}/guests`} className="font-semibold text-kumkum underline">
               Show all
             </Link>
@@ -177,13 +198,13 @@ export default async function GuestList({
               <table className="table-p min-w-[820px]">
                 <thead>
                   <tr>
-                    <th>Household</th>
-                    <th>Side</th>
-                    <th>Mobile</th>
-                    <th>Code</th>
-                    <th>Invited to</th>
-                    <th>Replied</th>
-                    <th>Cap</th>
+                    {th("name", "Household")}
+                    {th("side", "Side")}
+                    {th("mobile", "Mobile")}
+                    {th("code", "Code")}
+                    {th("invited", "Invited to")}
+                    {th("replied", "Replied")}
+                    {th("cap", "Cap")}
                   </tr>
                 </thead>
                 <tbody>
@@ -210,13 +231,43 @@ export default async function GuestList({
                       <td>
                         <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
                       </td>
-                      <td>{g.softCap ?? "—"}</td>
+                      <td className="whitespace-nowrap">
+                        {g.softCap ?? "—"}
+                        {overCap(g) && <OverCap heads={g.maxHeads} />}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <ul className="mt-4 space-y-3 lg:hidden">
+            {/* Phones: the same sorting as the table headers, as a menu. */}
+            <form action={`/host/e/${slug}/guests`} className="mt-4 flex items-end gap-2 lg:hidden">
+              {q && <input type="hidden" name="q" value={q} />}
+              <label className="block flex-1">
+                <span className="label">Sort by</span>
+                <select name="sort" defaultValue={sort ?? ""} className="input">
+                  <option value="">Order added</option>
+                  <option value="name">Household name</option>
+                  <option value="side">Side</option>
+                  <option value="mobile">Mobile</option>
+                  <option value="code">Code</option>
+                  <option value="invited">Functions invited to</option>
+                  <option value="replied">Replied</option>
+                  <option value="cap">Cap</option>
+                </select>
+              </label>
+              <label className="block w-32">
+                <span className="sr-only">Direction</span>
+                <select name="dir" defaultValue={dir} className="input">
+                  <option value="asc">A → Z, low → high</option>
+                  <option value="desc">Z → A, high → low</option>
+                </select>
+              </label>
+              <button type="submit" className="btn btn-secondary">
+                Sort
+              </button>
+            </form>
+            <ul className="mt-3 space-y-3 lg:hidden">
               {shown.map((g) => (
                 <li key={g.id}>
                   <Link href={link(g.id)} className="card block p-4 hover:border-kumkum">
@@ -247,7 +298,10 @@ export default async function GuestList({
                       {g.softCap !== null && (
                         <>
                           <dt className="text-ink-soft">Cap</dt>
-                          <dd className="text-right">{g.softCap}</dd>
+                          <dd className="text-right">
+                            {g.softCap}
+                            {overCap(g) && <OverCap heads={g.maxHeads} />}
+                          </dd>
                         </>
                       )}
                     </dl>
@@ -265,12 +319,39 @@ export default async function GuestList({
   );
 }
 
-function CountCard({ value, label, sub }: { value: string; label: string; sub?: string }) {
+function CountCard({ value, label, sub, warn = false }: { value: string; label: string; sub?: string; warn?: boolean }) {
   return (
-    <div className="card px-[18px] py-4">
-      <p className="font-display text-4xl leading-none text-ink">{value}</p>
+    <div className={`card h-full px-[18px] py-4 ${warn ? "border-kumkum" : ""}`}>
+      <p className={`font-display text-4xl leading-none ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
       <p className="mt-1.5 font-bold">{label}</p>
       {sub && <p className="text-sm text-ink-soft">{sub}</p>}
     </div>
+  );
+}
+
+/** A column header that sorts the list (a plain link, so it works without JavaScript). */
+function SortHeader({ label, active, dir, href }: { label: string; active: boolean; dir: SortDir; href: string }) {
+  const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}>
+      <Link
+        href={href}
+        className={`inline-flex items-center gap-1 rounded-md px-1 hover:text-kumkum ${active ? "text-kumkum" : ""}`}
+        title={`Sort by ${label.toLowerCase()}`}
+      >
+        {label}
+        <Icon className={`h-4 w-4 ${active ? "" : "opacity-40"}`} aria-hidden="true" />
+      </Link>
+    </th>
+  );
+}
+
+/** Replied with more people than the cap. */
+function OverCap({ heads }: { heads: number }) {
+  return (
+    <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-kumkum-soft px-2 py-0.5 text-xs font-bold text-kumkum">
+      <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />
+      {heads} replied
+    </span>
   );
 }
