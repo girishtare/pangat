@@ -9,7 +9,7 @@ import { slipDate } from "@/lib/when";
 import type { Side } from "@/lib/types";
 import { Alert, EmptyState, PageHeader, PageTabs } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
-import PrintButton from "./PrintButton";
+import { PrintButton, SlipSelection, SlipSheets } from "./SlipSelection";
 import SlipLanguages from "./SlipLanguages";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,8 @@ const PRINT_CSS = `
 @page { size: A4; margin: 8mm; }
 .sheet { width: 194mm; height: 281mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); background: white; }
 .slip { border: 0.3mm dashed #9a8f86; padding: 3.5mm; overflow: hidden; color: #2e1a1c; }
+.slip-cell { position: relative; min-height: 0; display: grid; } /* a slip plus its screen-only tick box */
+.slip-fill { min-height: 0; display: grid; }
 .slip-inner { height: 100%; border: 0.35mm solid transparent; border-radius: 2.5mm; /* same box as before, no visible frame */ padding: 2.5mm 3mm; display: flex; flex-direction: column; }
 @media screen {
   .sheet { margin: 0 auto 8mm; box-shadow: 0 2px 10px rgba(46,26,28,.18); }
@@ -222,6 +224,7 @@ export default async function Slips({
       <style>{PRINT_CSS}</style>
       {header}
 
+      <SlipSelection ids={guests.map((g) => g.id)}>
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] print:block">
         <div className="space-y-4 print:hidden">
           <section className="card p-[18px] sm:p-[22px]" aria-labelledby="which-slips">
@@ -317,6 +320,7 @@ export default async function Slips({
                 A4 paper, scale <b>100%</b> (not &quot;fit to page&quot;), headers and footers off.
               </li>
               <li>Print one sheet first and scan a QR code with your phone.</li>
+              <li>To reprint a few, untick the rest (tick box in each slip&apos;s corner): only ticked slips print, packed 8 to a sheet.</li>
               <li>Thicker paper (100 gsm or more) holds up better in the card.</li>
               <li>
                 QR codes point to <span className="break-all">{base}</span>.
@@ -324,7 +328,7 @@ export default async function Slips({
             </ul>
           </div>
 
-          <PrintButton disabled={guests.length === 0} count={guests.length} />
+          <PrintButton />
         </div>
 
         <div className="min-w-0">
@@ -340,26 +344,19 @@ export default async function Slips({
                 {sheets.length === 1 ? "One sheet" : `${sheets.length} sheets`} · A4 · 8 slips, each about 97 × 70 mm
                 {lang ? ` · ${LANG_LABEL[lang]} slips only` : ""}
               </p>
-              <div className="overflow-hidden print:overflow-visible">
-                {sheets.map((page, i) => (
-                  <div key={i} className="sheet">
-                    {page.map((g) => (
-                      <Slip
-                        key={g.id}
-                        g={g}
-                        base={base}
-                        event={host.event.name}
-                        replyBy={replyBy}
-                        phone={displayPhone(host.event.contactPhone[g.side])}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
+              <SlipSheets
+                perSheet={PER_SHEET}
+                items={guests.map((g) => ({
+                  id: g.id,
+                  name: g.nameEn,
+                  slip: <Slip g={g} base={base} event={host.event.name} replyBy={replyBy} phone={displayPhone(host.event.contactPhone[g.side])} />,
+                }))}
+              />
             </>
           )}
         </div>
       </div>
+      </SlipSelection>
     </EventShell>
   );
 }
