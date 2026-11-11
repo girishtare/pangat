@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { signedInUser } from "@/lib/host";
+import { listMyEvents, signedInUser } from "@/lib/host";
+import { scopeLabel } from "@/lib/sides";
+import { AuthShell } from "../../AuthBits";
 import { SetPasswordForm } from "../../AuthForms";
 
 export const dynamic = "force-dynamic";
@@ -8,15 +10,29 @@ export const dynamic = "force-dynamic";
 export default async function ChoosePassword() {
   const who = await signedInUser();
   if (!who.ok) redirect("/host/login?error=link");
+
+  // From a co-owner invitation: name the event and side, when it's clear which (one co-owner event).
+  const coOwned = (await listMyEvents(who.client)).filter((e) => e.role === "co_owner");
+  const invite = coOwned.length === 1 ? coOwned[0] : null;
+
   return (
-    <main className="mx-auto max-w-md px-5 py-16">
-      <h1 className="text-3xl font-bold text-kumkum">Choose a password</h1>
-      <p className="mt-2 text-lg">
-        For <b>{who.email}</b>. You can also always sign in with Google if this is a Gmail address.
-      </p>
-      <div className="mt-6">
-        <SetPasswordForm />
-      </div>
-    </main>
+    <AuthShell
+      title="Choose a password"
+      subtitle={
+        <>
+          For <b className="text-ink">{who.email}</b>.
+          {invite && (
+            <>
+              {" "}
+              You&apos;ve been invited to help with <b className="text-ink">{invite.name.en}</b>, {scopeLabel(invite.side ?? "both").toLowerCase()}.
+            </>
+          )}{" "}
+          You can also always sign in with Google if this is a Gmail address.
+        </>
+      }
+      below={<p className="text-sm text-ink-soft">Reached from an invitation email or a password-reset email.</p>}
+    >
+      <SetPasswordForm />
+    </AuthShell>
   );
 }

@@ -1,18 +1,58 @@
+import Link from "next/link";
+import type { ReactNode } from "react";
+import Logo from "../ui/Logo";
 import { signInWithGoogle } from "./actions";
 
-/** "Continue with Google": a plain form post, so it works without JavaScript. */
+/**
+ * The account pages' frame (sign in, create account, forgot password, choose a
+ * password): phone-first single column, the logo centred at the top, one card
+ * with the title and form, and a secondary line below the card.
+ */
+export function AuthShell({ title, subtitle, children, below }: { title: string; subtitle?: ReactNode; children: ReactNode; below?: ReactNode }) {
+  return (
+    <main className="mx-auto flex min-h-screen w-full max-w-[28rem] flex-col px-4 pb-10 pt-8 sm:pt-12">
+      <Link href="/" className="mx-auto rounded-lg" aria-label="Pangat home">
+        <Logo decorative className="h-12 sm:h-14" />
+      </Link>
+      <div className="card mt-6 p-5 sm:p-7">
+        <h1 className="font-display text-[1.875rem] leading-tight text-kumkum sm:text-[2.125rem]">{title}</h1>
+        {subtitle && <div className="mt-1.5 text-ink-soft">{subtitle}</div>}
+        <div className="mt-5">{children}</div>
+      </div>
+      {below && <div className="mt-6 text-center">{below}</div>}
+    </main>
+  );
+}
+
+/** A short notice inside the card (demo mode, a link that didn't work). */
+export function AuthNote({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "info" }) {
+  return (
+    <p
+      role={tone === "error" ? "alert" : "status"}
+      className={`mb-4 rounded-xl border px-4 py-3 ${tone === "error" ? "border-kumkum/30 bg-kumkum-soft text-kumkum-dark" : "border-haldi bg-haldi-soft text-ink"}`}
+    >
+      {children}
+    </p>
+  );
+}
+
+/**
+ * "Continue with Google", styled to Google's sign-in button guidelines (light
+ * theme: white, #747775 outline, #1F1F1F text, the standard four-colour G).
+ * A plain form post, so it works without JavaScript.
+ */
 export function GoogleButton() {
   return (
     <form action={signInWithGoogle}>
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-gray-300 bg-white px-5 py-3 text-lg font-semibold text-gray-800"
+        className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-[#747775] bg-white px-5 text-base font-semibold text-[#1F1F1F] transition-colors hover:bg-[#F8F8F8]"
       >
         <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
-          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
-          <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-          <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
-          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
         </svg>
         Continue with Google
       </button>
@@ -22,10 +62,10 @@ export function GoogleButton() {
 
 export function OrDivider() {
   return (
-    <div className="my-6 flex items-center gap-3 text-sm text-gray-600">
-      <span className="h-px flex-1 bg-gray-300" />
+    <div className="my-5 flex items-center gap-3 text-sm text-ink-soft">
+      <span className="h-px flex-1 bg-line" />
       or with email
-      <span className="h-px flex-1 bg-gray-300" />
+      <span className="h-px flex-1 bg-line" />
     </div>
   );
 }
