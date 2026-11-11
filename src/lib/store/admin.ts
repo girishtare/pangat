@@ -150,6 +150,8 @@ export async function deleteFunction(eventId: string, functionId: string): Promi
 export interface HostRow {
   userId: string;
   email: string;
+  /** Typed in by the owner; null until then. */
+  fullName: string | null;
   side: Side | null;
   role: "owner" | "co_owner";
   lastSignInAt: string | null;
@@ -158,12 +160,18 @@ export interface HostRow {
 }
 
 export async function listHosts(eventId: string): Promise<HostRow[]> {
-  const { data, error } = await admin().rpc("event_hosts", { p_event: eventId });
+  const [{ data, error }, names] = await Promise.all([
+    admin().rpc("event_hosts", { p_event: eventId }),
+    admin().from("hosts").select("user_id, full_name").eq("event_id", eventId),
+  ]);
   if (error) throw new Error(`hosts lookup failed: ${error.message}`);
+  if (names.error) throw new Error(`host names lookup failed: ${names.error.message}`);
+  const nameOf = new Map((names.data ?? []).map((r) => [r.user_id as string, r.full_name as string | null]));
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   return ((data ?? []) as any[]).map((r) => ({
     userId: r.user_id,
     email: r.email,
+    fullName: nameOf.get(r.user_id) ?? null,
     side: r.side,
     role: r.role === "owner" ? "owner" : "co_owner",
     lastSignInAt: r.last_sign_in_at,
@@ -189,7 +197,7 @@ export type AddCoOwnerResult =
  * Supabase emails them an invitation (they can also just sign in with Google
  * using that email). Never touches the owner's row.
  */
-export async function addCoOwner(eventId: string, email: string, side: Side, inviteRedirect: string): Promise<AddCoOwnerResult> {
+export async function addCoOwner(eventId: string, email: string, side: Side, fullName: string | null, inviteRedirect: string): Promise<AddCoOwnerResult> {
   const db = admin();
   const { data: existingId, error: lookupErr } = await db.rpc("user_id_by_email", { p_email: email });
   if (lookupErr) throw new Error(`user lookup failed: ${lookupErr.message}`);
@@ -209,13 +217,29 @@ export async function addCoOwner(eventId: string, email: string, side: Side, inv
   const { data: current } = await db.from("hosts").select("role").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
   if (current?.role === "owner") return { ok: false, error: "owner" };
   const { error } = current
-    ? await db.from("hosts").update({ side }).eq("event_id", eventId).eq("user_id", userId)
-    : await db.from("hosts").insert({ event_id: eventId, user_id: userId, side, role: "co_owner" });
+    ? await db.from("hosts").update({ side, ...(fullName ? { full_name: fullName } : {}) }).eq("event_id", eventId).eq("user_id", userId)
+    : await db.from("hosts").insert({ event_id: eventId, user_id: userId, side, role: "co_owner", full_name: fullName });
   if (error) {
     if (error.code === "23514") return { ok: false, error: "limit" }; // check_violation from the 3-per-side trigger
     throw new Error(`add co-owner failed: ${error.message}`);
   }
   return { ok: true, invited };
+}
+
+/** A host's name (owner or co-owner). Their to-do list entry follows by trigger. */
+export async function setHostName(eventId: string, userId: string, fullName: string | null) {
+  const { error } = await admin().from("hosts").update({ full_name: fullName }).eq("event_id", eventId).eq("user_id", userId);
+  if (error) throw new Error(`saving host name failed: ${error.message}`);
+}
+
+/** Tasks given to a host on this event (they must be reassigned before the host is removed). */
+export async function hostTaskCount(eventId: string, userId: string): Promise<number> {
+  const { data: helper, error } = await admin().from("helpers").select("id").eq("event_id", eventId).eq("host_user_id", userId).maybeSingle();
+  if (error) throw new Error(`helper lookup failed: ${error.message}`);
+  if (!helper) return 0;
+  const { count, error: countError } = await admin().from("tasks").select("id", { count: "exact", head: true }).eq("helper_id", helper.id);
+  if (countError) throw new Error(`task count failed: ${countError.message}`);
+  return count ?? 0;
 }
 
 export async function removeHost(eventId: string, userId: string): Promise<void> {
@@ -598,10 +622,19 @@ export async function resolveLookup(eventId: string, id: number, status: "sent" 
 
 /* ---------- To-do list writes (callers check the host's side first) ---------- */
 
-export async function findHelper(eventId: string, id: string): Promise<{ id: string; side: Side; fullName: string } | null> {
-  const { data, error } = await admin().from("helpers").select("id, side, full_name").eq("event_id", eventId).eq("id", id).maybeSingle();
+export async function findHelper(
+  eventId: string,
+  id: string,
+): Promise<{ id: string; side: Side | null; fullName: string; hostUserId: string | null } | null> {
+  const { data, error } = await admin().from("helpers").select("id, side, full_name, host_user_id").eq("event_id", eventId).eq("id", id).maybeSingle();
   if (error) throw new Error(`helper lookup failed: ${error.message}`);
-  return data ? { id: data.id, side: data.side, fullName: data.full_name } : null;
+  return data ? { id: data.id, side: data.side, fullName: data.full_name, hostUserId: data.host_user_id } : null;
+}
+
+/** A host's own to-do entry: only the phone lives here (the name comes from hosts). */
+export async function setHelperPhone(eventId: string, id: string, phone: string | null) {
+  const { error } = await admin().from("helpers").update({ phone }).eq("event_id", eventId).eq("id", id);
+  if (error) throw new Error(`saving phone failed: ${error.message}`);
 }
 
 export async function addHelper(eventId: string, userId: string, h: { fullName: string; phone: string | null; side: Side }) {
@@ -624,7 +657,7 @@ export async function deleteHelper(eventId: string, id: string): Promise<boolean
   return true;
 }
 
-export async function findTask(eventId: string, id: string): Promise<{ id: string; side: Side; title: string } | null> {
+export async function findTask(eventId: string, id: string): Promise<{ id: string; side: Side | null; title: string } | null> {
   const { data, error } = await admin().from("tasks").select("id, side, title").eq("event_id", eventId).eq("id", id).maybeSingle();
   if (error) throw new Error(`task lookup failed: ${error.message}`);
   return data ? { id: data.id, side: data.side, title: data.title } : null;

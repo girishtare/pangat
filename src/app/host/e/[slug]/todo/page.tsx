@@ -5,8 +5,8 @@ import { formatDay } from "@/lib/i18n";
 import { displayPhone, whatsappLink } from "@/lib/outreach";
 import { scopeLabel } from "@/lib/sides";
 import { listHelpers, listTasks } from "@/lib/store/supabase";
-import { isOverdue, sortTasks, taskMessage, todayIst, type Task } from "@/lib/todo";
-import type { Side } from "@/lib/types";
+import { isOverdue, sortTasks, taskMessage, todayIst, type Helper, type Task } from "@/lib/todo";
+import type { Side as SideType } from "@/lib/types";
 import { shortDay } from "@/lib/when";
 import PopupButton from "../../../../ui/PopupButton";
 import { EmptyState, PageHeader, SideBadge, WhatsAppIcon } from "../../../../ui/kit";
@@ -33,13 +33,14 @@ export default async function Todo({
   // Read as the host: a co-owner only gets their own side's people and tasks.
   const [helpers, allTasks] = await Promise.all([listHelpers(host.client, host.event.id), listTasks(host.client, host.event.id)]);
   const show: Show = sp.show === "done" || sp.show === "all" ? sp.show : "open";
-  const side: Side | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
+  const side: SideType | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
   const person = helpers.find((h) => h.id === sp.person) ?? null;
   const today = todayIst();
 
   const helperById = new Map(helpers.map((h) => [h.id, h]));
   const fnName = new Map(host.functions.map((f) => [f.id, f.name.en]));
-  const inScope = allTasks.filter((t) => (!side || t.side === side) && (!person || t.helperId === person.id));
+  // Tasks given to the owner (no side) show on every side's view.
+  const inScope = allTasks.filter((t) => (!side || t.side === side || t.side === null) && (!person || t.helperId === person.id));
   const counts = {
     todo: inScope.filter((t) => t.status === "todo").length,
     doing: inScope.filter((t) => t.status === "doing").length,
@@ -49,11 +50,16 @@ export default async function Todo({
   const tasks = sortTasks(inScope.filter((t) => (show === "all" ? true : show === "done" ? t.status === "done" : t.status !== "done")));
   const openFor = (helperId: string) => allTasks.filter((t) => t.helperId === helperId && t.status !== "done").length;
 
-  const allHelperOptions = helpers.map((h) => ({ id: h.id, label: host.side ? h.fullName : `${h.fullName} · ${scopeLabel(h.side)}` }));
+  // Hosts first (owner, then co-owners), then everyone else, by name.
+  const people = [...helpers].sort((a, b) => rank(a) - rank(b) || a.fullName.localeCompare(b.fullName));
+  const allHelperOptions = people.map((h) => ({
+    id: h.id,
+    label: `${h.fullName}${h.hostUserId ? ` (${roleOf(h)})` : ""}${host.side ? "" : ` · ${h.side ? scopeLabel(h.side) : "Both sides"}`}`,
+  }));
   const functionOptions = host.functions.map((f) => ({ id: f.id, name: f.name.en }));
 
   const base = `/host/e/${slug}/todo`;
-  const href = (o: { show?: Show; side?: Side | null; person?: string | null }) => {
+  const href = (o: { show?: Show; side?: SideType | null; person?: string | null }) => {
     const q = new URLSearchParams();
     const s = o.show ?? show;
     if (s !== "open") q.set("show", s);
@@ -193,7 +199,7 @@ export default async function Todo({
                               </Link>
                               {!host.side && (
                                 <div className="mt-0.5">
-                                  <SideBadge side={h.side} />
+                                  <Side side={h.side} />
                                 </div>
                               )}
                             </>
@@ -278,7 +284,8 @@ export default async function Todo({
           People helping
         </h2>
         <p className="text-ink-soft">
-          Relatives and friends who take on tasks. They don&apos;t sign in; the WhatsApp button sends them their task.
+          The owner and co-owners are here by default; add relatives and friends who take on tasks. They don&apos;t sign in; the WhatsApp
+          button sends them their task.
           {host.side ? ` You see the ${scopeLabel(host.side).toLowerCase()} only.` : ""}
         </p>
         {helpers.length === 0 ? (
@@ -302,24 +309,27 @@ export default async function Todo({
                 </tr>
               </thead>
               <tbody>
-                {helpers.map((h) => (
+                {people.map((h) => (
                   <tr key={h.id}>
                     <td className="wrap-names font-semibold">
                       <Link href={href({ person: h.id, side: null })} className="text-kumkum underline-offset-2 hover:underline">
                         {h.fullName}
                       </Link>
+                      {h.hostUserId && <span className="ml-2 badge badge-no">{roleOf(h)}</span>}
                     </td>
                     <td>
-                      <SideBadge side={h.side} />
+                      <Side side={h.side} />
                     </td>
                     <td className="whitespace-nowrap">{h.phone ? displayPhone(h.phone) : <span className="text-ink-soft">No mobile</span>}</td>
                     <td>{openFor(h.id)}</td>
                     <td className="whitespace-nowrap">
                       <span className="inline-flex items-center gap-1">
-                        <PopupButton label={<Pencil className="h-4 w-4" aria-label={`Edit ${h.fullName}`} />} title="Edit person" className="btn btn-quiet btn-sm">
-                          <PersonForm slug={slug} hostSide={host.side} person={h} />
-                        </PopupButton>
-                        <DeleteButton slug={slug} id={h.id} kind="person" name={h.fullName} />
+                        {(!h.hostUserId || host.canManage || h.hostUserId === host.userId) && (
+                          <PopupButton label={<Pencil className="h-4 w-4" aria-label={`Edit ${h.fullName}`} />} title="Edit person" className="btn btn-quiet btn-sm">
+                            <PersonForm slug={slug} hostSide={host.side} person={h} />
+                          </PopupButton>
+                        )}
+                        {!h.hostUserId && <DeleteButton slug={slug} id={h.id} kind="person" name={h.fullName} />}
                       </span>
                     </td>
                   </tr>
@@ -331,6 +341,19 @@ export default async function Todo({
       </section>
     </EventShell>
   );
+}
+
+function rank(h: Helper): number {
+  return h.hostUserId ? (h.side === null ? 0 : 1) : 2;
+}
+
+function roleOf(h: Helper): string {
+  return h.side === null ? "Owner" : "Co-owner";
+}
+
+/** Side badge; the owner (no side) shows as both sides. */
+function Side({ side }: { side: SideType | null }) {
+  return side ? <SideBadge side={side} /> : <span className="badge badge-no">Both sides</span>;
 }
 
 function Count({ value, label, warn = false }: { value: number; label: string; warn?: boolean }) {

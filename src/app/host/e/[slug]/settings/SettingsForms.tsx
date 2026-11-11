@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
 import { Alert } from "../../../../ui/kit";
-import { createFunction, dropHost, inviteHost, removeFunction, saveEvent, saveFunction, type FormState } from "./actions";
+import { createFunction, dropHost, inviteHost, removeFunction, renameHost, saveEvent, saveFunction, type FormState } from "./actions";
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -319,8 +319,12 @@ function InviteForm({ slug, full, onDone }: { slug: string; full: { bride: boole
   return (
     <form ref={form} action={action} className="space-y-4">
       <label className="block">
+        <span className="label">Their full name</span>
+        <input name="fullName" required maxLength={120} autoComplete="off" autoFocus className="input" placeholder="Sunita Kale" />
+      </label>
+      <label className="block">
         <span className="label">Their email</span>
-        <input name="email" type="email" required autoComplete="off" autoFocus className="input" placeholder="name@example.com" />
+        <input name="email" type="email" required autoComplete="off" className="input" placeholder="name@example.com" />
       </label>
       <fieldset>
         <legend className="label">Side</legend>
@@ -366,6 +370,23 @@ export function RemoveHostButton({ slug, userId, email }: { slug: string; userId
         {pending ? "Removing…" : "Remove"}
       </button>
       {state && !state.ok && <span className="text-sm text-kumkum">{state.message}</span>}
+    </form>
+  );
+}
+
+/** The owner names a host; the name also shows on the To-do list. */
+export function HostNameForm({ slug, userId, fullName }: { slug: string; userId: string; fullName: string | null }) {
+  const [state, action, pending] = useActionState(renameHost.bind(null, slug, userId), null);
+  return (
+    <form action={action} className="mt-4 space-y-4">
+      <label className="block">
+        <span className="label">Full name</span>
+        <input name="fullName" required maxLength={120} defaultValue={fullName ?? ""} className="input" placeholder="Sunita Kale" />
+      </label>
+      <Message state={state} />
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">
+        {pending ? "Saving…" : "Save name"}
+      </button>
     </form>
   );
 }

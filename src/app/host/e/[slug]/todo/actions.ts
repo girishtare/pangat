@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { normaliseMobile, parseSide } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
-import { addHelper, addTask, deleteHelper, deleteTask, findHelper, findTask, updateHelper, updateTask, type TaskInput } from "@/lib/store/admin";
+import { addHelper, addTask, deleteHelper, deleteTask, findHelper, findTask, setHelperPhone, setHostName, updateHelper, updateTask, type TaskInput } from "@/lib/store/admin";
 import { isTaskStatus, isValidDay } from "@/lib/todo";
 import type { Side } from "@/lib/types";
 
@@ -18,7 +18,8 @@ async function who(slug: string): Promise<{ host: HostContext } | { error: strin
   return { host: gate.host };
 }
 
-const mayTouch = (host: HostContext, side: Side) => !host.side || host.side === side;
+/** The owner (side null) is on every host's list, so anyone may give them tasks. */
+const mayTouch = (host: HostContext, side: Side | null) => !host.side || side === null || host.side === side;
 
 const done = (slug: string, message: string): FormState => {
   revalidatePath(`/host/e/${slug}/todo`);
@@ -50,6 +51,18 @@ export async function editPerson(slug: string, id: string, _prev: FormState, fd:
   if ("error" in w) return { ok: false, message: w.error };
   const current = await findHelper(w.host.event.id, id);
   if (!current || !mayTouch(w.host, current.side)) return { ok: false, message: "That person isn't on your list." };
+  if (current.hostUserId) {
+    // A host: the owner, or the host themself, edits the name (kept on hosts) and the mobile.
+    if (!w.host.canManage && current.hostUserId !== w.host.userId) return { ok: false, message: "Only the event's owner can change a host's details." };
+    const fullName = text(fd.get("fullName"));
+    if (!fullName || fullName.length > 120) return { ok: false, message: "Enter their full name." };
+    const phone = normaliseMobile(text(fd.get("phone")));
+    if (!phone.ok) return { ok: false, message: "That mobile number doesn't look right. Use 10 digits, e.g. 98765 43210." };
+    await setHostName(w.host.event.id, current.hostUserId, fullName);
+    await setHelperPhone(w.host.event.id, id, phone.value);
+    revalidatePath(`/host/e/${slug}/settings`);
+    return done(slug, "Saved.");
+  }
   const h = readHelper(w.host, fd);
   if (!h.ok) return { ok: false, message: h.message };
   await updateHelper(w.host.event.id, id, h.value);
@@ -61,6 +74,7 @@ export async function removePerson(slug: string, id: string): Promise<FormState>
   if ("error" in w) return { ok: false, message: w.error };
   const current = await findHelper(w.host.event.id, id);
   if (!current || !mayTouch(w.host, current.side)) return { ok: false, message: "That person isn't on your list." };
+  if (current.hostUserId) return { ok: false, message: "Hosts stay on this list while they are owner or co-owner. Remove a co-owner in Event settings." };
   const removed = await deleteHelper(w.host.event.id, id);
   if (!removed) return { ok: false, message: `${current.fullName} still has tasks. Give them to someone else or delete them first.` };
   return done(slug, `Removed ${current.fullName}.`);

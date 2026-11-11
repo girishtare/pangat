@@ -250,13 +250,13 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
 export async function listHelpers(client: SupabaseClient, eventId: string): Promise<Helper[]> {
   const { data, error } = await client
     .from("helpers")
-    .select("id, full_name, phone, side")
+    .select("id, full_name, phone, side, host_user_id")
     .eq("event_id", eventId)
     .order("full_name")
     .range(0, 999);
   if (error) throw new Error(`helper lookup failed: ${error.message}`);
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  return ((data ?? []) as any[]).map((r) => ({ id: r.id, fullName: r.full_name, phone: r.phone, side: r.side }));
+  return ((data ?? []) as any[]).map((r) => ({ id: r.id, fullName: r.full_name, phone: r.phone, side: r.side, hostUserId: r.host_user_id }));
 }
 
 export async function listTasks(client: SupabaseClient, eventId: string): Promise<Task[]> {
