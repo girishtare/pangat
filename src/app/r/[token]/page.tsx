@@ -30,7 +30,7 @@ export default async function GuestPage({
       <main className={`${shell} flex flex-col items-center justify-center px-5 py-6 text-center`}>
         <Mark className="h-14 w-14" />
         <div className="mt-5 w-full max-w-md rounded-[18px] border border-sand bg-card-e px-[18px] py-[22px]">
-          <h1 lang="mr" className="font-heading-e text-[26px] font-normal leading-[1.4] text-maroon">
+          <h1 lang="mr" className="font-heading-e text-[26px] font-bold [font-synthesis-weight:none] leading-[1.4] text-maroon">
             {mrLead}
           </h1>
           {mrRest && (
@@ -39,7 +39,7 @@ export default async function GuestPage({
             </p>
           )}
           <div aria-hidden="true" className="my-[18px] h-px bg-sand" />
-          <h2 lang="en" className="font-heading-e text-2xl font-normal leading-[1.3] text-maroon">
+          <h2 lang="en" className="font-heading-e text-2xl font-bold [font-synthesis-weight:none] leading-[1.3] text-maroon">
             {enLead}
           </h2>
           {enRest && (

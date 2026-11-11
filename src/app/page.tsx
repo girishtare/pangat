@@ -1,15 +1,11 @@
 import Link from "next/link";
-import { Playfair_Display } from "next/font/google";
 import { isDemo } from "@/lib/store";
 import { DEMO_TOKENS } from "@/lib/store/demo";
 import { paletteEFonts } from "./fonts";
 import { Mark } from "./ui/kit";
 
-// Rozha has one weight; font-normal stops the browser faking bold. Use it at 20 px and above only.
-// Trial (11 Nov): Playfair Display for the whole landing page (headings and
-// text), to judge it before using it across the site. Loaded on this page only.
-const playfair = Playfair_Display({ subsets: ["latin"], display: "swap", variable: "--font-playfair-display" });
-const display = "font-playfair font-bold";
+// Headings in Playfair Display (bold); text in Libre Baskerville. Both come from the root layout.
+const display = "font-playfair font-bold [font-synthesis-weight:none]";
 const wrap = "mx-auto max-w-[1200px] px-4 md:px-6";
 
 const btn = "inline-flex items-center justify-center rounded-xl border-2 font-bold no-underline transition-colors";
@@ -38,7 +34,7 @@ function Tick({ tone }: { tone: "maroon" | "sky" }) {
 export default function Home() {
   const demo = isDemo();
   return (
-    <div className={`${paletteEFonts} ${playfair.variable} font-playfair min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`}>
+    <div className={`${paletteEFonts} font-body-e min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`}>
       <Header demo={demo} />
       <main>
         <Hero demo={demo} />
