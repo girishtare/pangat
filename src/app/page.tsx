@@ -155,7 +155,7 @@ function InviteCard() {
     <div className={`${cardFrame} px-3 pb-6 pt-5`}>
       <div className="text-xs font-bold text-maroon">You are warmly invited</div>
       <div className={`${display} text-[28px] leading-[1.3] text-maroon`}>Manali &amp; Anish</div>
-      <div className="text-xs text-ink-e-soft">Sunday, 28 December · Pune</div>
+      <div className="text-xs text-ink-e-soft">Monday, 28 December · Mumbai</div>
     </div>
   );
 }
