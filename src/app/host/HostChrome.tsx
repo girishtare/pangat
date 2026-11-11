@@ -113,9 +113,15 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
           <div className="mb-5 hidden min-w-0 items-baseline gap-x-2.5 overflow-hidden whitespace-nowrap rounded-[14px] bg-sand px-4 py-2.5 lg:flex print:hidden">
             <span className="truncate font-display text-xl leading-tight text-kumkum">{host.event.name.en}</span>
             {host.event.name.mr && (
-              <span lang="mr" className="truncate text-ink-soft">
-                · {host.event.name.mr}
-              </span>
+              <>
+                <span className="text-xl text-kumkum" aria-hidden="true">
+                  ·
+                </span>
+                {/* Same size and colour as the English name; Tiro Devanagari Marathi (trial). */}
+                <span lang="mr" className="truncate font-marathi text-xl leading-tight text-kumkum">
+                  {host.event.name.mr}
+                </span>
+              </>
             )}
             <span className="shrink-0 text-sm text-ink-soft">· {[date, roleLine(host)].filter(Boolean).join(" · ")}</span>
           </div>
