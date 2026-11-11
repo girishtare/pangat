@@ -58,7 +58,7 @@ function Row({ slug, item }: { slug: string; item: LookupItem }) {
           {item.match.kind === "same" && <>That mobile is on the same household. They may not recognise the name on the card; call them.</>}
           {item.match.kind === "hidden" && <>That mobile belongs to a household on the other side; a host of that side will see this too.</>}
           {item.match.kind === "none" && (
-            <>No household has this mobile. If they should be invited, add them below, then send the invitation from the WhatsApp tab.</>
+            <>No household has this mobile. If they should be invited, add them with + Add a household, then send the invitation from the WhatsApp tab.</>
           )}
         </p>
       </div>

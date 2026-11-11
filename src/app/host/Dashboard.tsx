@@ -47,28 +47,6 @@ export default function Dashboard({
       </p>
       <p className="mt-4 text-[0.9375rem] text-ink-soft lg:hidden">{footnote}</p>
 
-      <div className="mt-4 rounded-2xl bg-sand px-5 py-[18px] lg:mt-[22px]">
-        <h2 className="mb-1 text-lg font-bold">How &quot;Expected&quot; is worked out</h2>
-        <p className="text-base">
-          Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + households not replied yet ×{" "}
-          <strong>{oneDecimal(avgHeads)}</strong> people on average × <strong>{pct(rates.pendingShowRate)}</strong>.{" "}
-          {settingsHref ? (
-            <>
-              You can change both percentages in{" "}
-              <Link href={settingsHref} className="font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
-                Event settings
-              </Link>
-              .
-            </>
-          ) : (
-            "The event's owner can change both percentages."
-          )}
-        </p>
-        <p className="mt-1 text-sm text-ink-soft">
-          The average is people per &quot;yes&quot; so far{yes.length ? "" : " (2 until the first yes comes in)"}; each function uses its own.
-        </p>
-      </div>
-
       <div className="hidden lg:block">
         <h2 className="mb-3 mt-9 font-display text-[1.625rem] text-kumkum">All the numbers</h2>
         <div className="overflow-x-auto rounded-2xl border border-line bg-card">
@@ -110,6 +88,28 @@ export default function Dashboard({
         </div>
         <p className="mt-2.5 text-sm text-ink-soft">{footnote}</p>
       </div>
+      <div className="mt-6 rounded-2xl bg-sand px-5 py-[18px] lg:mt-8">
+        <h2 className="mb-1 text-lg font-bold">How &quot;Expected&quot; is worked out</h2>
+        <p className="text-base">
+          Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + households not replied yet ×{" "}
+          <strong>{oneDecimal(avgHeads)}</strong> people on average × <strong>{pct(rates.pendingShowRate)}</strong>.{" "}
+          {settingsHref ? (
+            <>
+              You can change both percentages in{" "}
+              <Link href={settingsHref} className="font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
+                Event settings
+              </Link>
+              .
+            </>
+          ) : (
+            "The event's owner can change both percentages."
+          )}
+        </p>
+        <p className="mt-1 text-sm text-ink-soft">
+          The average is people per &quot;yes&quot; so far{yes.length ? "" : " (2 until the first yes comes in)"}; each function uses its own.
+        </p>
+      </div>
+
     </div>
   );
 }

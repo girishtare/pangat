@@ -72,19 +72,7 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
           <Mark className="h-[26px] w-[26px]" />
           Pangat
         </Link>
-        <p className="mx-2 mt-3 text-[0.9375rem] text-ink-soft [overflow-wrap:anywhere]">
-          {host.email} · {roleLabel(host)}
-        </p>
-        <div className="mx-2 mt-4 rounded-[14px] bg-sand p-3.5">
-          <p className="wrap-names font-display text-xl leading-[1.3] text-kumkum">{host.event.name.en}</p>
-          {host.event.name.mr && (
-            <p lang="mr" className="wrap-names text-[0.9375rem] text-ink-soft">
-              {host.event.name.mr}
-            </p>
-          )}
-          <p className="mt-1 text-sm text-ink-soft">{[date, roleLine(host)].filter(Boolean).join(" · ")}</p>
-        </div>
-        <nav aria-label="Event" className="mt-[18px]">
+        <nav aria-label="Event" className="mt-6">
           <ul className="grid gap-1">
             {items.map((item) => (
               <li key={item.href}>
@@ -109,6 +97,9 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
           </Link>
         </div>
         <div className="mx-2 mt-auto pt-6">
+          <p className="mb-1 px-1.5 text-[0.9375rem] text-ink-soft [overflow-wrap:anywhere]">
+            {host.email} · {roleLabel(host)}
+          </p>
           <SignOutButton variant="rail" />
         </div>
       </aside>
@@ -116,7 +107,19 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
       <MobileNav eventName={host.event.name.en} eventDate={date} items={items} who={who} signOut={<SignOutButton variant="rail" />} />
 
       <main id="main" className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:pb-14 lg:pt-8 print:p-0">
-        <div className="mx-auto max-w-[72rem] print:max-w-none">{children}</div>
+        <div className="mx-auto max-w-[72rem] print:max-w-none">
+          {/* Which event this is, on one line above every page (laptops; phones have it in the top bar). */}
+          <div className="mb-5 hidden min-w-0 items-baseline gap-x-2.5 overflow-hidden whitespace-nowrap rounded-[14px] bg-sand px-4 py-2.5 lg:flex print:hidden">
+            <span className="truncate font-display text-xl leading-tight text-kumkum">{host.event.name.en}</span>
+            {host.event.name.mr && (
+              <span lang="mr" className="truncate text-ink-soft">
+                · {host.event.name.mr}
+              </span>
+            )}
+            <span className="shrink-0 text-sm text-ink-soft">· {[date, roleLine(host)].filter(Boolean).join(" · ")}</span>
+          </div>
+          {children}
+        </div>
       </main>
     </div>
   );
