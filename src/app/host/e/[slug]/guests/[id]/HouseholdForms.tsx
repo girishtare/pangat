@@ -129,11 +129,17 @@ function ReplyRow({ f }: { f: ReplyFn }) {
 
 export function ReplyForm({ slug, id, functions }: { slug: string; id: string; functions: ReplyFn[] }) {
   const [state, action, pending] = useActionState(recordReply.bind(null, slug, id), null);
+  // React resets a form after its action runs, which would put the radios back to
+  // the first-loaded reply. Keying the rows on the saved reply remounts them with
+  // what the server now holds.
+  const saved = functions.map((f) => `${f.id}:${f.current?.status ?? ""}:${f.current?.heads ?? ""}:${f.current?.veg ?? ""}:${f.current?.arrivalSlot ?? ""}`).join(",");
   return (
     <form action={action} className="space-y-4">
-      {functions.map((f) => (
-        <ReplyRow key={f.id} f={f} />
-      ))}
+      <div key={saved} className="space-y-4">
+        {functions.map((f) => (
+          <ReplyRow key={f.id} f={f} />
+        ))}
+      </div>
       <Message state={state} />
       <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-lg">
         {pending ? "Saving…" : "Save reply on their behalf"}
