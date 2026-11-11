@@ -18,6 +18,11 @@ import { emailCardHtml, emailCardText, type EmailCard } from "./emailDesign";
  */
 export type MailResult = "sent" | "not_set_up" | "failed";
 
+/** True when SMTP_USER and SMTP_PASS are set, so Pangat can send its own emails. */
+export function mailConfigured(): boolean {
+  return !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
 /** One email in Pangat's design (src/lib/emailDesign.ts), with a plain-text copy. */
 export async function sendCardMail(to: string, subject: string, card: EmailCard): Promise<MailResult> {
   return sendMail(to, subject, emailCardText(card), emailCardHtml(card));

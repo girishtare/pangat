@@ -4,6 +4,8 @@ import { supabaseConfig } from "../supabase/config";
 import type { MessageKind } from "../outreach";
 import type { FunctionNumbers } from "../pilot";
 import type { Side } from "../types";
+import { coOwnerInviteCard } from "../emailDesign";
+import { mailConfigured, sendCardMail } from "../mail";
 
 // Writes for event setup and host management. Service role: every caller must
 // first check, with hostGate(), that the signed-in user may make the change.
@@ -215,6 +217,8 @@ export type AddCoOwnerResult =
 export interface InviteDetails {
   eventName: string;
   invitedBy: string;
+  /** The site's address, for the sign-in link and the logo. */
+  siteUrl: string;
 }
 
 const roleLabel = (side: Side | null) => `Co-owner · ${side === "bride" ? "Bride's side" : side === "groom" ? "Groom's side" : "Both sides"}`;
@@ -247,7 +251,7 @@ export async function addCoOwner(
   let invited = false;
   if (!userId || !(await hasConfirmed(userId))) {
     const data = { full_name: fullName, invited_by: details.invitedBy, event_name: details.eventName, role_label: roleLabel(side) };
-    const sent = await sendInvite(email, inviteRedirect, data, userId);
+    const sent = await sendInvite(email, inviteRedirect, data, userId, details.siteUrl);
     if (!sent.ok) return sent;
     userId = sent.userId;
     invited = true;
@@ -278,13 +282,39 @@ async function sendInvite(
   redirectTo: string,
   details: Record<string, string>,
   existingUserId: string | null,
+  siteUrl: string,
 ): Promise<{ ok: true; userId: string } | { ok: false; error: "invite_failed" | "rate_limited" }> {
-  // The template reads these from the user's metadata. Supabase only stores
+  // Supabase's template reads these from the user's metadata, and only stores
   // them on a new user, so refresh them first for someone invited before.
   if (existingUserId) {
     const { error: metaError } = await admin().auth.admin.updateUserById(existingUserId, { user_metadata: details });
     if (metaError) console.error("invite details not saved", metaError.status, metaError.code);
   }
+
+  // Normally Pangat sends the invitation itself, in its own design: Supabase
+  // makes the sign-in link (no email) and Pangat emails it over SMTP.
+  if (mailConfigured()) {
+    const { data: link, error: linkError } = await admin().auth.admin.generateLink({ type: "invite", email, options: { data: details, redirectTo } });
+    if (!linkError && link.properties?.hashed_token && link.user) {
+      const base = siteUrl.replace(/\/+$/, "");
+      const url = `${base}/auth/confirm?token_hash=${encodeURIComponent(link.properties.hashed_token)}&type=invite`;
+      const card = coOwnerInviteCard({
+        fullName: details.full_name || "there",
+        invitedBy: details.invited_by || "The family",
+        eventName: details.event_name || "an event",
+        roleLabel: details.role_label || "Co-owner",
+        email,
+        url,
+        siteUrl: base,
+      });
+      if ((await sendCardMail(email, "Your Pangat co-owner invitation", card)) === "sent") return { ok: true, userId: link.user.id };
+      console.error("Pangat invitation email failed; falling back to Supabase's");
+    } else if (linkError) {
+      console.error("invite link failed", linkError.status, linkError.code);
+    }
+  }
+
+  // Fallback: Supabase sends its own invitation email (template: supabase/templates/invite.html).
   const { data, error } = await admin().auth.admin.inviteUserByEmail(email, { redirectTo, data: details });
   if (error) {
     console.error("invite failed", error.status, error.code);
@@ -324,7 +354,7 @@ export async function resendInvite(
     event_name: details.eventName,
     role_label: roleLabel(host.side as Side | null),
   };
-  const sent = await sendInvite(data.user.email, redirectTo, meta, userId);
+  const sent = await sendInvite(data.user.email, redirectTo, meta, userId, details.siteUrl);
   return sent.ok ? { ok: true } : sent;
 }
 

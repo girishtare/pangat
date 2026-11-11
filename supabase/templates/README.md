@@ -6,6 +6,12 @@ source for what goes there.
 
 ## Invite user (co-owner invitation)
 
+Pangat normally sends the invitation itself, in its own design: Supabase makes
+the sign-in link (no email) and Pangat emails it through Gmail
+(`SMTP_USER`/`SMTP_PASS`). Supabase's own invitation email, with this template,
+is only the fallback: when Pangat's email isn't set up or fails. Paste it anyway
+so the fallback looks the same and its link goes through `/auth/confirm`.
+
 `invite.html` is generated from Pangat's email design (`src/lib/emailDesign.ts`):
 
     node scripts/build-email-templates.ts
