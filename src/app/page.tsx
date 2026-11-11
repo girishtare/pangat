@@ -3,6 +3,7 @@ import { isDemo } from "@/lib/store";
 import { DEMO_TOKENS } from "@/lib/store/demo";
 import { paletteEFonts } from "./fonts";
 import { Mark } from "./ui/kit";
+import StartAtTop from "./ui/StartAtTop";
 
 // Headings in Playfair Display (bold); text in Libre Baskerville. Both come from the root layout.
 const display = "font-playfair font-bold [font-synthesis-weight:none]";
@@ -35,6 +36,7 @@ export default function Home() {
   const demo = isDemo();
   return (
     <div className={`${paletteEFonts} font-body-e min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`}>
+      <StartAtTop />
       <Header demo={demo} />
       <main>
         <Hero demo={demo} />
