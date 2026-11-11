@@ -67,8 +67,9 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 
 /**
  * Tabs inside a page, as plain links (`?tab=…`), so each tab is a normal page
- * load that works without JavaScript and can be bookmarked. On phones the row
- * scrolls sideways rather than wrapping.
+ * load that works without JavaScript and can be bookmarked. On phones the tabs
+ * share the width equally (a long label wraps to two lines), so every tab,
+ * the current one included, is always in view.
  */
 export function PageTabs({
   label,
@@ -80,8 +81,8 @@ export function PageTabs({
   current: string;
 }) {
   return (
-    <nav aria-label={label} className="-mx-4 mb-5 overflow-x-auto px-4 sm:mx-0 sm:px-0 lg:mb-6">
-      <ul className="flex min-w-max gap-1 border-b-2 border-line">
+    <nav aria-label={label} className="mb-5 lg:mb-6">
+      <ul className="grid auto-cols-fr grid-flow-col gap-1 border-b-2 border-line sm:flex">
         {tabs.map(({ key, label: text, href, icon: Icon, count }) => {
           const on = key === current;
           return (
@@ -89,11 +90,11 @@ export function PageTabs({
               <Link
                 href={href}
                 aria-current={on ? "page" : undefined}
-                className={`-mb-0.5 flex min-h-12 items-center gap-2 rounded-t-xl border-b-[3px] px-4 font-bold transition-colors ${
+                className={`-mb-0.5 flex h-full min-h-12 items-center justify-center gap-x-2 gap-y-0.5 rounded-t-xl border-b-[3px] px-2 py-1.5 text-center leading-tight font-bold transition-colors max-sm:flex-wrap sm:px-4 ${
                   on ? "border-kumkum text-kumkum" : "border-transparent text-ink-soft hover:bg-paper-deep/60 hover:text-ink"
                 }`}
               >
-                {Icon && <Icon className="h-5 w-5" aria-hidden="true" />}
+                {Icon && <Icon className="hidden h-5 w-5 shrink-0 sm:block" aria-hidden="true" />}
                 {text}
                 {count !== undefined && (
                   <span className={`rounded-full px-2 text-sm ${on ? "bg-kumkum text-white" : "bg-paper-deep text-ink"}`}>{count}</span>
