@@ -204,11 +204,12 @@ export type AddCoOwnerResult =
   | { ok: false; error: "owner" | "already" | "limit" | "invite_failed" | "rate_limited" };
 
 /**
- * Makes someone a co-owner of one side, or of both (side null). If they have
- * no Pangat account yet, Supabase emails them an invitation (they can also
- * just sign in with Google using that email); `invited` says so. Someone who
- * already has an account gets no email from Supabase: the caller sends one.
- * Never touches the owner's row, nor an existing co-owner's (edit them).
+ * Makes someone a co-owner of one side, or of both (side null). If they are
+ * new to Pangat, or were invited before but never signed in, Supabase emails
+ * them an invitation (they can also just sign in with Google using that
+ * email); `invited` says so. Someone who has signed in before gets no email
+ * from Supabase: the caller sends one. Never touches the owner's row, nor an
+ * existing co-owner's (edit them).
  */
 export async function addCoOwner(
   eventId: string,
@@ -221,22 +222,27 @@ export async function addCoOwner(
   const db = admin();
   const { data: existingId, error: lookupErr } = await db.rpc("user_id_by_email", { p_email: email });
   if (lookupErr) throw new Error(`user lookup failed: ${lookupErr.message}`);
-
   let userId = existingId as string | null;
+
+  // Every check that can fail comes before any email goes out.
+  if (userId) {
+    const { data: current } = await db.from("hosts").select("role").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
+    if (current?.role === "owner") return { ok: false, error: "owner" };
+    if (current) return { ok: false, error: "already" };
+  }
+  if (await sideIsFull(eventId, side)) return { ok: false, error: "limit" };
+
+  // New to Pangat, or invited before but never signed in: Supabase emails a
+  // (fresh) link to set a password. Someone who has signed in gets no email
+  // from Supabase; the caller sends a note.
   let invited = false;
-  if (!userId) {
-    const { data, error } = await db.auth.admin.inviteUserByEmail(email, { redirectTo: inviteRedirect });
-    if (error) {
-      console.error("invite failed", error.status, error.code);
-      return { ok: false, error: error.code === "over_email_send_rate_limit" ? "rate_limited" : "invite_failed" };
-    }
-    userId = data.user.id;
+  if (!userId || !(await hasConfirmed(userId))) {
+    const sent = await sendInvite(email, inviteRedirect);
+    if (!sent.ok) return sent;
+    userId = sent.userId;
     invited = true;
   }
 
-  const { data: current } = await db.from("hosts").select("role").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
-  if (current?.role === "owner") return { ok: false, error: "owner" };
-  if (current) return { ok: false, error: "already" };
   const { error } = await db.from("hosts").insert({ event_id: eventId, user_id: userId, side, role: "co_owner", full_name: fullName });
   if (error) {
     if (error.code === "23514") return { ok: false, error: "limit" }; // check_violation from the 3-per-side trigger
@@ -244,6 +250,57 @@ export async function addCoOwner(
   }
   await setHostPhone(eventId, userId, phone); // their to-do entry was made by trigger on insert
   return { ok: true, invited };
+}
+
+/** True once they have confirmed their email (accepted an invitation, or signed in with Google). */
+async function hasConfirmed(userId: string): Promise<boolean> {
+  const { data, error } = await admin().auth.admin.getUserById(userId);
+  if (error) throw new Error(`user lookup failed: ${error.message}`);
+  return !!data.user?.email_confirmed_at;
+}
+
+/**
+ * Supabase's invitation email: a link to set a password. Works for someone new
+ * and, again, for someone invited earlier who never accepted (a fresh link).
+ */
+async function sendInvite(
+  email: string,
+  redirectTo: string,
+): Promise<{ ok: true; userId: string } | { ok: false; error: "invite_failed" | "rate_limited" }> {
+  const { data, error } = await admin().auth.admin.inviteUserByEmail(email, { redirectTo });
+  if (error) {
+    console.error("invite failed", error.status, error.code);
+    return { ok: false, error: error.code === "over_email_send_rate_limit" ? "rate_limited" : "invite_failed" };
+  }
+  return { ok: true, userId: data.user.id };
+}
+
+/** Would one more co-owner on this side (null: both sides) go over the limit? Same rule as the database trigger. */
+async function sideIsFull(eventId: string, side: Side | null): Promise<boolean> {
+  const { data, error } = await admin().from("hosts").select("side").eq("event_id", eventId).eq("role", "co_owner");
+  if (error) throw new Error(`co-owner count failed: ${error.message}`);
+  const on = (s: Side) => (data ?? []).filter((h) => h.side === null || h.side === s).length;
+  const sides: Side[] = side ? [side] : ["bride", "groom"];
+  return sides.some((s) => on(s) >= MAX_CO_OWNERS_PER_SIDE);
+}
+
+/**
+ * Sends a co-owner who has never signed in a fresh invitation link.
+ * Refuses for the owner, for anyone not on this event, and for anyone who has
+ * already signed in (they don't need one).
+ */
+export async function resendInvite(
+  eventId: string,
+  userId: string,
+  redirectTo: string,
+): Promise<{ ok: true } | { ok: false; error: "not_host" | "signed_in" | "invite_failed" | "rate_limited" }> {
+  const { data: host } = await admin().from("hosts").select("role").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
+  if (!host || host.role === "owner") return { ok: false, error: "not_host" };
+  const { data, error } = await admin().auth.admin.getUserById(userId);
+  if (error || !data.user?.email) throw new Error(`user lookup failed: ${error?.message ?? "no email"}`);
+  if (data.user.email_confirmed_at) return { ok: false, error: "signed_in" };
+  const sent = await sendInvite(data.user.email, redirectTo);
+  return sent.ok ? { ok: true } : sent;
 }
 
 /**
@@ -779,4 +836,22 @@ export async function setSlipLang(eventId: string, ids: string[], lang: "both" |
     changed += count ?? 0;
   }
   return changed;
+}
+
+/**
+ * After someone is removed from an event: deletes their Pangat account too,
+ * unless they are still a host of another event, or the database still points
+ * at them (WhatsApp sends, effort log, tasks or caterer numbers they recorded:
+ * pilot evidence, so those win and the account stays, with no access).
+ */
+export async function deleteAccountIfUnused(userId: string): Promise<"deleted" | "other_events" | "has_records"> {
+  const { count, error } = await admin().from("hosts").select("event_id", { count: "exact", head: true }).eq("user_id", userId);
+  if (error) throw new Error(`host lookup failed: ${error.message}`);
+  if ((count ?? 0) > 0) return "other_events";
+  const { error: delError } = await admin().auth.admin.deleteUser(userId);
+  if (delError) {
+    console.error("account delete refused", delError.status, delError.code);
+    return "has_records";
+  }
+  return "deleted";
 }

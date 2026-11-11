@@ -12,12 +12,14 @@ import type { Side } from "@/lib/types";
 import {
   addFunction,
   addCoOwner,
+  deleteAccountIfUnused,
   deleteFunction,
   functionUsage,
   hostTaskCount,
   listHosts,
   MAX_CO_OWNERS_PER_SIDE,
   removeHost,
+  resendInvite,
   updateEvent,
   updateHost,
   updateFunction,
@@ -184,7 +186,7 @@ export async function inviteHost(slug: string, _prev: InviteState, fd: FormData)
     return {
       ok: true,
       whatsapp,
-      message: `Invited ${fullName}. Pangat has emailed ${email.data} a link to set a password; they can also sign in with Google using this address.`,
+      message: `Invited ${fullName}. Pangat has emailed ${email.data} a link to set a password (check Spam or Promotions if it doesn't arrive); they can also sign in with Google using this address.`,
     };
   }
   // They already have an account, so Supabase sends nothing: we send a note ourselves.
@@ -240,5 +242,48 @@ export async function dropHost(slug: string, userId: string, _prev: FormState): 
     return { ok: false, message: `${target.displayName} has ${tasks} task${tasks === 1 ? "" : "s"} on the To-do list. Give them to someone else first.` };
   }
   await removeHost(who.host.event.id, userId);
-  return done(`Removed ${target.email}.`);
+
+  // Tell them, then delete their account if nothing else needs it.
+  const eventName = who.host.event.name.en;
+  const mail = await sendMail(
+    target.email,
+    `You've been removed from ${eventName} on Pangat`,
+    `Hello ${target.fullName ?? target.displayName},
+
+You are no longer a co-owner of ${eventName} on Pangat, so you can't open it any more. If you think this is a mistake, please speak to the family.
+
+Pangat`,
+  );
+  const account = await deleteAccountIfUnused(userId);
+  const told =
+    mail === "sent"
+      ? `We've emailed ${target.email} to let them know.`
+      : mail === "not_set_up"
+        ? "No email went out: Pangat's own email isn't set up yet (SMTP_USER and SMTP_PASS in Vercel)."
+        : "The email to let them know couldn't be sent.";
+  const kept = {
+    deleted: "Their Pangat account is deleted.",
+    other_events: "Their Pangat account stays: they are a host of another event.",
+    has_records:
+      "Their Pangat account stays, with no access to anything: it is linked to work they recorded (WhatsApp sends, effort log, tasks or caterer numbers), which the pilot review needs.",
+  }[account];
+  return done(`Removed ${target.displayName}. ${told} ${kept}`);
+}
+
+/** A fresh invitation link for a co-owner who has never signed in. */
+export async function resendHostInvite(slug: string, userId: string, _prev: FormState): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const base = await publicBaseUrl();
+  const r = await resendInvite(who.host.event.id, userId, `${base}/host`);
+  if (!r.ok) {
+    const message = {
+      not_host: "That person is no longer a co-owner of this event.",
+      signed_in: "They have signed in already, so they don't need a new link.",
+      rate_limited: "Too many emails just now. Please try again in an hour.",
+      invite_failed: "The email couldn't be sent. Please try again later.",
+    }[r.error];
+    return { ok: false, message };
+  }
+  return done("Sent a fresh invitation link.");
 }

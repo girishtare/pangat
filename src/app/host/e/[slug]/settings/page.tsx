@@ -6,7 +6,7 @@ import { loadHouseholdKeys } from "@/lib/store/supabase";
 import { longStamp, shortWhen } from "@/lib/when";
 import { Alert, PageHeader, PageTabs, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
-import { AddFunctionButton, EditHostForm, EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
+import { AddFunctionButton, EditHostForm, EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton, ResendInviteButton } from "./SettingsForms";
 import PopupButton from "../../../../ui/PopupButton";
 import { CalendarDays, Pencil, SlidersHorizontal, Users } from "lucide-react";
 
@@ -85,7 +85,17 @@ export default async function EventSettings({
       {h.userId === host.userId && <span className="font-normal text-ink-soft"> (you)</span>}
     </>
   );
-  const signedIn = (h: (typeof hosts)[number]) => (!h.confirmed ? "Invited, not signed in yet" : h.lastSignInAt ? longStamp(h.lastSignInAt) : "Never");
+  const signedIn = (h: (typeof hosts)[number]) =>
+    !h.confirmed ? (
+      <span className="inline-flex flex-wrap items-center justify-center gap-x-1">
+        Invited, not signed in yet
+        {h.role !== "owner" && <ResendInviteButton slug={slug} userId={h.userId} />}
+      </span>
+    ) : h.lastSignInAt ? (
+      longStamp(h.lastSignInAt)
+    ) : (
+      "Never"
+    );
   const viewText = (userId: string) => {
     const v = views.get(userId);
     return v ? `${v.count}, last ${dateOnly(v.last)}` : "0";
@@ -206,9 +216,10 @@ export default async function EventSettings({
                 <p className="text-sm [overflow-wrap:anywhere]">{h.email}</p>
                 <p className="text-sm text-ink-soft">{h.phone ? displayPhone(h.phone) : "No mobile yet"}</p>
                 <div className="mt-1">{role(h)}</div>
-                <p className="mt-1 text-sm text-ink-soft">
+                {/* A div, not a p: the Send again button is a form. */}
+                <div className="mt-1 text-sm text-ink-soft">
                   Last signed in: {signedIn(h)} · Dashboard visits: {viewText(h.userId)}
-                </p>
+                </div>
                 <div className="mt-2 flex flex-wrap items-center gap-1">
                   {editButton(h)}
                   {h.role !== "owner" && <RemoveHostButton slug={slug} userId={h.userId} email={h.email} />}
