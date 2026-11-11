@@ -5,9 +5,10 @@ import { scopeLabel } from "@/lib/sides";
 import { getStore } from "@/lib/store";
 import { dayMonthYear } from "@/lib/when";
 import { ArrowRight, CalendarDays, Plus } from "lucide-react";
-import { Divider, Mark } from "../ui/kit";
+import { Divider } from "../ui/kit";
 import Dashboard from "./Dashboard";
 import { SignOutButton } from "./HostChrome";
+import Logo from "../ui/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -49,10 +50,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-5 sm:px-6 sm:pt-7">
-        <span className="flex items-center gap-2 font-display text-[1.75rem] leading-none text-kumkum sm:text-[2rem]">
-          <Mark className="h-7 w-7 sm:h-8 sm:w-8" />
-          Pangat
-        </span>
+        <Logo className="h-10 sm:h-12" />
         <div className="flex min-w-0 items-center gap-3 text-sm sm:text-base">
           <span className="min-w-0 truncate text-ink">{who.email}</span>
           <span className="h-6 w-px shrink-0 bg-line" aria-hidden="true" />

@@ -6,9 +6,9 @@ import { formatDay, formatWhen, t } from "@/lib/i18n";
 import { eventDays, splitLead } from "@/lib/text";
 import { pick, type ArrivalSlot, type HouseholdView, type Lang } from "@/lib/types";
 import { MAX_HEADS } from "@/lib/validate";
-import { Mark } from "../../ui/kit";
 import Stepper from "../../ui/Stepper";
 import { reportNotUs, submitReply } from "./actions";
+import Logo from "../../ui/Logo";
 
 type Step = "confirm" | "form" | "done" | "notus";
 
@@ -111,10 +111,7 @@ export default function GuestFlow({
         <>
           <TopBar
             left={
-              <span className={`${heading} flex items-center gap-1.5 text-xl leading-none text-maroon`}>
-                <Mark className="h-[22px] w-[22px]" />
-                Pangat
-              </span>
+              <Logo lang={lang} className="h-9" />
             }
             right={langButton}
           />

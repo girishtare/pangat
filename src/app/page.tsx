@@ -2,8 +2,8 @@ import Link from "next/link";
 import { isDemo } from "@/lib/store";
 import { DEMO_TOKENS } from "@/lib/store/demo";
 import { paletteEFonts } from "./fonts";
-import { Mark } from "./ui/kit";
 import StartAtTop from "./ui/StartAtTop";
+import Logo from "./ui/Logo";
 
 // Headings in Playfair Display (bold); text in Noto Sans. Both come from the root layout.
 const display = "font-playfair font-bold [font-synthesis-weight:none]";
@@ -54,9 +54,8 @@ function Header({ demo }: { demo: boolean }) {
   return (
     <header className="border-b border-sand bg-cream md:sticky md:top-0 md:z-10 md:bg-cream/95">
       <nav aria-label="Main" className={`${wrap} flex items-center justify-between gap-2 py-3 md:gap-4 md:py-3.5`}>
-        <a href="#top" className="flex items-center gap-2 text-maroon no-underline md:gap-2.5">
-          <Mark className="h-[26px] w-[26px] md:h-8 md:w-8" />
-          <span className={`${display} text-2xl leading-none md:text-[30px]`}>Pangat</span>
+        <a href="#top" className="flex items-center rounded-lg no-underline">
+          <Logo className="h-9 md:h-11" />
         </a>
         <div className="flex items-center gap-7">
           <a href="#how" className="hidden font-semibold text-ink-e no-underline hover:text-maroon md:inline">

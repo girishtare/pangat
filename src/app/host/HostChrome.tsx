@@ -5,10 +5,11 @@ import { LayoutList, LogOut, ShieldAlert } from "lucide-react";
 import type { HostContext, HostGate } from "@/lib/host";
 import { scopeLabel } from "@/lib/sides";
 import { shortDay } from "@/lib/when";
-import { Mark, Wordmark } from "../ui/kit";
+import { Wordmark } from "../ui/kit";
 import MobileNav from "../ui/MobileNav";
 import { NavIcon, type NavItem, type NavKey } from "../ui/navIcons";
 import { signOut } from "./actions";
+import Logo from "../ui/Logo";
 
 export function SignOutButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "rail" | "text" }) {
   if (variant === "text") {
@@ -78,9 +79,8 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
   return (
     <div className="lg:grid lg:min-h-screen lg:grid-cols-[16.5rem_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-screen flex-col overflow-y-auto border-r border-line bg-card px-4 py-6 lg:flex print:hidden">
-        <Link href="/host?all=1" className="flex items-center gap-2 self-start px-2 font-display text-2xl leading-none text-kumkum" aria-label="Pangat: all events">
-          <Mark className="h-[26px] w-[26px]" />
-          Pangat
+        <Link href="/host?all=1" className="self-start rounded-lg px-2" aria-label="Pangat: all events">
+          <Logo decorative className="h-11" />
         </Link>
         <nav aria-label="Event" className="mt-6">
           <ul className="grid gap-1">

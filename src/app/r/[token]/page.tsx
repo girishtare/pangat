@@ -4,8 +4,8 @@ import { t } from "@/lib/i18n";
 import { splitLead } from "@/lib/text";
 import { isPlausibleToken } from "@/lib/token";
 import { paletteEFonts } from "../../fonts";
-import { Mark } from "../../ui/kit";
 import GuestFlow from "./GuestFlow";
+import Logo from "../../ui/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export default async function GuestPage({
     const [enLead, enRest] = splitLead(t("en", "notFound"));
     return (
       <main className={`${shell} flex flex-col items-center justify-center px-5 py-6 text-center`}>
-        <Mark className="h-14 w-14" />
+        <Logo lang="mr" className="h-16" />
         <div className="mt-5 w-full max-w-md rounded-[18px] border border-sand bg-card-e px-[18px] py-[22px]">
           <h1 lang="mr" className="font-heading-e text-[26px] font-bold [font-synthesis-weight:none] leading-[1.4] text-maroon">
             {mrLead}
