@@ -181,8 +181,8 @@ export default async function EventSettings({
                       <div className="text-sm text-ink-soft">{h.phone ? displayPhone(h.phone) : "No mobile yet"}</div>
                     </td>
                     <td>{role(h)}</td>
-                    <td>{signedIn(h)}</td>
-                    <td>{viewText(h.userId)}</td>
+                    <td className="whitespace-nowrap">{signedIn(h)}</td>
+                    <td className="whitespace-nowrap">{viewText(h.userId)}</td>
                     <td className="whitespace-nowrap">
                       {/* Pencil first, then Remove (co-owners only); the owner's pencil sits in the same column. */}
                       <span className="inline-flex items-center gap-1">

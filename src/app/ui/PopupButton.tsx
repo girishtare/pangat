@@ -31,7 +31,7 @@ export default function PopupButton({
       <dialog
         ref={dialog}
         aria-labelledby={id}
-        className="card m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto whitespace-normal p-0 text-left font-normal text-ink outline-none"
+        className="card m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto whitespace-normal p-0 text-left text-base font-normal text-ink outline-none"
         onClick={(e) => {
           if (e.target === dialog.current) dialog.current?.close(); // click on the backdrop
         }}
