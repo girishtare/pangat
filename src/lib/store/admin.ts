@@ -761,3 +761,22 @@ export async function deleteTask(eventId: string, id: string) {
   const { error } = await admin().from("tasks").delete().eq("event_id", eventId).eq("id", id);
   if (error) throw new Error(`deleting task failed: ${error.message}`);
 }
+
+/* ---------- Slips ---------- */
+
+/**
+ * Sets the slip language of some households. Limited to the event, and to one
+ * side when `side` is given (a co-owner's). Returns how many changed.
+ */
+export async function setSlipLang(eventId: string, ids: string[], lang: "both" | "en" | "mr", side: Side | null): Promise<number> {
+  let changed = 0;
+  // In batches: the ids go in the request URL.
+  for (let i = 0; i < ids.length; i += 150) {
+    let q = admin().from("households").update({ slip_lang: lang }, { count: "exact" }).eq("event_id", eventId).in("id", ids.slice(i, i + 150));
+    if (side) q = q.eq("side", side);
+    const { error, count } = await q;
+    if (error) throw new Error(`saving slip language failed: ${error.message}`);
+    changed += count ?? 0;
+  }
+  return changed;
+}

@@ -218,13 +218,17 @@ export interface GuestRow {
   createdAt: string;
   functionIds: string[];
   replied: string[]; // function ids with a reply
+  /** The language its slip is printed in. */
+  slipLang: SlipLang;
 }
+
+export type SlipLang = "both" | "en" | "mr";
 
 /** Households as the signed-in host may see them (RLS: their side only). */
 export async function listGuests(client: SupabaseClient, eventId: string): Promise<GuestRow[]> {
   const { data, error } = await client
     .from("households")
-    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, created_at, invites(function_id), responses(function_id)")
+    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, created_at, slip_lang, invites(function_id), responses(function_id)")
     .eq("event_id", eventId)
     .order("side")
     .order("created_at")
@@ -242,6 +246,7 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     createdAt: r.created_at,
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     replied: (r.responses ?? []).map((x: any) => x.function_id),
+    slipLang: r.slip_lang === "en" || r.slip_lang === "mr" ? r.slip_lang : "both",
   }));
 }
 
