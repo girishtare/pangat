@@ -923,7 +923,7 @@ export async function deleteAccountIfUnused(userId: string): Promise<"deleted" |
 
 /**
  * Deletes an event and everything in it, in one statement: functions,
- * households, invitations, replies and their history, slips' codes, WhatsApp
+ * households, invitations, replies and their history (since migration 0018), slips' codes, WhatsApp
  * records, effort log, tasks, people helping, caterer numbers and host links
  * all go with it (foreign keys cascade; checked 11 Nov), and its invitation
  * card PDFs are deleted from Storage. Cannot be undone.
