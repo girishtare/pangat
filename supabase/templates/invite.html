@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>An invitation to help bring everyone together</title>
+</head>
+<body style="margin:0;padding:0;background:#f5efe1;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5efe1" style="background:#f5efe1;">
+<tr><td align="center" style="padding:28px 12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#fffcf5;border:1px solid #e5d3af;border-radius:18px;">
+<tr><td style="padding:14px 18px 0;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td align="left" style="font-family:'Playfair Display', Georgia, 'Times New Roman', serif;font-size:20px;line-height:1;color:#b59a64;">&#10048;</td>
+<td align="right" style="font-family:'Playfair Display', Georgia, 'Times New Roman', serif;font-size:20px;line-height:1;color:#b59a64;">&#10048;</td>
+</tr></table>
+</td></tr>
+<tr><td align="center" style="padding:4px 32px 0;">
+<img src="{{ .SiteURL }}/brand/pangat-logo-en.png" width="158" height="64" alt="Pangat" style="display:block;width:158px;height:64px;border:0;">
+</td></tr>
+<tr><td align="center" style="padding:18px 32px 0;">
+<span style="display:inline-block;padding:7px 18px;border-radius:999px;background:#f2e8d2;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:12px;font-weight:bold;letter-spacing:0.18em;text-transform:uppercase;color:#790d16;">Co-owner invitation</span>
+</td></tr>
+<tr><td align="center" style="padding:18px 32px 0;">
+<h1 style="margin:0;font-family:'Playfair Display', Georgia, 'Times New Roman', serif;font-size:30px;line-height:1.2;font-weight:bold;color:#790d16;">An invitation to help bring everyone together</h1>
+</td></tr>
+<tr><td style="padding:18px 32px 0;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:6px auto 22px;"><tr>
+<td style="width:110px;border-top:1px solid #b59a64;font-size:0;line-height:0;">&nbsp;</td>
+<td style="padding:0 10px;font-family:'Playfair Display', Georgia, 'Times New Roman', serif;font-size:14px;line-height:1;color:#b59a64;">&#10022;</td>
+<td style="width:110px;border-top:1px solid #b59a64;font-size:0;line-height:0;">&nbsp;</td>
+</tr></table></td></tr>
+<tr><td style="padding:0 32px;">
+<p style="margin:0 0 14px;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:18px;font-weight:bold;color:#2e1a1c;">Hi {{ if .Data.full_name }}{{ .Data.full_name }}{{ else }}there{{ end }},</p>
+<p style="margin:0 0 16px;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:16px;line-height:1.6;color:#2e1a1c;">{{ if .Data.invited_by }}{{ .Data.invited_by }}{{ else }}The family{{ end }} has invited you to co-own {{ if .Data.event_name }}{{ .Data.event_name }}{{ else }}an event{{ end }} on Pangat.</p>
+<p style="margin:0 0 16px;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:16px;line-height:1.6;color:#2e1a1c;">Pangat helps your family keep guest replies and the headcount in one place. Accept your invitation to get started.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 24px;border:1px solid #e5d3af;border-radius:12px;">
+<tr><td style="padding:16px 20px 12px;font-family:'Playfair Display', Georgia, 'Times New Roman', serif;font-size:18px;font-weight:bold;letter-spacing:0.04em;text-transform:uppercase;color:#790d16;border-bottom:1px solid #e5d3af;">{{ if .Data.event_name }}{{ .Data.event_name }}{{ else }}Your event{{ end }}</td></tr>
+<tr><td style="padding:12px 20px 16px;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:15px;color:#2e1a1c;">Your role&nbsp;&nbsp;&nbsp;<strong style="color:#790d16;">{{ if .Data.role_label }}{{ .Data.role_label }}{{ else }}Co-owner{{ end }}</strong></td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;"><tr>
+<td align="center" bgcolor="#790d16" style="border-radius:10px;">
+<a href="{{ .ConfirmationURL }}" style="display:block;padding:15px 20px;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:17px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:10px;">Accept invitation & set password</a>
+</td></tr></table>
+<p style="margin:0 0 22px;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:13px;line-height:1.5;color:#5e4446;text-align:center;">Already use Google? Sign in with Google using {{ .Email }}.</p>
+</td></tr>
+<tr><td style="padding:0 32px 26px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #e5d3af;padding-top:16px;text-align:center;">
+<p style="margin:0 0 6px;font-family:'Playfair Display', Georgia, 'Times New Roman', serif;font-size:15px;font-weight:bold;color:#790d16;">Pangat &mdash; a little more organised, so you can focus on celebrating.</p>
+<p style="margin:0;font-family:'Noto Sans', Arial, Helvetica, sans-serif;font-size:12px;line-height:1.5;color:#5e4446;">If you weren't expecting this invitation, check with {{ if .Data.invited_by }}{{ .Data.invited_by }}{{ else }}the family{{ end }} before accepting.</p>
+</td></tr></table>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

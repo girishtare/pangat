@@ -5,7 +5,7 @@ import { z } from "zod";
 import { istInputToIso, isValidDate } from "@/lib/events";
 import { normaliseMobile } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
-import { sendMail } from "@/lib/mail";
+import { sendCardMail } from "@/lib/mail";
 import { whatsappLink } from "@/lib/outreach";
 import { publicBaseUrl } from "@/lib/site";
 import type { Side } from "@/lib/types";
@@ -128,8 +128,15 @@ export async function createFunction(slug: string, _prev: FormState, fd: FormDat
 
 /* ---------- Hosts ---------- */
 
+/** The name invitations go out under: the signed-in owner's name, else their email. */
+async function ownerName(host: HostContext): Promise<string> {
+  const me = (await listHosts(host.event.id)).find((h) => h.userId === host.userId);
+  return me?.displayName ?? host.email;
+}
+
 /** "both" is stored as side null: the co-owner covers both sides. */
 const sideField = z.enum(["both", "bride", "groom"]).transform((v) => (v === "both" ? null : v));
+const roleLabelFor = (side: Side | null) => `Co-owner · ${side === "bride" ? "Bride's side" : side === "groom" ? "Groom's side" : "Both sides"}`;
 const sideWords = (side: Side | null) => (side === "bride" ? "the bride's side" : side === "groom" ? "the groom's side" : "both sides");
 
 /** Name, mobile (and for a co-owner, side): all required. */
@@ -160,7 +167,8 @@ export async function inviteHost(slug: string, _prev: InviteState, fd: FormData)
 
   const base = await publicBaseUrl();
   const signIn = `${base}/host`;
-  const r = await addCoOwner(who.host.event.id, email.data, side, fullName, phone, signIn);
+  const details = { eventName: who.host.event.name.en, invitedBy: await ownerName(who.host) };
+  const r = await addCoOwner(who.host.event.id, email.data, side, fullName, phone, signIn, details);
   if (!r.ok) {
     const message = {
       owner: "That person is the event's owner.",
@@ -190,19 +198,20 @@ export async function inviteHost(slug: string, _prev: InviteState, fd: FormData)
     };
   }
   // They already have an account, so Supabase sends nothing: we send a note ourselves.
-  const mail = await sendMail(
-    email.data,
-    `You've been added to ${eventName} on Pangat`,
-    `Hello ${fullName},
-
-You've been added as a co-owner of ${eventName} on Pangat, for ${sideWords(side)}.
-
-` +
-      `Sign in with this email address (${email.data}) to see it:
-${signIn}
-
-Pangat`,
-  );
+  const mail = await sendCardMail(email.data, `You've been added to ${eventName} on Pangat`, {
+    badge: "Co-owner",
+    heading: "You've been added to an event",
+    greeting: `Hi ${fullName},`,
+    paragraphs: [
+      `${details.invitedBy} has made you a co-owner of ${eventName} on Pangat.`,
+      "You already have a Pangat account, so there's nothing to set up: sign in and the event is there.",
+    ],
+    event: { name: eventName, role: roleLabelFor(side) },
+    button: { label: "Open Pangat", url: signIn },
+    afterButton: `Sign in with ${email.data}, by password or with Google.`,
+    footnote: `If you weren't expecting this, check with ${details.invitedBy}.`,
+    siteUrl: base,
+  });
   const note =
     mail === "sent"
       ? `We've emailed ${email.data} to let them know.`
@@ -245,15 +254,17 @@ export async function dropHost(slug: string, userId: string, _prev: FormState): 
 
   // Tell them, then delete their account if nothing else needs it.
   const eventName = who.host.event.name.en;
-  const mail = await sendMail(
-    target.email,
-    `You've been removed from ${eventName} on Pangat`,
-    `Hello ${target.fullName ?? target.displayName},
-
-You are no longer a co-owner of ${eventName} on Pangat, so you can't open it any more. If you think this is a mistake, please speak to the family.
-
-Pangat`,
-  );
+  const mail = await sendCardMail(target.email, `You've been removed from ${eventName} on Pangat`, {
+    badge: "Event access",
+    heading: "You're no longer a co-owner",
+    greeting: `Hi ${target.fullName ?? target.displayName},`,
+    paragraphs: [
+      `You are no longer a co-owner of ${eventName} on Pangat, so you can't open it any more.`,
+      "If you think this is a mistake, please speak to the family.",
+    ],
+    footnote: "Thank you for helping.",
+    siteUrl: await publicBaseUrl(),
+  });
   const account = await deleteAccountIfUnused(userId);
   const told =
     mail === "sent"
@@ -275,7 +286,10 @@ export async function resendHostInvite(slug: string, userId: string, _prev: Form
   const who = await manager(slug);
   if ("error" in who) return { ok: false, message: who.error };
   const base = await publicBaseUrl();
-  const r = await resendInvite(who.host.event.id, userId, `${base}/host`);
+  const r = await resendInvite(who.host.event.id, userId, `${base}/host`, {
+    eventName: who.host.event.name.en,
+    invitedBy: await ownerName(who.host),
+  });
   if (!r.ok) {
     const message = {
       not_host: "That person is no longer a co-owner of this event.",
