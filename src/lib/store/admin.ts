@@ -958,7 +958,7 @@ export async function setCard(eventId: string, side: Side, lang: CardLang, path:
   const column = `card_${side}_${lang}_path`;
   const { data: ev, error: readError } = await admin().from("events").select(column).eq("id", eventId).single();
   if (readError) throw new Error(`card lookup failed: ${readError.message}`);
-  const old = (ev as Record<string, string | null>)[column];
+  const old = (ev as unknown as Record<string, string | null>)[column];
   const { error } = await admin().from("events").update({ [column]: path }).eq("id", eventId);
   if (error) throw new Error(`saving card failed: ${error.message}`);
   if (old && old !== path) await admin().storage.from(CARDS).remove([old]);
