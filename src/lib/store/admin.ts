@@ -211,6 +211,14 @@ export type AddCoOwnerResult =
  * from Supabase: the caller sends one. Never touches the owner's row, nor an
  * existing co-owner's (edit them).
  */
+/** What the invitation email says: filled into Supabase's template as .Data (supabase/templates/invite.html). */
+export interface InviteDetails {
+  eventName: string;
+  invitedBy: string;
+}
+
+const roleLabel = (side: Side | null) => `Co-owner · ${side === "bride" ? "Bride's side" : side === "groom" ? "Groom's side" : "Both sides"}`;
+
 export async function addCoOwner(
   eventId: string,
   email: string,
@@ -218,6 +226,7 @@ export async function addCoOwner(
   fullName: string,
   phone: string,
   inviteRedirect: string,
+  details: InviteDetails,
 ): Promise<AddCoOwnerResult> {
   const db = admin();
   const { data: existingId, error: lookupErr } = await db.rpc("user_id_by_email", { p_email: email });
@@ -237,7 +246,8 @@ export async function addCoOwner(
   // from Supabase; the caller sends a note.
   let invited = false;
   if (!userId || !(await hasConfirmed(userId))) {
-    const sent = await sendInvite(email, inviteRedirect);
+    const data = { full_name: fullName, invited_by: details.invitedBy, event_name: details.eventName, role_label: roleLabel(side) };
+    const sent = await sendInvite(email, inviteRedirect, data, userId);
     if (!sent.ok) return sent;
     userId = sent.userId;
     invited = true;
@@ -266,8 +276,16 @@ async function hasConfirmed(userId: string): Promise<boolean> {
 async function sendInvite(
   email: string,
   redirectTo: string,
+  details: Record<string, string>,
+  existingUserId: string | null,
 ): Promise<{ ok: true; userId: string } | { ok: false; error: "invite_failed" | "rate_limited" }> {
-  const { data, error } = await admin().auth.admin.inviteUserByEmail(email, { redirectTo });
+  // The template reads these from the user's metadata. Supabase only stores
+  // them on a new user, so refresh them first for someone invited before.
+  if (existingUserId) {
+    const { error: metaError } = await admin().auth.admin.updateUserById(existingUserId, { user_metadata: details });
+    if (metaError) console.error("invite details not saved", metaError.status, metaError.code);
+  }
+  const { data, error } = await admin().auth.admin.inviteUserByEmail(email, { redirectTo, data: details });
   if (error) {
     console.error("invite failed", error.status, error.code);
     return { ok: false, error: error.code === "over_email_send_rate_limit" ? "rate_limited" : "invite_failed" };
@@ -293,13 +311,20 @@ export async function resendInvite(
   eventId: string,
   userId: string,
   redirectTo: string,
+  details: InviteDetails,
 ): Promise<{ ok: true } | { ok: false; error: "not_host" | "signed_in" | "invite_failed" | "rate_limited" }> {
-  const { data: host } = await admin().from("hosts").select("role").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
+  const { data: host } = await admin().from("hosts").select("role, side, full_name").eq("event_id", eventId).eq("user_id", userId).maybeSingle();
   if (!host || host.role === "owner") return { ok: false, error: "not_host" };
   const { data, error } = await admin().auth.admin.getUserById(userId);
   if (error || !data.user?.email) throw new Error(`user lookup failed: ${error?.message ?? "no email"}`);
   if (data.user.email_confirmed_at) return { ok: false, error: "signed_in" };
-  const sent = await sendInvite(data.user.email, redirectTo);
+  const meta = {
+    full_name: (host.full_name as string | null) ?? "",
+    invited_by: details.invitedBy,
+    event_name: details.eventName,
+    role_label: roleLabel(host.side as Side | null),
+  };
+  const sent = await sendInvite(data.user.email, redirectTo, meta, userId);
   return sent.ok ? { ok: true } : sent;
 }
 
