@@ -107,19 +107,19 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
         <div className="space-y-2 lg:text-right">
           {showSide && (
             <div className="flex flex-wrap items-center gap-2 lg:justify-end" role="group" aria-label="Side">
-              <span className="w-20 text-sm font-semibold text-ink-soft lg:w-auto">Side</span>
+              <span className="w-[4.5rem] text-sm font-semibold text-ink-soft lg:w-auto">Side</span>
               <button type="button" onClick={() => setSide(null)} aria-pressed={side === null} className={chip(side === null)}>
-                Both sides {rows.length}
+                Both {rows.length}
               </button>
               {SIDES.map((s) => (
                 <button key={s.value} type="button" onClick={() => setSide(s.value)} aria-pressed={side === s.value} className={chip(side === s.value)}>
-                  {s.label} {sideCount(s.value)}
+                  {s.short} {sideCount(s.value)}
                 </button>
               ))}
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2 lg:justify-end" role="group" aria-label="Language">
-            <span className="w-20 text-sm font-semibold text-ink-soft lg:w-auto">Language</span>
+            <span className="w-[4.5rem] text-sm font-semibold text-ink-soft lg:w-auto">Language</span>
             <button type="button" onClick={() => setOnly(null)} aria-pressed={only === null} className={chip(only === null)}>
               All {inSide}
             </button>
