@@ -61,6 +61,8 @@
   --font-display: var(--font-rozha-one), "Nirmala UI", Georgia, serif;
   --font-body-e: var(--font-mukta-sans), "Nirmala UI", system-ui, sans-serif; /* = font-sans */
   --font-heading-e: var(--font-rozha-one), "Nirmala UI", Georgia, serif; /* = font-display */
+  /* Trial on the landing page only (src/app/page.tsx loads it). */
+  --font-playfair: var(--font-playfair-display), Georgia, serif;
 }
 
 html {
