@@ -288,7 +288,7 @@ export default async function Todo({
             </EmptyState>
           </div>
         ) : (
-          <div className="mt-4 overflow-x-auto rounded-[1.25rem] border border-line bg-card">
+          <div className="relative mt-4 overflow-x-auto rounded-[1.25rem] border border-line bg-card">
             <table className="table-p min-w-[560px]">
               <thead>
                 <tr>
