@@ -8,6 +8,7 @@ import { Alert, PageHeader, PageTabs, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { AddFunctionButton, EditHostForm, EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton, ResendInviteButton } from "./SettingsForms";
 import PopupButton from "../../../../ui/PopupButton";
+import DeleteEvent from "./DeleteEvent";
 import { CalendarDays, Pencil, SlidersHorizontal, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -130,6 +131,22 @@ export default async function EventSettings({
             catererFinalOn={host.event.catererFinalOn}
           />
         </Section>
+      )}
+
+      {tab === "details" && (
+        <section className="mt-5 rounded-[1.25rem] border-2 border-dashed border-kumkum/40 p-[18px] sm:p-[22px]" aria-labelledby="danger-title">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 id="danger-title" className="font-display text-xl text-kumkum">
+                Delete this event
+              </h2>
+              <p className="text-[0.9375rem] text-ink-soft">
+                For an event created by mistake. Everything in it is deleted for everyone and can&apos;t be recovered.
+              </p>
+            </div>
+            <DeleteEvent slug={slug} eventName={host.event.name.en} households={households.length} />
+          </div>
+        </section>
       )}
 
       {tab === "functions" && (

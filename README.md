@@ -55,6 +55,10 @@ Other commands: `npm test`, `npm run typecheck`, `npm run build`. Do not run the
 
    Leave both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` unset to run in demo mode. None of these use the `NEXT_PUBLIC_` prefix: no browser code talks to Supabase.
 
+## Deleting an event
+
+The owner opens **Event settings → Event details → Delete this event**. A warning says it can't be recovered; **Yes, delete the event** starts a 5-second countdown shown on both buttons, and Cancel (or Escape) stops it. At 0 the event and everything in it (functions, households, replies, slips, WhatsApp records, tasks, people helping, caterer numbers, co-owner links) is deleted in one statement. People's Pangat accounts stay.
+
 ## Adding a co-owner
 
 The event's owner opens **Event settings → Owner and co-owners → Invite co-owner** and enters the person's full name, email, mobile and side (both sides, the bride's or the groom's). New people get Supabase's invitation email to set a password; someone who already has a Pangat account is added at once and gets a short email from Pangat (needs `SMTP_USER` and `SMTP_PASS`). Either way they can sign in with Google using that address, and the pop-up offers a WhatsApp message to them. Up to 3 per side; a co-owner of both sides counts on each. The pencil next to Remove edits a host's name, mobile and side. Someone invited before who never signed in gets a fresh Supabase invitation when invited again, and **Send again** (next to "Invited, not signed in yet") resends it. **Remove** takes away their access, emails them (needs `SMTP_USER` and `SMTP_PASS`) and deletes their Pangat account if they host no other event and nothing they recorded (WhatsApp sends, effort log, tasks, caterer numbers) points at it; otherwise the account stays, with no access.

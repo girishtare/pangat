@@ -13,6 +13,7 @@ import {
   addFunction,
   addCoOwner,
   deleteAccountIfUnused,
+  deleteEvent,
   deleteFunction,
   functionUsage,
   hostTaskCount,
@@ -300,4 +301,15 @@ export async function resendHostInvite(slug: string, userId: string, _prev: Form
     return { ok: false, message };
   }
   return done("Sent a fresh invitation link.");
+}
+
+/* ---------- Deleting the event ---------- */
+
+/** The owner deletes the whole event, after the pop-up's warning and 5-second countdown. */
+export async function removeEvent(slug: string): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  await deleteEvent(who.host.event.id);
+  revalidatePath("/host", "layout");
+  return { ok: true, message: "Deleted." };
 }
