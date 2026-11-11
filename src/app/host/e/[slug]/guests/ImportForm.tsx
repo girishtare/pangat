@@ -172,7 +172,7 @@ export default function ImportForm({ slug }: { slug: string }) {
             )}
           </div>
           {problems.length > 0 && (
-            <ul className="mt-3 max-h-72 list-disc space-y-1 overflow-y-auto pl-5 text-sm">
+            <ul className="mt-3 max-h-80 list-disc space-y-1 overflow-y-auto pl-5 text-sm">
               {problems.flatMap((r) => [
                 ...r.errors.map((e) => (
                   <li key={`${r.line}e${e}`} className="text-kumkum-dark">
