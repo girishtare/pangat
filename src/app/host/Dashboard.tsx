@@ -114,6 +114,9 @@ export default function Dashboard({
   );
 }
 
+const label = "text-[0.8125rem] font-bold uppercase tracking-[0.08em] text-ink-soft lg:text-sm";
+const big = "font-display text-[3.5rem] leading-none text-kumkum lg:text-[4rem]";
+
 function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
   const share = (v: number) => (f.invitedHouseholds ? `${(v / f.invitedHouseholds) * 100}%` : "0%");
   return (
@@ -123,18 +126,18 @@ function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
         <span className="shrink-0 text-sm text-ink-soft">{shortWhen(fn.startsAt)}</span>
       </div>
 
-      <div className="mt-1.5 flex items-end justify-between gap-2.5 lg:mt-2.5 lg:block">
+      {/* Expected on the left, Confirmed on the right in the same style; veg and non-veg belong to Confirmed. */}
+      <div className="mt-1.5 flex flex-wrap items-start justify-between gap-x-4 gap-y-2 lg:mt-2.5">
         <div>
-          <div className="text-[0.8125rem] font-bold uppercase tracking-[0.08em] text-ink-soft lg:text-sm">Expected</div>
-          <div className="font-display text-[3.5rem] leading-none text-kumkum lg:text-[4rem]">{n(f.expected)}</div>
+          <div className={label}>Expected</div>
+          <div className={big}>{n(f.expected)}</div>
         </div>
-        <div className="text-right text-[0.9375rem] lg:mt-2 lg:text-left lg:text-base">
-          Confirmed <strong>{n(f.confirmedHeads)}</strong>
-          <br className="lg:hidden" />
-          <span className="text-ink-soft lg:text-ink">
-            <span className="hidden lg:inline"> · </span>
+        <div className="ml-auto text-right">
+          <div className={label}>Confirmed</div>
+          <div className={big}>{n(f.confirmedHeads)}</div>
+          <div className="mt-1 text-sm text-ink-soft">
             {fn.catered ? `veg ${n(f.veg)} · non-veg ${n(f.nonveg)}` : "no food served"}
-          </span>
+          </div>
         </div>
       </div>
 
