@@ -9,6 +9,7 @@ import { EventShell, GateMessage } from "../../../HostChrome";
 import { AddFunctionButton, EditHostForm, EventForm, FunctionEditor, InviteCoOwner, NewFunctionForm, RemoveHostButton, ResendInviteButton } from "./SettingsForms";
 import PopupButton from "../../../../ui/PopupButton";
 import DeleteEvent from "./DeleteEvent";
+import CardUpload from "./CardUpload";
 import { CalendarDays, Pencil, SlidersHorizontal, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -130,6 +131,19 @@ export default async function EventSettings({
             catererDueOn={host.event.catererDueOn}
             catererFinalOn={host.event.catererFinalOn}
           />
+        </Section>
+      )}
+
+      {tab === "details" && (
+        <Section
+          className="mt-5"
+          title="Invitation card"
+          subtitle="Upload the wedding card as a PDF, in English and in Marathi. Guests get a link to it in the WhatsApp message and a button on their reply page, in their household's language (Slips → Language of each slip). Only you can upload it."
+        >
+          <div className="grid gap-3 md:grid-cols-2">
+            <CardUpload slug={slug} lang="mr" has={!!host.event.cards.mr} />
+            <CardUpload slug={slug} lang="en" has={!!host.event.cards.en} />
+          </div>
         </Section>
       )}
 
