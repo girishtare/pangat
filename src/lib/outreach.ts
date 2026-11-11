@@ -6,22 +6,26 @@
 
 export type MessageKind = "invite" | "reminder";
 
-/** Placeholders hosts can use in the message texts. */
-export const PLACEHOLDERS = ["{name}", "{name_mr}", "{event}", "{event_mr}", "{date}", "{date_mr}", "{phone}", "{link}"] as const;
+/**
+ * Placeholders hosts can use in the message texts. Every language has its own
+ * suffix (_en, _mr) so more languages can be added later. The old unsuffixed
+ * {name}, {event} and {date} still work in texts saved before (same as _en).
+ */
+export const PLACEHOLDERS = ["{name_en}", "{name_mr}", "{event_en}", "{event_mr}", "{date_en}", "{date_mr}", "{phone}", "{link}"] as const;
 
 // Marathi first-draft wording: have a native reader check it, like src/lib/i18n.ts.
 export const DEFAULT_TEXT: Record<MessageKind, string> = {
   invite:
     "नमस्कार {name_mr}!\n" +
     "{event_mr} साठी आपणांस सस्नेह निमंत्रण. कृपया {date_mr} पर्यंत कोण कोण येणार ते या लिंकवर कळवा.\n\n" +
-    "Namaskar {name}!\n" +
-    "You are warmly invited to {event}. Please tell us who's coming by {date}, using this link:\n\n" +
+    "Namaskar {name_en}!\n" +
+    "You are warmly invited to {event_en}. Please tell us who's coming by {date_en}, using this link:\n\n" +
     "{link}",
   reminder:
     "नमस्कार {name_mr}!\n" +
     "{event_mr} साठी आपले उत्तर अजून आलेले नाही. कृपया {date_mr} पर्यंत या लिंकवर कळवा.\n\n" +
-    "Namaskar {name}!\n" +
-    "A gentle reminder: please tell us who's coming to {event} by {date}. It takes a minute:\n\n" +
+    "Namaskar {name_en}!\n" +
+    "A gentle reminder: please tell us who's coming to {event_en} by {date_en}. It takes a minute:\n\n" +
     "{link}",
 };
 
@@ -39,12 +43,16 @@ export interface MessageVars {
 /** Fills {placeholders}; Marathi ones fall back to English when missing. Unknown braces are left alone. */
 export function fillMessage(template: string, v: MessageVars): string {
   const map: Record<string, string> = {
-    "{name}": v.name,
+    "{name_en}": v.name,
     "{name_mr}": v.nameMr || v.name,
-    "{event}": v.event,
+    "{event_en}": v.event,
     "{event_mr}": v.eventMr || v.event,
-    "{date}": v.date,
+    "{date_en}": v.date,
     "{date_mr}": v.dateMr,
+    // Older names, kept so texts saved before still fill in.
+    "{name}": v.name,
+    "{event}": v.event,
+    "{date}": v.date,
     "{phone}": v.phone ?? "",
     "{link}": v.link,
   };

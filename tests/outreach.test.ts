@@ -28,6 +28,8 @@ describe("messages", () => {
 
   it("leaves unknown braces alone and handles a missing phone", () => {
     expect(fillMessage("{phone}|{nope}|{name}", { ...vars, phone: null })).toBe("|{nope}|Shri. A. Joshi & family");
+    // New _en names and the old unsuffixed ones fill the same.
+    expect(fillMessage("{name_en}|{name}|{event_en}|{event}", vars)).toBe(`${vars.name}|${vars.name}|${vars.event}|${vars.event}`);
   });
 
   it("builds wa.me links from stored mobiles", () => {
