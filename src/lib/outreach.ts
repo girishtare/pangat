@@ -59,8 +59,12 @@ export function whatsappLink(mobile: string | null, text: string): string | null
 }
 
 /** A guest's personal link. QR codes on slips carry ?s=q so the reply records the channel. */
-export function guestLink(base: string, token: string, channel: "qr" | "link"): string {
-  return `${base.replace(/\/+$/, "")}/r/${token}${channel === "qr" ? "?s=q" : ""}`;
+export function guestLink(base: string, token: string, channel: "qr" | "link", lang?: "en" | "mr"): string {
+  const q = new URLSearchParams();
+  if (channel === "qr") q.set("s", "q");
+  if (lang) q.set("l", lang); // a one-language slip opens the reply page in that language
+  const qs = q.toString();
+  return `${base.replace(/\/+$/, "")}/r/${token}${qs ? `?${qs}` : ""}`;
 }
 
 /** Shows a stored +91 mobile the way people write it: 98765 43210. */

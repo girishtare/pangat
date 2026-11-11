@@ -41,6 +41,7 @@ describe("messages", () => {
   it("marks QR links so replies record the channel", () => {
     expect(guestLink("https://pangat.example/", "tok123", "qr")).toBe("https://pangat.example/r/tok123?s=q");
     expect(guestLink("https://pangat.example", "tok123", "link")).toBe("https://pangat.example/r/tok123");
+    expect(guestLink("https://pangat.example", "tok123", "qr", "en")).toBe("https://pangat.example/r/tok123?s=q&l=en");
   });
 
   it("shows Indian mobiles as people write them", () => {
