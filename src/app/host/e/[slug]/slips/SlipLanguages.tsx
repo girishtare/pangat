@@ -92,7 +92,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
     });
 
   const chip = (active: boolean) =>
-    `inline-flex min-h-10 items-center gap-1.5 rounded-full px-3.5 text-sm font-bold ${active ? "bg-kumkum text-white" : "bg-paper-deep text-ink hover:bg-sand"}`;
+    `inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-bold sm:px-3.5 ${active ? "bg-kumkum text-white" : "bg-paper-deep text-ink hover:bg-sand"}`;
   const cols = showSide ? 4 : 3;
 
   return (
@@ -107,7 +107,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
         <div className="space-y-2 lg:text-right">
           {showSide && (
             <div className="flex flex-wrap items-center gap-2 lg:justify-end" role="group" aria-label="Side">
-              <span className="w-[4.5rem] text-sm font-semibold text-ink-soft lg:w-auto">Side</span>
+              <span className="text-sm font-semibold text-ink-soft">Side</span>
               <button type="button" onClick={() => setSide(null)} aria-pressed={side === null} className={chip(side === null)}>
                 Both {rows.length}
               </button>
@@ -119,7 +119,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2 lg:justify-end" role="group" aria-label="Language">
-            <span className="w-[4.5rem] text-sm font-semibold text-ink-soft lg:w-auto">Language</span>
+            <span className="text-sm font-semibold text-ink-soft">Language</span>
             <button type="button" onClick={() => setOnly(null)} aria-pressed={only === null} className={chip(only === null)}>
               All {inSide}
             </button>
