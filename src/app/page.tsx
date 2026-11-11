@@ -5,7 +5,7 @@ import { paletteEFonts } from "./fonts";
 import { Mark } from "./ui/kit";
 import StartAtTop from "./ui/StartAtTop";
 
-// Headings in Playfair Display (bold); text in Libre Baskerville. Both come from the root layout.
+// Headings in Playfair Display (bold); text in Noto Sans. Both come from the root layout.
 const display = "font-playfair font-bold [font-synthesis-weight:none]";
 const wrap = "mx-auto max-w-[1200px] px-4 md:px-6";
 

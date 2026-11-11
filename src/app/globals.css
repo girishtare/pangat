@@ -56,16 +56,17 @@
   --color-track: var(--p-track);
 
   /* Fonts (src/app/fonts.ts, set on <html>), the same on every page:
-     Playfair Display for headings, Libre Baskerville for text, and Tiro
-     Devanagari Marathi for Marathi letters (the first two have none, so the
-     browser falls through to Tiro). */
-  --font-sans: var(--font-libre-baskerville), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
-  --font-display: var(--font-playfair-display), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
+     Noto Sans for English text, Noto Sans Devanagari for Marathi, Playfair
+     Display for large English headings. Noto Sans and Playfair have no
+     Devanagari, so Marathi letters (in text and in headings) fall through to
+     Noto Sans Devanagari, the next font in each list. */
+  --font-sans: var(--font-noto-sans), var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
+  --font-display: var(--font-playfair-display), var(--font-noto-sans-deva), "Nirmala UI", Georgia, serif;
   /* Older names used by the landing and guest pages: the same two stacks. */
-  --font-body-e: var(--font-libre-baskerville), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
-  --font-heading-e: var(--font-playfair-display), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
-  --font-playfair: var(--font-playfair-display), var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
-  --font-marathi: var(--font-tiro-marathi), "Nirmala UI", Georgia, serif;
+  --font-body-e: var(--font-noto-sans), var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
+  --font-heading-e: var(--font-playfair-display), var(--font-noto-sans-deva), "Nirmala UI", Georgia, serif;
+  --font-playfair: var(--font-playfair-display), var(--font-noto-sans-deva), "Nirmala UI", Georgia, serif;
+  --font-marathi: var(--font-noto-sans-deva), "Nirmala UI", system-ui, sans-serif;
 }
 
 html {
@@ -105,8 +106,8 @@ dialog::backdrop {
 }
 
 @layer components {
-  /* Headings: Playfair Display bold. Tiro (Marathi) has one weight; no fake
-     bold is drawn for it, so Marathi headings stay crisp. */
+  /* Headings: Playfair Display bold; Marathi in them is Noto Sans Devanagari
+     bold. Both have a real bold, so no synthetic bold is ever drawn. */
   .font-display {
     font-family: var(--font-display);
     font-weight: 700;
