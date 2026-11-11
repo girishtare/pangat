@@ -298,6 +298,7 @@ dialog::backdrop {
   /* Long tables scroll inside their own box with the header row pinned, so the
      page around them stays put. */
   .table-scroll {
+    position: relative; /* keeps screen-reader-only header labels inside the box */
     max-height: min(70vh, 44rem);
     overflow: auto;
   }

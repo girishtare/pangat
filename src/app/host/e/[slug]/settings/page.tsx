@@ -98,7 +98,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
           subtitle={`Up to ${MAX_CO_OWNERS_PER_SIDE} helpers on each side (bride's side ${coOwners.bride} of ${MAX_CO_OWNERS_PER_SIDE}, groom's side ${coOwners.groom} of ${MAX_CO_OWNERS_PER_SIDE}). A co-owner sees and works on their own side only; only you change these settings and the caterer numbers.`}
           actions={<InviteCoOwner slug={slug} full={{ bride: coOwners.bride >= MAX_CO_OWNERS_PER_SIDE, groom: coOwners.groom >= MAX_CO_OWNERS_PER_SIDE }} />}
         >
-          <div className="hidden overflow-x-auto rounded-[14px] border border-line lg:block">
+          <div className="relative hidden overflow-x-auto rounded-[14px] border border-line lg:block">
             <table className="table-p min-w-[720px]">
               <thead>
                 <tr>
