@@ -9,9 +9,13 @@ import { Noto_Sans, Noto_Sans_Devanagari, Playfair_Display } from "next/font/goo
 // browser draws each Marathi letter from Noto Sans Devanagari, the next font
 // in both lists (see globals.css). Latin files are preloaded; the Devanagari
 // file loads when Marathi text appears.
-const notoSans = Noto_Sans({ weight: ["400", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-noto-sans" });
+// adjustFontFallback: false on the two Latin-only fonts. Otherwise next/font puts
+// a size-matched local stand-in (Arial, Times New Roman) right after them, and
+// on Windows that stand-in draws Marathi letters itself through the system's
+// own fallback, so Noto Sans Devanagari is never reached.
+const notoSans = Noto_Sans({ weight: ["400", "600", "700"], subsets: ["latin"], display: "swap", adjustFontFallback: false, variable: "--font-noto-sans" });
 const notoDeva = Noto_Sans_Devanagari({ weight: ["400", "600", "700"], subsets: ["devanagari"], display: "swap", variable: "--font-noto-sans-deva" });
-const playfair = Playfair_Display({ weight: "700", subsets: ["latin"], display: "swap", variable: "--font-playfair-display" });
+const playfair = Playfair_Display({ weight: "700", subsets: ["latin"], display: "swap", adjustFontFallback: false, variable: "--font-playfair-display" });
 
 /** The font variables; the root layout puts them on <html>. */
 export const paletteEFonts = `${notoSans.variable} ${notoDeva.variable} ${playfair.variable}`;
