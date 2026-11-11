@@ -168,7 +168,7 @@ export async function inviteHost(slug: string, _prev: InviteState, fd: FormData)
 
   const base = await publicBaseUrl();
   const signIn = `${base}/host`;
-  const details = { eventName: who.host.event.name.en, invitedBy: await ownerName(who.host) };
+  const details = { eventName: who.host.event.name.en, invitedBy: await ownerName(who.host), siteUrl: base };
   const r = await addCoOwner(who.host.event.id, email.data, side, fullName, phone, signIn, details);
   if (!r.ok) {
     const message = {
@@ -290,6 +290,7 @@ export async function resendHostInvite(slug: string, userId: string, _prev: Form
   const r = await resendInvite(who.host.event.id, userId, `${base}/host`, {
     eventName: who.host.event.name.en,
     invitedBy: await ownerName(who.host),
+    siteUrl: base,
   });
   if (!r.ok) {
     const message = {

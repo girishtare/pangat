@@ -131,3 +131,30 @@ export function emailCardText(c: EmailCard): string {
   lines.push("Pangat", c.footnote);
   return lines.join("\n");
 }
+
+/** The co-owner invitation: the same card whether Pangat or Supabase sends it. */
+export function coOwnerInviteCard(v: {
+  fullName: string;
+  invitedBy: string;
+  eventName: string;
+  roleLabel: string;
+  email: string;
+  /** The sign-in link: Pangat's /auth/confirm?token_hash=…&type=invite. */
+  url: string;
+  siteUrl: string;
+}): EmailCard {
+  return {
+    badge: "Co-owner invitation",
+    heading: "An invitation to help bring everyone together",
+    greeting: `Hi ${v.fullName},`,
+    paragraphs: [
+      `${v.invitedBy} has invited you to co-own ${v.eventName} on Pangat.`,
+      "Pangat helps your family keep guest replies and the headcount in one place. Accept your invitation to get started.",
+    ],
+    event: { name: v.eventName, role: v.roleLabel },
+    button: { label: "Accept invitation & set password", url: v.url },
+    afterButton: `Already use Google? Sign in with Google using ${v.email}.`,
+    footnote: `If you weren't expecting this invitation, check with ${v.invitedBy} before accepting.`,
+    siteUrl: v.siteUrl,
+  };
+}
