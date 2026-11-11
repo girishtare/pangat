@@ -15,6 +15,10 @@ export const dynamic = "force-dynamic";
 
 const PER_SHEET = 8; // 2 x 4 on A4: each slip about 97 x 70 mm
 
+/** What the slips are printed in: English, Marathi, or both (English lines first, then Marathi). */
+type SlipLang = "both" | "en" | "mr";
+const LANG_LABEL: Record<SlipLang, string> = { both: "English and Marathi", en: "English only", mr: "Marathi only" };
+
 /*
  * Print geometry is fixed: A4, 8 mm margins, a 194 x 281 mm sheet split 2 x 4.
  * On screen the sheet is only shrunk with `zoom` (never in print), so phones
@@ -49,41 +53,58 @@ function Slip({
   eventName,
   replyBy,
   phone,
+  lang,
 }: {
   g: GuestRow;
   base: string;
   eventName: string;
   replyBy: { en: string; mr: string };
   phone: string | null;
+  lang: SlipLang;
 }) {
-  const qr = qrPath(guestLink(base, g.token, "qr"));
+  const qr = qrPath(guestLink(base, g.token, "qr", lang === "both" ? undefined : lang));
   const q = 4; // quiet zone, in modules
+  const en = lang !== "mr";
+  const mr = lang !== "en";
+  // The family's name: Marathi on top when Marathi is printed and known; English only on English slips.
+  const mainName = mr && g.nameMr ? g.nameMr : g.nameEn;
+  const subName = lang === "both" && g.nameMr ? g.nameEn : null;
   return (
     <div className="slip">
       <div className="slip-inner">
         <div className="flex items-center justify-between gap-2 border-b border-kumkum pb-[1.2mm] font-bold uppercase text-kumkum" style={{ fontSize: "6.8pt", letterSpacing: "0.06em" }}>
-          <span lang="mr" className="min-w-0 truncate">
+          <span lang={mr ? "mr" : "en"} className="min-w-0 truncate">
             {eventName}
           </span>
-          <span className="shrink-0">Pangat</span>
+          <span lang={lang === "mr" ? "mr" : "en"} className="shrink-0">
+            {lang === "mr" ? "पंगत" : "Pangat"}
+          </span>
         </div>
         <div className="mt-[2mm] flex min-h-0 flex-1 gap-[3mm]">
           <div className="min-w-0 flex-1">
-            <div lang={g.nameMr ? "mr" : undefined} className="wrap-names font-display text-kumkum" style={{ fontSize: "12.5pt", lineHeight: 1.2 }}>
-              {g.nameMr || g.nameEn}
+            <div lang={mainName === g.nameMr ? "mr" : "en"} className="wrap-names font-display text-kumkum" style={{ fontSize: "12.5pt", lineHeight: 1.2 }}>
+              {mainName}
             </div>
-            {g.nameMr && (
+            {subName && (
               <div className="wrap-names" style={{ fontSize: "8.5pt", lineHeight: 1.25 }}>
-                {g.nameEn}
+                {subName}
               </div>
             )}
-            <div className="mt-[2mm]" style={{ fontSize: "7.5pt", lineHeight: 1.35 }}>
-              <div className="font-bold">Scan to tell us who&apos;s coming.</div>
-              <div>Reply by {replyBy.en}.</div>
-              <div lang="mr" className="mt-[1.6mm] font-bold">
-                QR स्कॅन करून कोण कोण येणार ते कळवा.
-              </div>
-              <div lang="mr">{replyBy.mr} पर्यंत.</div>
+            <div className="mt-[2mm]" style={{ fontSize: lang === "both" ? "7.5pt" : "8.5pt", lineHeight: 1.35 }}>
+              {en && (
+                <>
+                  <div className="font-bold">Scan to tell us who&apos;s coming.</div>
+                  <div>Reply by {replyBy.en}.</div>
+                </>
+              )}
+              {mr && (
+                <>
+                  <div lang="mr" className={`font-bold ${en ? "mt-[1.6mm]" : ""}`}>
+                    QR स्कॅन करून कोण कोण येणार ते कळवा.
+                  </div>
+                  <div lang="mr">{replyBy.mr} पर्यंत.</div>
+                </>
+              )}
             </div>
           </div>
           <div className="flex flex-none flex-col items-center">
@@ -98,7 +119,9 @@ function Slip({
               <path d={qr.d} fill="#000" />
             </svg>
             <div className="text-kumkum" style={{ fontSize: "6.5pt" }}>
-              <span lang="mr">कोड</span> · Code
+              {mr && <span lang="mr">कोड</span>}
+              {lang === "both" && " · "}
+              {en && "Code"}
             </div>
             <div className="font-display" style={{ fontSize: "13pt", letterSpacing: "0.2em", lineHeight: 1.1 }}>
               {g.shortCode}
@@ -106,9 +129,9 @@ function Slip({
           </div>
         </div>
         {phone && (
-          <div className="mt-[1.5mm] border-t border-line pt-[1.2mm]" style={{ fontSize: "6.6pt", lineHeight: 1.3 }}>
-            <div>No smartphone? Call {phone} and give your code.</div>
-            <div lang="mr">स्मार्टफोन नाही? {phone} वर फोन करून कोड सांगा.</div>
+          <div className="mt-[1.5mm] border-t border-line pt-[1.2mm]" style={{ fontSize: lang === "both" ? "6.6pt" : "7.2pt", lineHeight: 1.3 }}>
+            {en && <div>No smartphone? Call {phone} and give your code.</div>}
+            {mr && <div lang="mr">स्मार्टफोन नाही? {phone} वर फोन करून कोड सांगा.</div>}
           </div>
         )}
       </div>
@@ -121,7 +144,7 @@ export default async function Slips({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ side?: string; since?: string; ids?: string }>;
+  searchParams: Promise<{ side?: string; since?: string; ids?: string; lang?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -133,15 +156,26 @@ export default async function Slips({
   const side: Side | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
   const ids = sp.ids ? new Set(sp.ids.split(",")) : null;
   const since = sp.since && /^\d{4}-\d{2}-\d{2}$/.test(sp.since) ? sp.since : null;
+  const lang: SlipLang = sp.lang === "en" || sp.lang === "mr" ? sp.lang : "both";
+  // The same slips in another language: keep every other choice in the link.
+  const langHref = (l: SlipLang) => {
+    const qs = new URLSearchParams();
+    if (sp.side && !host.side) qs.set("side", sp.side);
+    if (since) qs.set("since", since);
+    if (sp.ids) qs.set("ids", sp.ids);
+    if (l !== "both") qs.set("lang", l);
+    const q = qs.toString();
+    return `/host/e/${slug}/slips${q ? `?${q}` : ""}`;
+  };
   const guests = all.filter(
     (g) => (!side || g.side === side) && (!ids || ids.has(g.id)) && (!since || g.createdAt.slice(0, 10) >= since),
   );
 
   const base = await publicBaseUrl();
   const replyBy = slipDate(host.event.cutoffAt);
-  const eventName = host.event.name.mr || host.event.name.en;
+  const eventName = lang === "en" ? host.event.name.en : host.event.name.mr || host.event.name.en;
   const missingPhone = (["bride", "groom"] as const).filter((s) => !host.event.contactPhone[s] && guests.some((g) => g.side === s));
-  const noMarathi = guests.filter((g) => !g.nameMr).length;
+  const noMarathi = lang === "en" ? 0 : guests.filter((g) => !g.nameMr).length;
   const sheets = chunk(guests, PER_SHEET);
   const filtered = !!(ids || since || (side && !host.side));
 
@@ -158,18 +192,37 @@ export default async function Slips({
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] print:block">
         <div className="space-y-4 print:hidden">
           <section className="card p-[18px] sm:p-[22px]" aria-labelledby="which-slips">
+            <h2 id="slip-lang" className="mb-2 text-lg font-bold">
+              Print in
+            </h2>
+            <div role="group" aria-labelledby="slip-lang" className="mb-5 grid grid-cols-3 gap-1 rounded-xl bg-paper-deep p-1">
+              {(["en", "mr", "both"] as const).map((l) => (
+                <Link
+                  key={l}
+                  href={langHref(l)}
+                  aria-current={lang === l ? "true" : undefined}
+                  title={LANG_LABEL[l]}
+                  className={`flex min-h-11 items-center justify-center rounded-lg px-2 text-center text-[0.9375rem] font-bold leading-tight ${
+                    lang === l ? "bg-kumkum text-white shadow-sm" : "text-ink hover:bg-card/70"
+                  }`}
+                >
+                  {l === "en" ? "English" : l === "mr" ? <span lang="mr">मराठी</span> : "Both"}
+                </Link>
+              ))}
+            </div>
             <h2 id="which-slips" className="mb-3 text-lg font-bold">
               Which slips
             </h2>
             {ids ? (
               <Alert tone="info">
                 Showing {guests.length === 1 ? "one household's slip" : `${guests.length} selected slips`}.{" "}
-                <Link href={`/host/e/${slug}/slips`} className="font-semibold underline">
+                <Link href={`/host/e/${slug}/slips${lang !== "both" ? `?lang=${lang}` : ""}`} className="font-semibold underline">
                   Show all slips
                 </Link>
               </Alert>
             ) : (
               <form className="space-y-4" action={`/host/e/${slug}/slips`}>
+                {lang !== "both" && <input type="hidden" name="lang" value={lang} />}
                 {!host.side && (
                   <label className="block">
                     <span className="label">Side</span>
@@ -191,7 +244,7 @@ export default async function Slips({
                     Show
                   </button>
                   {filtered && (
-                    <Link href={`/host/e/${slug}/slips`} className="btn btn-quiet btn-sm">
+                    <Link href={`/host/e/${slug}/slips${lang !== "both" ? `?lang=${lang}` : ""}`} className="btn btn-quiet btn-sm">
                       All slips
                     </Link>
                   )}
@@ -251,7 +304,7 @@ export default async function Slips({
           ) : (
             <>
               <p className="mb-2 text-[0.9375rem] text-ink-soft print:hidden">
-                {sheets.length === 1 ? "One sheet" : `${sheets.length} sheets`} · A4 · 8 slips, each about 97 × 70 mm
+                {sheets.length === 1 ? "One sheet" : `${sheets.length} sheets`} · A4 · 8 slips, each about 97 × 70 mm · {LANG_LABEL[lang]}
               </p>
               <div className="overflow-hidden print:overflow-visible">
                 {sheets.map((page, i) => (
@@ -264,6 +317,7 @@ export default async function Slips({
                         eventName={eventName}
                         replyBy={replyBy}
                         phone={displayPhone(host.event.contactPhone[g.side])}
+                        lang={lang}
                       />
                     ))}
                   </div>
