@@ -144,7 +144,15 @@ export function PersonForm({
         <input name="phone" inputMode="tel" autoComplete="off" defaultValue={person?.phone ?? ""} className="input" placeholder="98765 43210" />
       </label>
       {person?.hostUserId ? (
-        <p className="hint">The side of a host follows their role in Event settings.</p>
+        <div>
+          <p className="label">Side</p>
+          <p className="flex flex-wrap items-center gap-2">
+            <span className={`badge ${person.side === "groom" ? "badge-groom" : person.side === "bride" ? "badge-bride" : "badge-no"}`}>
+              {person.side === "groom" ? "Groom's side" : person.side === "bride" ? "Bride's side" : "Both sides"}
+            </span>
+            <span className="hint">An owner or co-owner: their side and their place on this list come from Event settings.</span>
+          </p>
+        </div>
       ) : hostSide ? (
         <input type="hidden" name="side" value={hostSide} />
       ) : (

@@ -315,8 +315,10 @@ dialog::backdrop {
     z-index: 1;
     box-shadow: inset 0 -1px 0 var(--color-line);
   }
-  .table-p td form {
-    display: inline-flex; /* a button in a cell (e.g. Remove) sits on the text line */
+  /* A button in a cell (e.g. Remove) sits on the text line. Not forms inside a
+     pop-up opened from the cell: those keep their normal stacked layout. */
+  .table-p td form:not(dialog form) {
+    display: inline-flex;
     vertical-align: middle;
   }
   .table-p tbody tr:hover {

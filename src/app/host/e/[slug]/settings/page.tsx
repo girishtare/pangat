@@ -4,18 +4,28 @@ import { displayPhone } from "@/lib/outreach";
 import { dashboardViewStats, functionUsage, listHosts, MAX_CO_OWNERS_PER_SIDE } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
 import { longStamp, shortWhen } from "@/lib/when";
-import { Alert, PageHeader, Section } from "../../../../ui/kit";
+import { Alert, PageHeader, PageTabs, Section } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { AddFunctionButton, EventForm, FunctionEditor, HostNameForm, InviteCoOwner, NewFunctionForm, RemoveHostButton } from "./SettingsForms";
 import PopupButton from "../../../../ui/PopupButton";
-import { Pencil } from "lucide-react";
+import { CalendarDays, Pencil, SlidersHorizontal, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 const dateOnly = (iso: string) => new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "Asia/Kolkata" }).format(new Date(iso));
 
-export default async function EventSettings({ params }: { params: Promise<{ slug: string }> }) {
+type Tab = "details" | "functions" | "people";
+
+export default async function EventSettings({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { slug } = await params;
+  const { tab: tabParam } = await searchParams;
+  const tab: Tab = tabParam === "functions" || tabParam === "people" ? tabParam : "details";
   const gate = await hostGate(slug);
   if (!gate.ok) return <GateMessage gate={gate} title="Event settings" />;
   const { host } = gate;
@@ -60,7 +70,17 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
     <EventShell host={host} current="settings">
       <PageHeader title="Event settings" subtitle="Only you, as the owner, can change these." />
 
-      <div className="space-y-5">
+      <PageTabs
+        label="Event settings"
+        current={tab}
+        tabs={[
+          { key: "details", label: "Event details", href: `/host/e/${slug}/settings`, icon: SlidersHorizontal },
+          { key: "functions", label: "Functions", href: `/host/e/${slug}/settings?tab=functions`, icon: CalendarDays, count: host.functions.length },
+          { key: "people", label: "Owner and co-owners", href: `/host/e/${slug}/settings?tab=people`, icon: Users, count: hosts.length },
+        ]}
+      />
+
+      {tab === "details" && (
         <Section id="details" title="Event details">
           <EventForm
             slug={slug}
@@ -75,7 +95,9 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             catererFinalOn={host.event.catererFinalOn}
           />
         </Section>
+      )}
 
+      {tab === "functions" && (
         <Section
           id="functions"
           title="Functions"
@@ -102,7 +124,9 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             <NewFunctionForm slug={slug} households={households.length} />
           </div>
         </Section>
+      )}
 
+      {tab === "people" && (
         <Section
           id="people"
           title="Owner and co-owners"
@@ -165,7 +189,7 @@ export default async function EventSettings({ params }: { params: Promise<{ slug
             ))}
           </ul>
         </Section>
-      </div>
+      )}
     </EventShell>
   );
 }

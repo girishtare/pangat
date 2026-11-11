@@ -48,7 +48,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
 
   return (
     <div className="min-h-screen">
-      <header className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-5 sm:px-6 sm:pt-7">
+      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-5 sm:px-6 sm:pt-7">
         <span className="flex items-center gap-2 font-display text-[1.75rem] leading-none text-kumkum sm:text-[2rem]">
           <Mark className="h-7 w-7 sm:h-8 sm:w-8" />
           Pangat
@@ -59,9 +59,9 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
           <SignOutButton variant="text" />
         </div>
       </header>
-      <Divider className="mx-auto mt-4 max-w-4xl px-4 sm:px-6" />
+      <Divider className="mx-auto mt-4 max-w-6xl px-4 sm:px-6" />
 
-      <main className="mx-auto max-w-4xl px-4 pb-14 pt-6 sm:px-6 sm:pt-8">
+      <main className="mx-auto max-w-6xl px-4 pb-14 pt-6 sm:px-6 sm:pt-8">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <div>
             <h1 className="font-display text-[2rem] leading-tight text-kumkum-dark sm:text-[2.75rem]">Your events</h1>
@@ -78,29 +78,26 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
             {create}
           </div>
         ) : (
-          <ul className="mt-7 space-y-4">
+          /* Three cards a row on laptops (two on tablets, one on phones); more events wrap to the next row. */
+          <ul className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
             {events.map((e) => (
-              <li key={e.slug}>
-                <article className="card relative flex flex-col gap-4 p-4 transition-colors hover:border-kumkum sm:flex-row sm:items-center sm:gap-6 sm:p-6">
-                  <div className="flex min-w-0 flex-1 items-start gap-4 sm:items-center sm:gap-6">
-                    <EventArt className="h-16 w-20 shrink-0 sm:h-24 sm:w-28" />
-                    <span className="hidden h-20 w-px shrink-0 bg-line sm:block" aria-hidden="true" />
-                    <div className="min-w-0">
-                      <h2 className="wrap-names font-display text-xl leading-snug text-ink sm:text-[1.75rem]">{e.name.en}</h2>
-                      <p className="mt-1 flex items-center gap-2 text-ink-soft sm:text-lg">
-                        <CalendarDays className="h-5 w-5 shrink-0 text-kumkum" aria-hidden="true" />
-                        {e.firstStartsAt ? `First function: ${dayMonthYear(e.firstStartsAt)}` : "No functions yet"}
-                      </p>
-                      <span className="badge badge-groom mt-2 whitespace-normal text-sm sm:text-base">
-                        {e.role === "owner" ? "Owner" : `Co-owner · ${e.side ? scopeLabel(e.side) : ""}`}
-                      </span>
-                    </div>
-                  </div>
+              <li key={e.slug} className="flex">
+                <article className="card relative flex w-full flex-col p-5 transition-colors hover:border-kumkum sm:p-6">
+                  <EventArt className="h-20 w-24 shrink-0" />
+                  <h2 className="wrap-names mt-4 font-display text-[1.375rem] leading-snug text-ink sm:text-2xl">{e.name.en}</h2>
+                  <p className="mt-1.5 flex items-center gap-2 text-ink-soft">
+                    <CalendarDays className="h-5 w-5 shrink-0 text-kumkum" aria-hidden="true" />
+                    {e.firstStartsAt ? `First function: ${dayMonthYear(e.firstStartsAt)}` : "No functions yet"}
+                  </p>
+                  <span className="badge badge-groom mt-3 self-start whitespace-normal text-sm">
+                    {e.role === "owner" ? "Owner" : `Co-owner · ${e.side ? scopeLabel(e.side) : "Both sides"}`}
+                  </span>
+                  <span className="min-h-5 flex-1" aria-hidden="true" />
                   {/* The whole card opens the event; the button is the visible, large tap target. */}
                   <Link
                     href={`/host/e/${e.slug}`}
                     aria-label={`Open ${e.name.en}`}
-                    className="btn btn-primary min-h-12 w-full shrink-0 text-lg after:absolute after:inset-0 after:rounded-[1.25rem] after:content-[''] sm:w-auto sm:px-7"
+                    className="btn btn-primary min-h-12 w-full text-lg after:absolute after:inset-0 after:rounded-[1.25rem] after:content-['']"
                   >
                     Open event
                     <ArrowRight className="h-5 w-5" aria-hidden="true" />
