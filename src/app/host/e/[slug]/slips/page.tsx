@@ -29,6 +29,7 @@ const PRINT_CSS = `
 .sheet { width: 194mm; height: 281mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); background: white; }
 .slip { border: 0.3mm dashed #9a8f86; padding: 3.5mm; overflow: hidden; color: #2e1a1c; }
 .slip-cell { position: relative; min-height: 0; display: grid; } /* a slip plus its screen-only tick box */
+.slip-pick .slip-inner > :first-child { padding-left: 5.5mm; } /* on screen, the header starts clear of the tick box */
 .slip-fill { min-height: 0; display: grid; }
 .slip-inner { height: 100%; border: 0.35mm solid transparent; border-radius: 2.5mm; /* same box as before, no visible frame */ padding: 2.5mm 3mm; display: flex; flex-direction: column; }
 @media screen {
@@ -93,18 +94,19 @@ function Slip({
               </div>
             )}
             <div className="mt-[2mm]" style={{ fontSize: lang === "both" ? "7.5pt" : "8.5pt", lineHeight: 1.35 }}>
-              {en && (
-                <>
-                  <div className="font-bold">Scan to tell us who&apos;s coming.</div>
-                  <div>Reply by {replyBy.en}.</div>
-                </>
-              )}
+              {/* Marathi first, then English, like the name above (owner, 12 Nov). */}
               {mr && (
                 <>
-                  <div lang="mr" className={`font-bold ${en ? "mt-[1.6mm]" : ""}`}>
+                  <div lang="mr" className="font-bold">
                     QR स्कॅन करून कोण कोण येणार ते कळवा.
                   </div>
                   <div lang="mr">{replyBy.mr} पर्यंत.</div>
+                </>
+              )}
+              {en && (
+                <>
+                  <div className={`font-bold ${mr ? "mt-[1.6mm]" : ""}`}>Scan to tell us who&apos;s coming.</div>
+                  <div>Reply by {replyBy.en}.</div>
                 </>
               )}
             </div>
@@ -132,8 +134,8 @@ function Slip({
         </div>
         {phone && (
           <div className="mt-[1.5mm] border-t border-line pt-[1.2mm]" style={{ fontSize: lang === "both" ? "6.6pt" : "7.2pt", lineHeight: 1.3 }}>
-            {en && <div>No smartphone? Call {phone} and give your code.</div>}
             {mr && <div lang="mr">स्मार्टफोन नाही? {phone} वर फोन करून कोड सांगा.</div>}
+            {en && <div>No smartphone? Call {phone} and give your code.</div>}
           </div>
         )}
       </div>

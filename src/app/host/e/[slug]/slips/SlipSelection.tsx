@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { Printer, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer, Search } from "lucide-react";
 
 /*
  * Which slips to print. Every slip on screen has a tick box in its top-left
@@ -82,9 +82,10 @@ const chunk = <T,>(items: T[], n: number): T[][] => {
 };
 
 /**
- * The sheets. On screen: every slip (or those matching the search), with its
- * tick box (unticked ones faded). In print: only the ticked slips, whatever the
- * search, packed into as few sheets as they need.
+ * The sheets. On screen: one A4 sheet at a time with Previous / Next (owner,
+ * 12 Nov), of every slip or those matching the search, each with its tick box
+ * (unticked ones faded). In print: only the ticked slips, whatever the search
+ * or the sheet on screen, packed into as few sheets as they need.
  */
 export function SlipSheets({
   items,
@@ -95,6 +96,7 @@ export function SlipSheets({
 }) {
   const { ids, ticked, toggle, setMany } = useSelection();
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
   const chosen = items.filter((it) => ticked.has(it.id));
   const printSheets = chunk(chosen, perSheet).length;
 
@@ -105,6 +107,10 @@ export function SlipSheets({
     ? items.filter((it) => it.name.toLowerCase().includes(ql) || (it.nameMr ?? "").includes(q) || it.code.toLowerCase().includes(ql))
     : items;
   const shownIds = shown.map((it) => it.id);
+  const screenSheets = chunk(shown, perSheet);
+  const sheetCount = screenSheets.length;
+  // A search can leave fewer sheets than the one we were on: stay in range.
+  const at = Math.min(page, Math.max(0, sheetCount - 1));
   const allShownTicked = shownIds.every((id) => ticked.has(id));
   const noneShownTicked = !shownIds.some((id) => ticked.has(id));
 
@@ -116,7 +122,10 @@ export function SlipSheets({
         <input
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(0);
+          }}
           placeholder="Search by name or code"
           className="input pl-10"
         />
@@ -146,14 +155,15 @@ export function SlipSheets({
         </p>
       )}
 
-      {/* Screen: every slip (or the ones found) with its tick box. */}
+      {/* Screen: one sheet at a time (or of the ones found), each slip with its tick box. */}
+      {sheetCount > 1 && <SheetPager at={at} count={sheetCount} perSheet={perSheet} total={shown.length} onGo={setPage} />}
       <div className="overflow-hidden print:hidden">
-        {chunk(shown, perSheet).map((page, i) => (
-          <div key={i} className="sheet">
-            {page.map((it) => {
+        {screenSheets.slice(at, at + 1).map((sheet) => (
+          <div key={at} className="sheet">
+            {sheet.map((it) => {
               const on = ticked.has(it.id);
               return (
-                <div key={it.id} className="slip-cell">
+                <div key={it.id} className="slip-cell slip-pick">
                   <label className="absolute left-[1.5mm] top-[1.5mm] z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-white/90 shadow-sm">
                     <input type="checkbox" checked={on} onChange={() => toggle(it.id)} className="h-6 w-6 accent-kumkum" />
                     <span className="sr-only">Print the slip for {it.name}</span>
@@ -165,6 +175,8 @@ export function SlipSheets({
           </div>
         ))}
       </div>
+
+      {sheetCount > 1 && <SheetPager at={at} count={sheetCount} perSheet={perSheet} total={shown.length} onGo={setPage} bottom />}
 
       {/* Print: only the ticked slips, 8 to a sheet. */}
       <div className="hidden print:block">
@@ -179,5 +191,49 @@ export function SlipSheets({
         ))}
       </div>
     </>
+  );
+}
+
+/** Previous / Next between the sheets on screen, with "Sheet 2 of 9 · slips 9-16 of 72". */
+function SheetPager({
+  at,
+  count,
+  perSheet,
+  total,
+  onGo,
+  bottom = false,
+}: {
+  at: number;
+  count: number;
+  perSheet: number;
+  total: number;
+  onGo: (n: number) => void;
+  bottom?: boolean;
+}) {
+  const first = at * perSheet + 1;
+  const last = Math.min(total, (at + 1) * perSheet);
+  const go = (n: number) => {
+    onGo(n);
+    if (bottom) window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  return (
+    <nav aria-label={bottom ? "Sheets (bottom)" : "Sheets"} className={`flex items-center justify-between gap-2 print:hidden ${bottom ? "mt-1" : "mb-3"}`}>
+      <button type="button" onClick={() => go(at - 1)} disabled={at === 0} className="btn btn-secondary btn-sm min-h-10">
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        Previous
+      </button>
+      <p className="text-center text-sm" aria-live={bottom ? undefined : "polite"}>
+        <span className="font-semibold">
+          Sheet {at + 1} of {count}
+        </span>
+        <span className="text-ink-soft max-sm:block">
+          <span className="max-sm:hidden"> · </span>slips {first}–{last} of {total}
+        </span>
+      </p>
+      <button type="button" onClick={() => go(at + 1)} disabled={at >= count - 1} className="btn btn-secondary btn-sm min-h-10">
+        Next
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      </button>
+    </nav>
   );
 }
