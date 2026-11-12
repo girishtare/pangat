@@ -32,7 +32,10 @@ export default async function GuestList({
   const { slug } = await params;
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().slice(0, 60);
-  const { sort, dir } = parseSort(sp.sort, sp.dir);
+  // Sorted by household name unless another column is chosen (owner, 12 Nov).
+  const parsed = parseSort(sp.sort, sp.dir);
+  const sort: GuestSort = parsed.sort ?? "name";
+  const dir = parsed.dir;
   const gate = await hostGate(slug);
   if (!gate.ok) return <GateMessage gate={gate} title="Guest list" />;
 
@@ -84,8 +87,8 @@ export default async function GuestList({
   const pageHref = (p: number) => {
     const qs = new URLSearchParams();
     if (q) qs.set("q", q);
-    if (sort) qs.set("sort", sort);
-    if (sort && dir !== "asc") qs.set("dir", dir);
+    if (sort !== "name") qs.set("sort", sort);
+    if (dir !== "asc") qs.set("dir", dir);
     if (p > 1) qs.set("page", String(p));
     const str = qs.toString();
     return str ? `/host/e/${slug}/guests?${str}` : `/host/e/${slug}/guests`;
@@ -287,8 +290,7 @@ export default async function GuestList({
               {q && <input type="hidden" name="q" value={q} />}
               <label className="block flex-1">
                 <span className="label">Sort by</span>
-                <select name="sort" defaultValue={sort ?? ""} className="input">
-                  <option value="">Order added</option>
+                <select name="sort" defaultValue={sort} className="input">
                   <option value="name">Household name</option>
                   <option value="side">Side</option>
                   <option value="mobile">Mobile</option>
