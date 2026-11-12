@@ -93,11 +93,11 @@ function Slip({
                 {subName}
               </div>
             )}
-            <div className="mt-[2mm]" style={{ fontSize: lang === "both" ? "7.5pt" : "8.5pt", lineHeight: 1.35 }}>
-              {/* Marathi first, then English, like the name above (owner, 12 Nov). */}
+            <div className="mt-[2mm]" style={{ fontSize: lang === "both" ? "8.5pt" : "9.5pt", lineHeight: 1.35 }}>
+              {/* Marathi first, then English, like the name above (owner, 12 Nov). One point up, regular weight (owner, 12 Nov). */}
               {mr && (
                 <>
-                  <div lang="mr" className="font-bold">
+                  <div lang="mr">
                     QR स्कॅन करून कोण कोण येणार ते कळवा.
                   </div>
                   <div lang="mr">{replyBy.mr} पर्यंत.</div>
@@ -105,7 +105,7 @@ function Slip({
               )}
               {en && (
                 <>
-                  <div className={`font-bold ${mr ? "mt-[1.6mm]" : ""}`}>Scan to tell us who&apos;s coming.</div>
+                  <div className={mr ? "mt-[1.6mm]" : undefined}>Scan to tell us who&apos;s coming.</div>
                   <div>Reply by {replyBy.en}.</div>
                 </>
               )}
@@ -124,7 +124,7 @@ function Slip({
           </div>
         </div>
         {phone && (
-          <div className="mt-[1.5mm] border-t border-line pt-[1.2mm]" style={{ fontSize: lang === "both" ? "6.6pt" : "7.2pt", lineHeight: 1.3 }}>
+          <div className="mt-[1.5mm] border-t border-line pt-[1.2mm]" style={{ fontSize: lang === "both" ? "7.2pt" : "8pt", lineHeight: 1.3 }}>
             {mr && <div lang="mr">स्मार्टफोन नाही? {phone} वर फोन करून कोड सांगा.</div>}
             {en && <div>No smartphone? Call {phone} and give your code.</div>}
           </div>
