@@ -2,7 +2,7 @@
  * Sorting the guest list by any column. Ties fall back to the English name, so
  * the order is always stable and predictable.
  */
-export const GUEST_SORTS = ["name", "side", "mobile", "location", "code", "invited", "replied", "cap"] as const;
+export const GUEST_SORTS = ["name", "side", "mobile", "location", "code", "invited", "replied", "sent", "cap"] as const;
 export type GuestSort = (typeof GUEST_SORTS)[number];
 export type SortDir = "asc" | "desc";
 
@@ -15,7 +15,12 @@ export interface SortableGuest {
   functionIds: string[];
   replied: string[];
   softCap: number | null;
+  /** How the invitation went out; null = not sent yet. */
+  inviteVia?: "card" | "whatsapp" | "both" | null;
 }
+
+/** Invitation sent: card, then WhatsApp, then both; not sent goes last. */
+const VIA_ORDER = { card: 1, whatsapp: 2, both: 3 } as const;
 
 export function parseSort(sort: string | undefined, dir: string | undefined): { sort: GuestSort | null; dir: SortDir } {
   const s = GUEST_SORTS.find((k) => k === sort) ?? null;
@@ -53,6 +58,8 @@ export function sortGuests<T extends SortableGuest>(rows: T[], sort: GuestSort |
         return sign * (a.functionIds.length - b.functionIds.length);
       case "replied":
         return sign * (replyShare(a) - replyShare(b));
+      case "sent":
+        return blanksLast(a.inviteVia ? VIA_ORDER[a.inviteVia] : null, b.inviteVia ? VIA_ORDER[b.inviteVia] : null, () => VIA_ORDER[a.inviteVia!] - VIA_ORDER[b.inviteVia!]);
       case "cap":
         return blanksLast(a.softCap, b.softCap, () => a.softCap! - b.softCap!);
     }

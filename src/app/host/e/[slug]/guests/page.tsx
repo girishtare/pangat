@@ -15,6 +15,7 @@ import { Alert, EmptyState, PageHeader, ReplyBadge, SideBadge } from "../../../.
 import { EventShell, GateMessage } from "../../../HostChrome";
 import AddHouseholdForm from "./AddHouseholdForm";
 import ImportForm from "./ImportForm";
+import InviteSent from "./InviteSent";
 import PopupButton from "../../../../ui/PopupButton";
 import LookupQueue, { type LookupItem } from "./LookupQueue";
 
@@ -27,7 +28,7 @@ export default async function GuestList({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ q?: string; sort?: string; dir?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; dir?: string; page?: string; invite?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -66,6 +67,10 @@ export default async function GuestList({
     });
   const noMobile = guests.filter((g) => !g.mobile).length;
   const noMarathi = guests.filter((g) => !g.nameMr).length;
+  // Invitation sent, ticked by hand (owner, 12 Nov). ?invite=not shows the ones still to send.
+  const notSent = guests.filter((g) => !g.inviteVia).length;
+  const sentBy = (v: "card" | "whatsapp" | "both") => guests.filter((g) => g.inviteVia === v).length;
+  const onlyNotSent = sp.invite === "not";
   const qLower = q.toLowerCase();
   const qDigits = q.replace(/\D/g, "");
   const found = q
@@ -79,7 +84,7 @@ export default async function GuestList({
           (qDigits.length >= 4 && (g.mobile ?? "").includes(qDigits)),
       )
     : guests;
-  const shown = sortGuests(found, sort, dir);
+  const shown = sortGuests(onlyNotSent ? found.filter((g) => !g.inviteVia) : found, sort, dir);
   // 50 households a page (owner, 12 Nov: speed; the list grows to about 400).
   const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
   const pageNo = Math.min(pages, Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1));
@@ -87,6 +92,7 @@ export default async function GuestList({
   const pageHref = (p: number) => {
     const qs = new URLSearchParams();
     if (q) qs.set("q", q);
+    if (onlyNotSent) qs.set("invite", "not");
     if (sort !== "name") qs.set("sort", sort);
     if (dir !== "asc") qs.set("dir", dir);
     if (p > 1) qs.set("page", String(p));
@@ -114,6 +120,7 @@ export default async function GuestList({
   const sortHref = (col: GuestSort) => {
     const qs = new URLSearchParams();
     if (q) qs.set("q", q);
+    if (onlyNotSent) qs.set("invite", "not");
     qs.set("sort", col);
     qs.set("dir", sort === col && dir === "asc" ? "desc" : "asc");
     return `/host/e/${slug}/guests?${qs}`;
@@ -150,9 +157,9 @@ export default async function GuestList({
       />
 
       {/* Two columns on phones too (owner, 12 Nov). With three cards, the total spans the row on phones so none sits alone. */}
-      <div className={`grid grid-cols-2 gap-2.5 sm:gap-3 ${overCount ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+      <div className={`grid grid-cols-2 gap-2.5 sm:gap-3 ${overCount ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         <CountCard
-          className={overCount ? "" : "max-sm:col-span-2"}
+          className={overCount ? "max-sm:col-span-2" : ""}
           value={n(guests.length)}
           label="households"
           sub={host.side ? undefined : `${n(bySide.bride)} bride's side · ${n(bySide.groom)} groom's side`}
@@ -167,6 +174,21 @@ export default async function GuestList({
           <CountCard ok label={guests.length === 1 ? "It has a Marathi name" : `All ${n(guests.length)} have a Marathi name`} sub="Their slips show it" />
         ) : (
           <CountCard value={n(noMarathi)} label="have no Marathi name" sub="Their slip shows the English name" />
+        )}
+        {guests.length > 0 && notSent === 0 ? (
+          <CountCard
+            ok
+            label={guests.length === 1 ? "Invitation sent" : `All ${n(guests.length)} invitations sent`}
+            sub={`${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} both`}
+          />
+        ) : (
+          <Link href={`/host/e/${slug}/guests?invite=not`} className="block rounded-[1.25rem] hover:opacity-90">
+            <CountCard
+              value={n(notSent)}
+              label={notSent === 1 ? "invitation not sent" : "invitations not sent"}
+              sub={`Sent: ${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} both`}
+            />
+          </Link>
         )}
         {overCount > 0 && (
           <Link href={`/host/e/${slug}/guests?sort=cap&dir=desc`} className="block rounded-[1.25rem] hover:opacity-90">
@@ -206,6 +228,14 @@ export default async function GuestList({
             placeholder="Search name, mobile, code, place"
           />
         </div>
+        {onlyNotSent && (
+          <p className="mt-2 text-sm">
+            Showing households whose invitation isn&apos;t marked sent.{" "}
+            <Link href={q ? `/host/e/${slug}/guests?q=${encodeURIComponent(q)}` : `/host/e/${slug}/guests`} className="font-semibold text-kumkum underline">
+              Show all
+            </Link>
+          </p>
+        )}
         {q && (
           <p className="mt-2 text-sm">
             {found.length} of {guests.length} households match &quot;{q}&quot;.{" "}
@@ -233,7 +263,7 @@ export default async function GuestList({
           <>
             {pager("top")}
             <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
-              <table className="table-p min-w-[960px]">
+              <table className="table-p min-w-[1120px]">
                 <thead>
                   <tr>
                     {th("name", "Household")}
@@ -243,6 +273,7 @@ export default async function GuestList({
                     {th("code", "Code")}
                     {th("invited", "Invited to")}
                     {th("replied", "Replied")}
+                    {th("sent", "Invitation")}
                     {th("cap", "Cap")}
                   </tr>
                 </thead>
@@ -276,6 +307,9 @@ export default async function GuestList({
                       <td>
                         <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
                       </td>
+                      <td className="text-left!">
+                        <InviteSent slug={slug} id={g.id} name={g.nameEn} via={g.inviteVia} />
+                      </td>
                       <td className="whitespace-nowrap">
                         {g.softCap ?? "—"}
                         {overCap(g) && <OverCap heads={g.maxHeads} />}
@@ -288,6 +322,7 @@ export default async function GuestList({
             {/* Phones: the same sorting as the table headers, as a menu. */}
             <form action={`/host/e/${slug}/guests`} className="mt-4 flex items-end gap-2 lg:hidden">
               {q && <input type="hidden" name="q" value={q} />}
+              {onlyNotSent && <input type="hidden" name="invite" value="not" />}
               <label className="block flex-1">
                 <span className="label">Sort by</span>
                 <select name="sort" defaultValue={sort} className="input">
@@ -298,6 +333,7 @@ export default async function GuestList({
                   <option value="code">Code</option>
                   <option value="invited">Functions invited to</option>
                   <option value="replied">Replied</option>
+                  <option value="sent">Invitation sent</option>
                   <option value="cap">Cap</option>
                 </select>
               </label>
@@ -314,8 +350,8 @@ export default async function GuestList({
             </form>
             <ul className="mt-3 space-y-3 lg:hidden">
               {pageRows.map((g) => (
-                <li key={g.id}>
-                  <Link href={link(g.id)} className="card block p-4 hover:border-kumkum">
+                <li key={g.id} className="card overflow-hidden">
+                  <Link href={link(g.id)} className="block p-4 hover:bg-paper-deep/40">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="wrap-names font-bold text-kumkum underline underline-offset-2">{g.nameEn}</p>
@@ -358,6 +394,9 @@ export default async function GuestList({
                       )}
                     </dl>
                   </Link>
+                  <div className="border-t border-line px-4 py-1.5">
+                    <InviteSent slug={slug} id={g.id} name={g.nameEn} via={g.inviteVia} />
+                  </div>
                 </li>
               ))}
             </ul>
