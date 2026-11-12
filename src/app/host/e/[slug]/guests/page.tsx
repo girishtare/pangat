@@ -116,8 +116,10 @@ export default async function GuestList({
         }
       />
 
-      <div className={`grid gap-3 sm:grid-cols-2 ${overCount ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+      {/* Two columns on phones too (owner, 12 Nov). With three cards, the total spans the row on phones so none sits alone. */}
+      <div className={`grid grid-cols-2 gap-2.5 sm:gap-3 ${overCount ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         <CountCard
+          className={overCount ? "" : "max-sm:col-span-2"}
           value={n(guests.length)}
           label="households"
           sub={host.side ? undefined : `${n(bySide.bride)} bride's side · ${n(bySide.groom)} groom's side`}
@@ -336,12 +338,12 @@ export default async function GuestList({
   );
 }
 
-function CountCard({ value, label, sub, warn = false }: { value: string; label: string; sub?: string; warn?: boolean }) {
+function CountCard({ value, label, sub, warn = false, className = "" }: { value: string; label: string; sub?: string; warn?: boolean; className?: string }) {
   return (
-    <div className={`card h-full px-[18px] py-4 ${warn ? "border-kumkum" : ""}`}>
-      <p className={`font-display text-[1.75rem] leading-none ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
-      <p className="mt-1.5 font-bold">{label}</p>
-      {sub && <p className="text-sm text-ink-soft">{sub}</p>}
+    <div className={`card h-full px-3.5 py-3 sm:px-[18px] sm:py-4 ${warn ? "border-kumkum" : ""} ${className}`}>
+      <p className={`font-display text-[1.5rem] leading-none sm:text-[1.75rem] ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
+      <p className="mt-1.5 font-bold leading-snug max-sm:text-sm">{label}</p>
+      {sub && <p className="text-sm text-ink-soft max-sm:text-xs">{sub}</p>}
     </div>
   );
 }
