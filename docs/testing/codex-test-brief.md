@@ -1,6 +1,6 @@
 # Pangat: testing brief for Codex
 
-Written 12 November 2026. This is a guide to what has been built so you can test all of it thoroughly. **`CLAUDE.md` is the source of truth.** `README.md` is out of date in places (see "Docs known to be stale" at the end).
+Written 12 November 2026; updated the same evening after Codex's first run (results in section 11, read that first). This is a guide to what has been built so you can test all of it thoroughly. **`CLAUDE.md` is the source of truth.** `README.md` is out of date in places (see "Docs known to be stale" at the end).
 
 ## 1. What Pangat is
 
@@ -85,7 +85,7 @@ None of them has the `NEXT_PUBLIC_` prefix.
 | `/host/e/<slug>/guests` | host | Guest list. `?q=`, `?sort=name\|side\|mobile\|location\|code\|invited\|replied\|cap`, `?dir=asc\|desc`, `?page=`. Default sort is name A to Z |
 | `/host/e/<slug>/guests/template` | host | Downloads the event's Excel template |
 | `/host/e/<slug>/guests/<id>` | host | Household page: record a reply on their behalf, edit, delete, copy link, one slip |
-| `/host/e/<slug>/slips` | host | Language of each slip, and Print slips (8 per A4) |
+| `/host/e/<slug>/slips` | host | Print slips (8 per A4): `?side=`, `?place=` (a location, or `-` for none), `?lang=en\|mr\|both`, `?since=YYYY-MM-DD`, `?ids=`. `?tab=language`: Language of each slip |
 | `/host/e/<slug>/whatsapp` | host | Distribution list, message texts, effort log |
 | `/host/e/<slug>/todo` | host | People helping and tasks |
 | `/host/e/<slug>/numbers` | owner | Caterer numbers (pilot record) |
@@ -197,7 +197,7 @@ Verify the numbers by hand against the database for a mix of these cases:
 
 **List:**
 - 50 a page, with Previous and Next above and below.
-- Every column sorts, with blanks last.
+- Sorted by household name, A to Z, by default. Every column sorts, with blanks last. Paging links leave the default sort out of the URL.
 - On phones a Sort by menu replaces the clickable headers.
 
 **Search** (`LiveSearch`):
@@ -219,11 +219,15 @@ Verify the numbers by hand against the database for a mix of these cases:
 
 **Language of each slip tab:**
 - Set per household or for ticked households: English, Marathi or Both (`households.slip_lang`, default Both).
-- Search by name or place, and filter by language.
+- Households in name order, A to Z.
+- Search by name or place.
+- Three drop-downs, each with counts: **Side** (owner only), **Location** (every place on that side, case ignored, plus "No location given") and **Language**. Each counts within the ones before it: side, then location, then language. Changing side resets location.
 - A Location column appears from 640 px; on phones it shows under the name.
 
 **Print slips tab:**
 - 8 per A4. The print geometry is 194 × 281 mm.
+- Slips are in household-name order, on screen and in print.
+- **Which slips** filters: Side (owner only), **Location** (a drop-down of the side's places with counts; "No location given" appears only when some household has none), Language, and "added on or after". **Show** applies them; **All slips** clears them. The Location list follows the Side in the URL, so it updates only after Show.
 - The screen shows one A4 sheet at a time, with Previous and Next and "Sheet 2 of 9 · slips 9–16 of 72".
 - A search starts again at sheet 1.
 
@@ -234,6 +238,7 @@ Verify the numbers by hand against the database for a mix of these cases:
 - Reply-by date, written "24th December 2026".
 - The side's contact number for "no smartphone? call …".
 - With Both, Marathi lines come first, then English.
+- Text sizes (12 Nov): the "Scan…" and reply-by lines are 8.5 pt on two-language slips and 9.5 pt on one-language slips, regular weight; the "No smartphone?" line is 7.2 / 8 pt. Only the event name in the header is bold. Fit was checked on screen with a long two-line name in both scripts (it fits, with about 1 px to spare); it has not been checked on paper.
 
 **QR codes:**
 - They are drawn in the browser (`src/app/ui/QrCode.tsx`).
@@ -244,7 +249,8 @@ Verify the numbers by hand against the database for a mix of these cases:
 - Every ticked slip prints, not just the visible sheet.
 - Printing with nothing ticked.
 - Odd counts, for example 9 slips.
-- Very long names in both scripts.
+- Very long names in both scripts, now that the text is bigger: nothing may be cut off or spill out of a slip, on screen or in print preview.
+- Location filter: a place typed two ways ("Borivali" and "borivali ") counts as one; a place with an apostrophe or comma; a `?place=` that doesn't exist (should show every location).
 - Each QR code decodes to the right household's link.
 
 ### 5.6 WhatsApp (`src/app/host/e/[slug]/whatsapp/`, `src/lib/outreach.ts`)
@@ -289,6 +295,8 @@ Verify the numbers by hand against the database for a mix of these cases:
 
 **Search:** it matches task, note, person and function. It sits on the side-filter row.
 
+**Status switch:** the tapped status shows at once and the switch dims until the save finishes (added 12 Nov after a save took several seconds). Check that a failed save puts the old status back and shows the error.
+
 ### 5.8 Caterer numbers (owner only; `src/app/host/e/[slug]/numbers/`, `src/lib/pilot.ts`, migrations 0006, 0010 and 0017)
 
 **What's on the tab, per function:**
@@ -302,7 +310,7 @@ Verify the numbers by hand against the database for a mix of these cases:
 **Caterer dates** are set in Event settings. The first count is due 20 Dec, and the last change is 25 Dec. The live event currently says 24 Dec, which needs fixing.
 
 **Questions to answer:**
-- Can `freezePredicted` be run twice? It overwrites the first freeze; there is no guard. Is that acceptable for the pilot record?
+- The Freeze buttons ask for a browser `confirm()` first, so an automated tab must accept the dialog (Playwright: `page.on("dialog", d => d.accept())`). Freezing again is allowed: the dialog warns "This replaces the numbers frozen earlier", then the first count is overwritten. The freeze has **not yet been tested end to end**; please do it on a throwaway event.
 - What does `readCount` do with blank, negative, decimal or huge input?
 
 ### 5.9 Event settings (`src/app/host/e/[slug]/settings/`)
@@ -339,6 +347,8 @@ Verify the numbers by hand against the database for a mix of these cases:
 - "and family" becomes सहपरिवार, with no आणि.
 - Tare is written तरे, not तारे.
 - The output must be Devanagari only (`cleanSuggestion`).
+
+**Layout:** below 640 px the Suggest button sits under the field so the field gets the full width; from 640 px it sits beside it.
 
 **To test:**
 - Empty English.
@@ -470,4 +480,34 @@ Integration and end-to-end tests (for example Playwright against a local build w
   - Lists the migrations only up to 0010.
   - Says "food yes/no"; it is now three choices.
 - `src/lib/pilot.ts`: the header comment says "frozen on 14 December"; it's 19 December.
-- `CLAUDE.md` says the caterer's last date is 25 December. The live event's setting says 24 December.
+- `CLAUDE.md` says the caterer's last date is 25 December. The live event's setting still says 24 December (checked 12 Nov). This is the owner's setting to change, not a code defect.
+
+## 11. First test run (12 November) and what to do next
+
+Codex's first end-to-end run used a throwaway event, which has since been deleted. Here is what happened to each finding.
+
+| Finding | Verdict | Status |
+|---|---|---|
+| Marathi name field too narrow at 360 px (Suggest button beside it) | Real: 135 px of field for a 240 px placeholder | **Fixed** (PR 99). Suggest sits under the field on phones; the field is 255 px at 360 px |
+| "Coming · 1 people" on the guest summary (English) | Real; Marathi was already right | **Fixed** (PR 99), and "1 people invited" on dashboard cards too |
+| "Wedding" and "Reception" split mid-word on dashboard cards at 1280 × 846 | Not reproducible: every heading is one line at that size, even "Engagement ceremony"; the date moves below when space runs out | No change. Report it again only with a screenshot and the exact viewport |
+| Caterer last date 24 vs 25 Dec | A setting, not a defect | Owner to change in Event settings |
+| Task status took seconds with no feedback | Real | **Fixed** (PR 99). The tapped status shows at once and the switch dims while saving |
+| First-count freeze couldn't be completed | The browser `confirm()` dialog blocked the test tab | Still untested; accept the dialog and test it |
+
+**Changed since the first run** (re-test these):
+- Guest list sorted by name by default (PR 94).
+- Slips in name order; Location filter in Which slips (PR 96).
+- Language of each slip: Side, Location and Language drop-downs (PR 97).
+- Slip text one point bigger, not bold (PR 98).
+- The three fixes in the table above (PR 99).
+
+**Focus for the next run**, in this order:
+1. Caterer numbers end to end on a throwaway event: baseline, Freeze, Freeze revised, To the caterer, actual counts, and the verdict. Accept the `confirm()` dialogs.
+2. Permissions: sign in as a one-side co-owner (a second test account invited to the throwaway event) and try the other side's households, tasks and "not us" requests, plus the owner-only pages and actions. Section 3 lists the attacks.
+3. Excel round trip: download the template, fill it (including duplicates, a renamed function column, Marathi, a blank mobile, a location), upload it, check the result.
+4. Print preview of Print slips with the new sizes and a filter applied: every ticked slip, nothing cut off.
+5. Re-check the changes listed above at 360 px, 390 px, 1280 × 846 and 1440 × 900.
+6. A guest reply on a phone-sized screen in both languages, including one person, veg-only and no-food functions, and a change of reply.
+
+**Running the automated tests:** the local folder has no `node_modules`, and installing on the owner's PC is not allowed. Use GitHub Actions (it already runs typecheck, tests and build on every push) or your own sandbox.
