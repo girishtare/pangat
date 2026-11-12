@@ -112,7 +112,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
         >
           {/* Laptop: the table. Phone: one card per function, so "To the caterer" never scrolls out of sight. */}
           <div className={`${tableBox} hidden lg:block`}>
-            <table className="w-full min-w-[720px] border-collapse text-center text-base">
+            <table className="w-full min-w-[720px] border-collapse text-center text-[0.9375rem]">
               <thead>
                 <tr className="bg-paper-deep">
                   <th scope="col" className="px-4 py-3 text-left">
@@ -195,11 +195,11 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
           {revisedAt && (
             <div className="mt-6">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-display text-xl text-kumkum">Revised count</h3>
+                <h3 className="font-display text-lg text-kumkum">Revised count</h3>
                 <FrozenPill label={`Frozen on ${shortStamp(revisedAt)}`} />
               </div>
               <div className={`${tableBox} hidden lg:block`}>
-                <table className="w-full min-w-[600px] border-collapse text-center text-base">
+                <table className="w-full min-w-[600px] border-collapse text-center text-[0.9375rem]">
                   <thead>
                     <tr className="bg-paper-deep">
                       <th scope="col" className="px-4 py-3 text-left">
@@ -350,12 +350,12 @@ function VerdictCard({
       <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">4 · Which number was closer?</p>
       <h2 className="mt-1 font-display text-[1.375rem] leading-[1.2] text-kumkum sm:text-[1.75rem]">{headline}</h2>
       {judged > 0 ? (
-        <p className="mt-1.5 text-lg">
+        <p className="mt-1.5 text-base">
           Across all functions, the family&apos;s guess was off by <strong>{familyOff.toLocaleString("en-IN")}</strong> people; Pangat was off by{" "}
           <strong>{pangatOff.toLocaleString("en-IN")}</strong>.
         </p>
       ) : (
-        <p className="mt-1.5 text-lg">Fill in the family&apos;s guess and freeze Pangat&apos;s number to compare them with the counts.</p>
+        <p className="mt-1.5 text-base">Fill in the family&apos;s guess and freeze Pangat&apos;s number to compare them with the counts.</p>
       )}
 
       <div className="mt-[22px] grid gap-[22px]">
@@ -370,7 +370,7 @@ function VerdictCard({
             <div key={fn.id}>
               <div className="flex flex-wrap items-baseline justify-between gap-2.5">
                 <h3 className="font-display text-[1.3125rem]">
-                  {fn.name.en} <span className="font-sans text-base text-ink-soft">· {actual.toLocaleString("en-IN")} came</span>
+                  {fn.name.en} <span className="font-sans text-[0.9375rem] text-ink-soft">· {actual.toLocaleString("en-IN")} came</span>
                 </h3>
                 {v === "tool" && <span className="rounded-full bg-kumkum px-3 py-0.5 text-sm font-bold text-white">✓ Pangat was closer</span>}
                 {v === "baseline" && <span className="rounded-full bg-sand px-3 py-0.5 text-sm font-bold text-kumkum-dark">Family&apos;s guess was closer</span>}

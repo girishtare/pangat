@@ -64,7 +64,7 @@ export default async function WhatsApp({
     <Link
       href={`${base_}?tab=${tabNow}&kind=${k}`}
       aria-current={kind === k ? "true" : undefined}
-      className={`flex min-h-11 items-center justify-center rounded-[10px] px-3 text-center text-[0.9375rem] leading-tight sm:px-[18px] sm:text-base ${
+      className={`flex min-h-11 items-center justify-center rounded-[10px] px-3 text-center text-[0.9375rem] leading-tight sm:px-[18px] sm:text-[0.9375rem] ${
         kind === k ? "bg-card font-bold text-kumkum shadow-[0_1px_3px_rgba(46,26,28,0.15)]" : "font-semibold text-ink hover:bg-card/60"
       }`}
     >
@@ -107,7 +107,7 @@ export default async function WhatsApp({
       {tabNow === "message" && (
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <section className="card p-[18px] sm:p-[22px]" aria-labelledby="message-title">
-          <h2 id="message-title" className="text-lg font-bold">
+          <h2 id="message-title" className="text-base font-bold">
             The message
           </h2>
           <p className="mb-3 text-[0.9375rem] text-ink-soft">
@@ -124,7 +124,7 @@ export default async function WhatsApp({
         </section>
 
         <section className="rounded-[1.25rem] bg-sand p-[18px] sm:p-[22px]" aria-labelledby="preview-title">
-          <h2 id="preview-title" className="mb-3 text-lg font-bold">
+          <h2 id="preview-title" className="mb-3 text-base font-bold">
             {sample ? `Preview · ${sample.nameEn}` : "Preview"}
           </h2>
           {sample ? (

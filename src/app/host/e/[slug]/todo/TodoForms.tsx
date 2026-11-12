@@ -110,7 +110,7 @@ export function TaskForm({
         </div>
       </fieldset>
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-base">
         {pending ? "Saving…" : task ? "Save task" : "Add task"}
       </button>
     </form>
@@ -170,7 +170,7 @@ export function PersonForm({
         </fieldset>
       )}
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-base">
         {pending ? "Saving…" : person ? "Save" : "Add person"}
       </button>
     </form>

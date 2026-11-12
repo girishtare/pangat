@@ -41,7 +41,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
   if (events.length === 1 && !all) redirect(`/host/e/${events[0].slug}`);
 
   const create = (
-    <Link href="/host/new" className="btn btn-haldi min-h-12 w-full px-6 text-lg sm:w-auto">
+    <Link href="/host/new" className="btn btn-haldi min-h-12 w-full px-6 text-base sm:w-auto">
       <Plus className="h-5 w-5" aria-hidden="true" />
       Create an event
     </Link>
@@ -51,7 +51,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-5 sm:px-6 sm:pt-7">
         <Logo className="h-10 sm:h-12" />
-        <div className="flex min-w-0 items-center gap-3 text-sm sm:text-base">
+        <div className="flex min-w-0 items-center gap-3 text-sm sm:text-[0.9375rem]">
           <span className="min-w-0 truncate text-ink">{who.email}</span>
           <span className="h-6 w-px shrink-0 bg-line" aria-hidden="true" />
           <SignOutButton variant="text" />
@@ -63,7 +63,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <div>
             <h1 className="font-display text-[1.5rem] leading-tight text-kumkum-dark sm:text-[2rem]">Your events</h1>
-            <p className="mt-1 text-lg text-ink-soft">Choose an event to continue.</p>
+            <p className="mt-1 text-base text-ink-soft">Choose an event to continue.</p>
           </div>
           {events.length > 0 && create}
         </div>
@@ -95,7 +95,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
                   <Link
                     href={`/host/e/${e.slug}`}
                     aria-label={`Open ${e.name.en}`}
-                    className="btn btn-primary min-h-12 w-full text-lg after:absolute after:inset-0 after:rounded-[1.25rem] after:content-['']"
+                    className="btn btn-primary min-h-12 w-full text-base after:absolute after:inset-0 after:rounded-[1.25rem] after:content-['']"
                   >
                     Open event
                     <ArrowRight className="h-5 w-5" aria-hidden="true" />

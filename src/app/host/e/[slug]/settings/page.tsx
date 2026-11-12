@@ -158,7 +158,7 @@ export default async function EventSettings({
         <section className="mt-5 rounded-[1.25rem] border-2 border-dashed border-kumkum/40 p-[18px] sm:p-[22px]" aria-labelledby="danger-title">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 id="danger-title" className="font-display text-xl text-kumkum">
+              <h2 id="danger-title" className="font-display text-lg text-kumkum">
                 Delete this event
               </h2>
               <p className="text-[0.9375rem] text-ink-soft">

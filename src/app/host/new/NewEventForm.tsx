@@ -71,7 +71,7 @@ export default function NewEventForm() {
           {state.error}
         </p>
       )}
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-base">
         {pending ? "Creating…" : "Create event"}
       </button>
     </form>

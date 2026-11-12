@@ -46,7 +46,7 @@ export function GoogleButton() {
     <form action={signInWithGoogle}>
       <button
         type="submit"
-        className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-[#747775] bg-white px-5 text-base font-semibold text-[#1F1F1F] transition-colors hover:bg-[#F8F8F8]"
+        className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-[#747775] bg-white px-5 text-[0.9375rem] font-semibold text-[#1F1F1F] transition-colors hover:bg-[#F8F8F8]"
       >
         <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />

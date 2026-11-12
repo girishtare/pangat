@@ -45,7 +45,7 @@ export default function LoginForm() {
           </p>
         )}
       </div>
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-base">
         {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>
