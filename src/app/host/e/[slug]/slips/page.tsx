@@ -193,7 +193,7 @@ export default async function Slips({
             <SlipLanguages
               slug={slug}
               showSide={!host.side}
-              rows={all.map((g) => ({ id: g.id, nameEn: g.nameEn, nameMr: g.nameMr, side: g.side, lang: g.slipLang }))}
+              rows={all.map((g) => ({ id: g.id, nameEn: g.nameEn, nameMr: g.nameMr, side: g.side, location: g.location, lang: g.slipLang }))}
             />
           )}
         </section>

@@ -12,6 +12,8 @@ export interface SlipLangRow {
   nameEn: string;
   nameMr: string | null;
   side: Side;
+  /** Where they stay ("Borivali, Mumbai"): helps choose the language. */
+  location: string | null;
   lang: SlipLang;
 }
 
@@ -58,7 +60,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
     (r) =>
       (!side || r.side === side) &&
       (!only || langOf(r) === only) &&
-      (!q || r.nameEn.toLowerCase().includes(q) || (r.nameMr ?? "").includes(query.trim())),
+      (!q || r.nameEn.toLowerCase().includes(q) || (r.nameMr ?? "").includes(query.trim()) || (r.location ?? "").toLowerCase().includes(q)),
   );
 
   const save = (ids: string[], lang: SlipLang) => {
@@ -93,16 +95,17 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
 
   const chip = (active: boolean) =>
     `inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-bold sm:px-3.5 ${active ? "bg-kumkum text-white" : "bg-paper-deep text-ink hover:bg-sand"}`;
-  const cols = showSide ? 4 : 3;
+  // Location is its own column from 640 px; on phones it sits under the names.
+  const cols = showSide ? 5 : 4;
 
   return (
     <div>
       {/* Search and filters */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <label className="relative block lg:w-80">
-          <span className="sr-only">Search households</span>
+          <span className="sr-only">Search households by name or location</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
-          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name" className="input pl-10" />
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name or place" className="input pl-10" />
         </label>
         <div className="space-y-2 lg:text-right">
           {showSide && (
@@ -177,6 +180,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
           <colgroup>
             <col className="w-11 sm:w-14" />
             <col />
+            <col className="max-sm:hidden" />
             {showSide && <col className="max-sm:w-[4.75rem]" />}
             <col className="max-sm:w-[6.5rem]" />
           </colgroup>
@@ -193,6 +197,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
                 />
               </th>
               <th className="text-left! max-sm:px-1.5!">Household</th>
+              <th className="max-sm:hidden">Location</th>
               {showSide && <th className="max-sm:px-1!">Side</th>}
               <th className="max-sm:px-1.5!">
                 <span className="sm:hidden">Language</span>
@@ -229,7 +234,9 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
                           {r.nameMr}
                         </span>
                       )}
+                      {r.location && <span className="block text-xs text-ink-soft sm:hidden">{r.location}</span>}
                     </td>
+                    <td className="wrap-names text-sm max-sm:hidden">{r.location ?? <span className="text-ink-soft">—</span>}</td>
                     {showSide && (
                       <td className="max-sm:px-1!">
                         <span className={`badge ${r.side === "bride" ? "badge-bride" : "badge-groom"} max-sm:px-2 max-sm:text-xs`}>
