@@ -28,10 +28,11 @@ describe("Excel template", () => {
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     expect(wb.worksheets.map((w) => w.name)).toEqual([TEMPLATE_SHEET, "How to fill", "Lists"]);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Haldi", "Wedding", "Reception", "Cap"]);
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Location", "Haldi", "Wedding", "Reception", "Cap", "Comments / Notes"]);
     expect(ws.getCell("C2").dataValidation?.type).toBe("list");
-    for (const c of ["E2", "F500", "G2"]) expect(ws.getCell(c).dataValidation?.type).toBe("list");
-    expect(ws.getCell("H2").dataValidation?.type).toBe("whole");
+    expect(ws.getCell("E2").dataValidation?.type).toBeUndefined();
+    for (const c of ["F2", "G500", "H2"]) expect(ws.getCell(c).dataValidation?.type).toBe("list");
+    expect(ws.getCell("I2").dataValidation?.type).toBe("whole");
     expect(ws.getCell("D2").numFmt).toBe("@");
     const lists = wb.getWorksheet("Lists")!;
     expect(lists.state).toBe("veryHidden");
@@ -54,8 +55,8 @@ describe("Excel template", () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    ws.getRow(2).values = ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", "bride", "98765 43210", "Yes", "Yes", "Yes", 6];
-    ws.getRow(3).values = ["Dr. G. Sathe", null, "groom", 9123456789, null, "Yes", "Yes", null];
+    ws.getRow(2).values = ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", "bride", "98765 43210", "Borivali, Mumbai", "Yes", "Yes", "Yes", 6, "Uncle"];
+    ws.getRow(3).values = ["Dr. G. Sathe", null, "groom", 9123456789, null, null, "Yes", "Yes", null, null];
     const filled = Buffer.from(await wb.xlsx.writeBuffer());
 
     const { text } = await readBack(filled);
@@ -68,6 +69,8 @@ describe("Excel template", () => {
       nameMr: "श्री. अ. जोशी सहपरिवार",
       mobile: "+919876543210",
       softCap: 6,
+      location: "Borivali, Mumbai",
+      notes: "Uncle",
       functionIds: ["f-haldi", "f-wedding", "f-reception"],
     });
     expect(r.rows[1].draft).toMatchObject({ side: "groom", mobile: "+919123456789", functionIds: ["f-wedding", "f-reception"] });

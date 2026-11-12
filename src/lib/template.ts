@@ -3,7 +3,8 @@ import ExcelJS from "exceljs";
 import { MAX_CAP, MAX_IMPORT_ROWS, TEMPLATE_SHEET } from "./guestlist";
 import type { Bilingual, Side } from "./types";
 
-const FIXED = ["Name", "Marathi name", "Side", "Mobile"] as const;
+const FIXED = ["Name", "Marathi name", "Side", "Mobile", "Location"] as const;
+const NOTES = "Comments / Notes";
 const SIDE_LABEL: Record<Side, string> = { bride: "bride's side", groom: "groom's side" };
 
 /**
@@ -31,18 +32,21 @@ export async function buildGuestTemplate(opts: {
   const yesNo = ["Yes", "No"];
   yesNo.forEach((v, i) => (lists.getCell(i + 1, 2).value = v));
 
-  // Name, Marathi name, Side, Mobile, then one column per function, then Cap.
+  // Name, Marathi name, Side, Mobile, Location, then one column per function, then Cap and Comments / Notes.
   const fnNames = opts.functions.map((f) => f.en);
   const firstFn = FIXED.length + 1;
   const capCol = firstFn + fnNames.length;
-  const headers = [...FIXED, ...fnNames, "Cap"];
+  const notesCol = capCol + 1;
+  const headers = [...FIXED, ...fnNames, "Cap", NOTES];
   ws.columns = [
     { header: FIXED[0], key: "name", width: 34 },
     { header: FIXED[1], key: "nameMr", width: 34 },
     { header: FIXED[2], key: "side", width: 12 },
     { header: FIXED[3], key: "mobile", width: 18, style: { numFmt: "@" } },
+    { header: FIXED[4], key: "location", width: 24 },
     ...fnNames.map((n, i) => ({ header: n, key: `fn${i}`, width: Math.min(28, Math.max(12, n.length + 4)) })),
     { header: "Cap", key: "cap", width: 8 },
+    { header: NOTES, key: "notes", width: 44 },
   ];
   const header = ws.getRow(1);
   header.font = { bold: true };
@@ -58,8 +62,10 @@ export async function buildGuestTemplate(opts: {
     ? `Leave blank: everything you add goes to the ${SIDE_LABEL[opts.hostSide]}.`
     : "Pick bride or groom.";
   ws.getCell("D1").note = "One mobile per household: the one that gets the WhatsApp link. 10 digits is fine.";
+  ws.getCell("E1").note = 'Optional. Where they stay: just the place, e.g. "Borivali, Mumbai" or "Edvan, Palghar".';
   fnNames.forEach((n, i) => (ws.getCell(1, firstFn + i).note = `Yes = invited to ${n}. Blank = not invited.`));
   ws.getCell(1, capCol).note = `Optional. The most people this card covers (1 to ${MAX_CAP}).`;
+  ws.getCell(1, notesCol).note = "Optional. Anything to remember about this household.";
 
   const lastRow = MAX_IMPORT_ROWS + 1;
   for (let r = 2; r <= lastRow; r++) {
@@ -109,9 +115,11 @@ export async function buildGuestTemplate(opts: {
     ],
     ["• Mobile: one number per household, the one that should get the WhatsApp link. 98765 43210 is fine; +91 is added."],
     ["   For a number outside India, start with + and the country code, e.g. +44 7700 900123."],
+    ['• Location: optional. Where they stay, just the place: "Borivali, Mumbai", "Edvan, Palghar".'],
     [`• One column per function (${fnNames.join(", ") || "none yet"}): pick Yes under each function this household is invited to.`],
     ["   Blank means not invited. Every household needs at least one Yes. Tip: fill one row, then drag the Yes cells down."],
     [`• Cap: optional. The most people this card covers (1 to ${MAX_CAP}).`],
+    ["• Comments / Notes: optional, anything to remember about the household."],
     [""],
     ["When it's ready: Pangat → Guest list → Import from a sheet → Choose file.", true],
     ["Pangat checks every row before adding anything and shows any problem with its row number."],
@@ -127,8 +135,8 @@ export async function buildGuestTemplate(opts: {
   help.getCell(1, 1).font = { bold: true, size: 14 };
   const example = [
     headers,
-    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "98765 43210", ...fnNames.map(() => "Yes"), 6],
-    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+91 91234 56789", ...fnNames.map((_, i) => (i === fnNames.length - 1 ? "Yes" : "")), ""],
+    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "98765 43210", "Borivali, Mumbai", ...fnNames.map(() => "Yes"), 6, ""],
+    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+91 91234 56789", "Edvan, Palghar", ...fnNames.map((_, i) => (i === fnNames.length - 1 ? "Yes" : "")), "", "Coming from Pune on the day"],
   ];
   example.forEach((row) => help.addRow([row.map(String).join("   |   ")]));
 

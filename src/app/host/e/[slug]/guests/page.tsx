@@ -66,6 +66,8 @@ export default async function GuestList({
         (g) =>
           g.nameEn.toLowerCase().includes(qLower) ||
           (g.nameMr ?? "").includes(q) ||
+          (g.location ?? "").toLowerCase().includes(qLower) ||
+          (g.notes ?? "").toLowerCase().includes(qLower) ||
           g.shortCode === q.toUpperCase() ||
           (qDigits.length >= 4 && (g.mobile ?? "").includes(qDigits)),
       )
@@ -105,7 +107,7 @@ export default async function GuestList({
               <PopupButton label="Import from Excel" title="Import from Excel" className="btn btn-secondary">
                 <ImportForm slug={slug} />
                 <p className="hint mt-4">
-                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, a Yes column for each function, Cap. Households already on
+                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Location, a Yes column for each function, Cap, Comments / Notes. Households already on
                   the list are skipped, so the same file can be uploaded again after adding rows.
                 </p>
               </PopupButton>
@@ -156,14 +158,14 @@ export default async function GuestList({
           </h2>
           <form className="w-full sm:w-auto sm:min-w-[22rem]" action={`/host/e/${slug}/guests`} role="search">
             <label className="relative block">
-              <span className="sr-only">Find a household by name, mobile or code</span>
+              <span className="sr-only">Find a household by name, mobile, code, location or notes</span>
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
               <input
                 type="search"
                 name="q"
                 defaultValue={q}
                 enterKeyHint="search"
-                placeholder="Search name, mobile or code"
+                placeholder="Search name, mobile, code, place"
                 className="input min-h-12 pl-11"
               />
             </label>
@@ -182,7 +184,7 @@ export default async function GuestList({
           <div className="mt-4">
             {q ? (
               <EmptyState icon={Search} title="No household matches">
-                Try part of the name, the last digits of the mobile, or the six-letter code.
+                Try part of the name, the last digits of the mobile, the six-letter code, or a place.
               </EmptyState>
             ) : host.functions.length === 0 ? (
               <EmptyState icon={Settings} title="No households yet" />
@@ -195,12 +197,13 @@ export default async function GuestList({
         ) : (
           <>
             <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
-              <table className="table-p min-w-[820px]">
+              <table className="table-p min-w-[960px]">
                 <thead>
                   <tr>
                     {th("name", "Household")}
                     {th("side", "Side")}
                     {th("mobile", "Mobile")}
+                    {th("location", "Location")}
                     {th("code", "Code")}
                     {th("invited", "Invited to")}
                     {th("replied", "Replied")}
@@ -221,11 +224,17 @@ export default async function GuestList({
                         ) : (
                           <div className="text-sm text-kumkum">No Marathi name</div>
                         )}
+                        {g.notes && (
+                          <div className="mt-0.5 line-clamp-1 text-sm italic text-ink-soft" title={g.notes}>
+                            Note: {g.notes}
+                          </div>
+                        )}
                       </td>
                       <td>
                         <SideBadge side={g.side} />
                       </td>
                       <td className="whitespace-nowrap">{g.mobile ? displayPhone(g.mobile) : <span className="font-bold text-kumkum">No mobile</span>}</td>
+                      <td className="max-w-[12rem] text-sm">{g.location ?? <span className="text-ink-soft">—</span>}</td>
                       <td className="whitespace-nowrap font-display tracking-[0.2em]">{g.shortCode}</td>
                       <td className="text-sm">{invitedTo(g.functionIds)}</td>
                       <td>
@@ -250,6 +259,7 @@ export default async function GuestList({
                   <option value="name">Household name</option>
                   <option value="side">Side</option>
                   <option value="mobile">Mobile</option>
+                  <option value="location">Location</option>
                   <option value="code">Code</option>
                   <option value="invited">Functions invited to</option>
                   <option value="replied">Replied</option>
@@ -291,10 +301,17 @@ export default async function GuestList({
                     <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                       <dt className="text-ink-soft">Mobile</dt>
                       <dd className="text-right font-semibold">{g.mobile ? displayPhone(g.mobile) : <span className="text-kumkum">No mobile</span>}</dd>
+                      {g.location && (
+                        <>
+                          <dt className="text-ink-soft">Location</dt>
+                          <dd className="text-right">{g.location}</dd>
+                        </>
+                      )}
                       <dt className="text-ink-soft">Code</dt>
                       <dd className="text-right font-display tracking-[0.2em]">{g.shortCode}</dd>
                       <dt className="text-ink-soft">Invited to</dt>
                       <dd className="text-right">{invitedTo(g.functionIds)}</dd>
+                      {g.notes && <dd className="col-span-2 mt-1 line-clamp-2 italic text-ink-soft">Note: {g.notes}</dd>}
                       {g.softCap !== null && (
                         <>
                           <dt className="text-ink-soft">Cap</dt>

@@ -5,7 +5,8 @@ import type { Bilingual, Side } from "./types";
  *
  * One row per household (one card). A header row names the columns; only
  * "Name" is required. Columns, in any order:
- *   Name | Marathi name | Side | Mobile | <one column per function> | Cap
+ *   Name | Marathi name | Side | Mobile | Location | <one column per function> | Cap | Comments / Notes
+ * Location: where the household stays, a short place ("Borivali, Mumbai"), not an address.
  * Function columns (the template's way, owner 12 Nov): a column headed with
  * the function's name; "Yes" (or ✓, x, हो) invites the household, blank or
  * "No" doesn't. A household must be invited to at least one.
@@ -18,6 +19,8 @@ import type { Bilingual, Side } from "./types";
 
 export const MAX_IMPORT_ROWS = 1000;
 export const MAX_CAP = 30;
+export const MAX_LOCATION = 80;
+export const MAX_NOTES = 500;
 
 export interface FunctionRef {
   id: string;
@@ -31,6 +34,9 @@ export interface HouseholdDraft {
   /** E.164, e.g. +919876543210. */
   mobile: string | null;
   softCap: number | null;
+  /** Where they stay, e.g. "Borivali, Mumbai". */
+  location: string | null;
+  notes: string | null;
   functionIds: string[];
 }
 
@@ -38,6 +44,7 @@ export interface ExistingHousehold {
   side: Side;
   nameEn: string;
   mobile: string | null;
+  location?: string | null;
 }
 
 export type RowStatus = "new" | "exists" | "error";
@@ -59,7 +66,7 @@ export interface SheetCheck {
   counts: { new: number; exists: number; error: number };
 }
 
-type Field = "nameEn" | "nameMr" | "side" | "mobile" | "functions" | "cap";
+type Field = "nameEn" | "nameMr" | "side" | "mobile" | "location" | "functions" | "cap" | "notes";
 
 const HEADER_ALIASES: Record<Field, string[]> = {
   nameEn: ["name", "household", "householdname", "nameenglish", "englishname", "family", "familyname", "guest", "guestname"],
@@ -68,9 +75,11 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   mobile: ["mobile", "mobileno", "mobilenumber", "phone", "phoneno", "phonenumber", "whatsapp", "whatsappnumber", "number", "contact", "मोबाईल"],
   functions: ["functions", "function", "invitedto", "events", "event", "invited"],
   cap: ["cap", "softcap", "max", "maxpeople", "maxheads", "limit", "people"],
+  location: ["location", "place", "city", "town", "village", "area", "stays", "staysat", "from", "गाव", "ठिकाण"],
+  notes: ["commentsnotes", "comments", "comment", "notes", "note", "remarks", "remark", "टीप", "शेरा"],
 };
 
-const headerKey = (s: string) => s.trim().toLowerCase().replace(/[\s_().'’:-]/g, "");
+const headerKey = (s: string) => s.trim().toLowerCase().replace(/[\s_().'’:/-]/g, "");
 
 const YES = new Set(["yes", "y", "✓", "✔", "x", "true", "1", "हो", "होय"]);
 const NO = new Set(["no", "n", "false", "0", "नाही"]);
@@ -151,6 +160,22 @@ export function parseSide(raw: string): Side | null {
 }
 
 const nameKey = (s: string) => s.toLowerCase().replace(/[.,]/g, " ").replace(/\s+/g, " ").trim();
+const placeKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9\u0900-\u097f]/g, "");
+
+/**
+ * Same household? Same side and name, and neither the mobile nor the location
+ * tells them apart (owner, 12 Nov: two families can share a name). A blank
+ * mobile or location doesn't count as different.
+ */
+export function sameHousehold(
+  a: { side: Side; nameEn: string; mobile: string | null; location?: string | null },
+  b: { side: Side; nameEn: string; mobile: string | null; location?: string | null },
+): boolean {
+  if (a.side !== b.side || nameKey(a.nameEn) !== nameKey(b.nameEn)) return false;
+  if (a.mobile && b.mobile && a.mobile !== b.mobile) return false;
+  if (a.location && b.location && placeKey(a.location) !== placeKey(b.location)) return false;
+  return true;
+}
 const SIDE_NAMES: Record<Side, string> = { bride: "bride's side", groom: "groom's side" };
 
 export function checkSheet(input: {
@@ -223,9 +248,8 @@ export function checkSheet(input: {
   }
 
   const existingByMobile = new Map(input.existing.filter((e) => e.mobile).map((e) => [e.mobile as string, e]));
-  const existingByName = new Map(input.existing.map((e) => [`${e.side}|${nameKey(e.nameEn)}`, e]));
   const seenMobile = new Map<string, number>();
-  const seenName = new Map<string, number>();
+  const seenRows: { line: number; side: Side; nameEn: string; mobile: string | null; location: string | null }[] = [];
 
   const rows: RowResult[] = [];
   dataRows.forEach((cells, i) => {
@@ -286,6 +310,11 @@ export function checkSheet(input: {
     }
     if (functionIds.length === 0 && !errors.length) errors.push("Not invited to any function.");
 
+    const location = cell("location").replace(/\s+/g, " ") || null;
+    if (location && location.length > MAX_LOCATION) errors.push(`Location is longer than ${MAX_LOCATION} characters (just the place, e.g. "Borivali, Mumbai").`);
+    const notes = cell("notes").replace(/\s+/g, " ") || null;
+    if (notes && notes.length > MAX_NOTES) errors.push(`Comments / Notes is longer than ${MAX_NOTES} characters.`);
+
     let softCap: number | null = null;
     const capRaw = cell("cap");
     if (capRaw) {
@@ -301,17 +330,17 @@ export function checkSheet(input: {
       else seenMobile.set(mobile, line);
     }
     if (side && nameEn) {
-      const key = `${side}|${nameKey(nameEn)}`;
-      const prev = seenName.get(key);
-      if (prev) errors.push(`Same name and side as row ${prev}.`);
-      else seenName.set(key, line);
+      const me = { side, nameEn, mobile, location };
+      const prev = seenRows.find((r) => sameHousehold(r, me));
+      if (prev) errors.push(`Same name and side as row ${prev.line}, with no different mobile or location to tell them apart.`);
+      seenRows.push({ line, ...me });
     }
 
     // Already in the guest list?
     let status: RowStatus = errors.length ? "error" : "new";
     if (status === "new" && side) {
       const byMobile = mobile ? existingByMobile.get(mobile) : undefined;
-      const byName = existingByName.get(`${side}|${nameKey(nameEn)}`);
+      const byName = input.existing.find((e) => sameHousehold(e, { side, nameEn, mobile, location }));
       if (byName || (byMobile && byMobile.side === side)) {
         status = "exists";
         warnings.push("Already in the guest list; skipped.");
@@ -324,7 +353,7 @@ export function checkSheet(input: {
       line,
       label: nameEn || `(row ${line})`,
       status,
-      draft: status === "error" || !side ? null : { side, nameEn, nameMr, mobile, softCap, functionIds },
+      draft: status === "error" || !side ? null : { side, nameEn, nameMr, mobile, softCap, location, notes, functionIds },
       errors,
       warnings,
     });

@@ -467,6 +467,8 @@ export interface HouseholdDetail {
   shortCode: string;
   token: string;
   softCap: number | null;
+  location: string | null;
+  notes: string | null;
   functionIds: string[];
   responses: {
     functionId: string;
@@ -483,7 +485,7 @@ export interface HouseholdDetail {
 export async function loadHousehold(eventId: string, householdId: string): Promise<HouseholdDetail | null> {
   const { data, error } = await admin()
     .from("households")
-    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, invites(function_id), responses(*)")
+    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, invites(function_id), responses(*)")
     .eq("id", householdId)
     .eq("event_id", eventId)
     .maybeSingle();
@@ -501,6 +503,8 @@ export async function loadHousehold(eventId: string, householdId: string): Promi
     shortCode: r.short_code,
     token: r.token,
     softCap: r.soft_cap,
+    location: r.location ?? null,
+    notes: r.notes ?? null,
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     responses: (r.responses ?? []).map((x: any) => ({
       functionId: x.function_id,
@@ -530,13 +534,21 @@ export async function findHouseholdByCode(eventId: string, code: string): Promis
 export async function updateHousehold(
   eventId: string,
   householdId: string,
-  fields: { side: Side; nameEn: string; nameMr: string | null; mobile: string | null; softCap: number | null },
+  fields: { side: Side; nameEn: string; nameMr: string | null; mobile: string | null; softCap: number | null; location: string | null; notes: string | null },
   functionIds: string[],
 ): Promise<void> {
   const db = admin();
   const { error } = await db
     .from("households")
-    .update({ side: fields.side, name_en: fields.nameEn, name_mr: fields.nameMr, mobile: fields.mobile, soft_cap: fields.softCap })
+    .update({
+      side: fields.side,
+      name_en: fields.nameEn,
+      name_mr: fields.nameMr,
+      mobile: fields.mobile,
+      soft_cap: fields.softCap,
+      location: fields.location,
+      notes: fields.notes,
+    })
     .eq("id", householdId)
     .eq("event_id", eventId);
   if (error) throw new Error(`update household failed: ${error.message}`);
