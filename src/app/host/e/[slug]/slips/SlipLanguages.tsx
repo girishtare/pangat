@@ -23,9 +23,9 @@ const CHOICES: { value: SlipLang; label: string; short: string; title: string; l
   { value: "both", label: "Both", short: "Both", title: "English and Marathi" },
 ];
 
-const SIDES: { value: Side; label: string }[] = [
-  { value: "bride", label: "Bride's side" },
-  { value: "groom", label: "Groom's side" },
+const SIDES: { value: Side; label: string; short: string }[] = [
+  { value: "bride", label: "Bride's side", short: "Bride" },
+  { value: "groom", label: "Groom's side", short: "Groom" },
 ];
 
 /** Places compare without case or outer spaces ("borivali " = "Borivali"). */
