@@ -111,6 +111,7 @@ export const demoStore = {
           heads: r?.heads ?? 0,
           veg: r?.veg ?? 0,
           nonveg: r?.nonveg ?? 0,
+          cap: h.softCap ?? null,
         });
       }
     }

@@ -127,7 +127,7 @@ export async function loadDashboard(client: SupabaseClient, eventSlug: string): 
     client.from("functions").select("*").eq("event_id", ev.id).order("starts_at").order("sort_order"),
     client
       .from("households")
-      .select("id, side, invites(function_id), responses(function_id, status, heads, veg, nonveg)")
+      .select("id, side, soft_cap, invites(function_id), responses(function_id, status, heads, veg, nonveg)")
       .eq("event_id", ev.id)
       .range(0, 4999),
   ]);
@@ -148,6 +148,7 @@ export async function loadDashboard(client: SupabaseClient, eventSlug: string): 
         heads: r?.heads ?? 0,
         veg: vegOnly.has(inv.function_id) && r?.status === "yes" ? r.heads : (r?.veg ?? 0),
         nonveg: vegOnly.has(inv.function_id) ? 0 : (r?.nonveg ?? 0),
+        cap: h.soft_cap ?? null,
       });
     }
   }

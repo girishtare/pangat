@@ -10,6 +10,7 @@ const fact = (householdId: string, side: "bride" | "groom"): InviteFact => ({
   heads: 0,
   veg: 0,
   nonveg: 0,
+  cap: null,
 });
 
 const facts = [fact("a", "bride"), fact("b", "bride"), fact("c", "groom")];

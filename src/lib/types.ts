@@ -67,6 +67,8 @@ export interface InviteFact {
   heads: number;
   veg: number;
   nonveg: number;
+  /** The household's cap (most people on the card), or null. */
+  cap: number | null;
 }
 
 export interface DashboardData {
