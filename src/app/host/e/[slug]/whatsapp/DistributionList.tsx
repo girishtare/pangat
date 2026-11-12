@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, Phone, Search, SkipForward, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Phone, Search, SkipForward, X } from "lucide-react";
 import type { MessageKind } from "@/lib/outreach";
 import { ReplyBadge, SideBadge, WhatsAppIcon } from "../../../../ui/kit";
 import { recordSend } from "./actions";
@@ -29,6 +29,8 @@ export interface ListRow {
  * them one by one. A WhatsApp link opens one chat at a time, so each household
  * takes one tap (Open WhatsApp); Pangat moves on to the next and records it.
  */
+const PER_PAGE = 50;
+
 export default function DistributionList({ slug, kind, rows, showSide }: { slug: string; kind: MessageKind; rows: ListRow[]; showSide: boolean }) {
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [queue, setQueue] = useState<string[] | null>(null); // ids still to send, in order
@@ -49,7 +51,12 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
           (qDigits.length >= 4 && (r.mobile ?? "").replace(/\D/g, "").includes(qDigits)),
       )
     : rows;
-  // "Tick all" acts on the households shown (all of them, or the ones found).
+  // 50 a page (owner, 12 Nov: speed). Ticks and "Tick all" cover every page.
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
+  const at = Math.min(page, pages - 1);
+  const pageRows = shown.slice(at * PER_PAGE, (at + 1) * PER_PAGE);
+  // "Tick all" acts on the households shown (all of them, or the ones found), on every page.
   const sendable = shown.filter((r) => r.href);
   const allTicked = sendable.length > 0 && sendable.every((r) => ticked.has(r.id));
   const byId = new Map(rows.map((r) => [r.id, r]));
@@ -131,7 +138,10 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
                 <input
                   type="search"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setPage(0);
+                  }}
                   enterKeyHint="search"
                   autoComplete="off"
                   placeholder="Search name, mobile, place, code"
@@ -168,6 +178,28 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
         </p>
       )}
 
+      {pages > 1 && (
+        <nav aria-label="Pages" className="mt-4 flex items-center justify-between gap-2">
+          <button type="button" onClick={() => setPage(at - 1)} disabled={at === 0} className="btn btn-secondary btn-sm min-h-10">
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            Previous
+          </button>
+          <p className="text-center text-sm" aria-live="polite">
+            <span className="font-semibold">
+              Page {at + 1} of {pages}
+            </span>
+            <span className="text-ink-soft max-sm:block">
+              <span className="max-sm:hidden"> · </span>
+              {at * PER_PAGE + 1}–{Math.min(shown.length, (at + 1) * PER_PAGE)} of {shown.length}
+            </span>
+          </p>
+          <button type="button" onClick={() => setPage(at + 1)} disabled={at >= pages - 1} className="btn btn-secondary btn-sm min-h-10">
+            Next
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </nav>
+      )}
+
       {/* Laptop: table */}
       <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
         <table className="table-p min-w-[820px]">
@@ -187,7 +219,7 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
             </tr>
           </thead>
           <tbody>
-            {shown.map((r) => (
+            {pageRows.map((r) => (
               <tr key={r.id} className={done.has(r.id) ? "bg-leaf-soft/60" : ""}>
                 <td>
                   <input
@@ -224,7 +256,7 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
 
       {/* Phone: cards */}
       <ul className="mt-4 space-y-3 lg:hidden">
-        {shown.map((r) => (
+        {pageRows.map((r) => (
           <li key={r.id} className={`card p-4 ${done.has(r.id) ? "border-leaf" : ""}`}>
             <div className="flex items-start gap-3">
               <input

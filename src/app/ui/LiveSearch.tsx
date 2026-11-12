@@ -40,6 +40,7 @@ export function LiveSearch({
   const push = (next: string) => {
     const qs = new URLSearchParams(params.toString());
     const v = next.trim();
+    qs.delete("page"); // a new search starts again on page 1
     if (v) qs.set(param, v);
     else qs.delete(param);
     const s = qs.toString();

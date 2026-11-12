@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, CircleCheck, Search, Settings, TriangleAlert, Users } from "lucide-react";
 import { LiveSearch } from "../../../../ui/LiveSearch";
+import { ListPager } from "../../../../ui/ListPager";
 import { hostGate } from "@/lib/host";
 import { householdWhatsApp } from "@/lib/hostMessages";
 import { parseSort, sortGuests, type GuestSort, type SortDir } from "@/lib/guestSort";
@@ -19,12 +20,14 @@ import LookupQueue, { type LookupItem } from "./LookupQueue";
 
 export const dynamic = "force-dynamic";
 
+const PER_PAGE = 50;
+
 export default async function GuestList({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ q?: string; sort?: string; dir?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; dir?: string; page?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -74,6 +77,32 @@ export default async function GuestList({
       )
     : guests;
   const shown = sortGuests(found, sort, dir);
+  // 50 households a page (owner, 12 Nov: speed; the list grows to about 400).
+  const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
+  const pageNo = Math.min(pages, Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1));
+  const pageRows = shown.slice((pageNo - 1) * PER_PAGE, pageNo * PER_PAGE);
+  const pageHref = (p: number) => {
+    const qs = new URLSearchParams();
+    if (q) qs.set("q", q);
+    if (sort) qs.set("sort", sort);
+    if (sort && dir !== "asc") qs.set("dir", dir);
+    if (p > 1) qs.set("page", String(p));
+    const str = qs.toString();
+    return str ? `/host/e/${slug}/guests?${str}` : `/host/e/${slug}/guests`;
+  };
+  const pager = (where: "top" | "bottom") =>
+    pages > 1 ? (
+      <ListPager
+        at={pageNo}
+        pages={pages}
+        first={(pageNo - 1) * PER_PAGE + 1}
+        last={Math.min(shown.length, pageNo * PER_PAGE)}
+        total={shown.length}
+        prevHref={pageNo > 1 ? pageHref(pageNo - 1) : null}
+        nextHref={pageNo < pages ? pageHref(pageNo + 1) : null}
+        where={where}
+      />
+    ) : null;
   const link = (id: string) => `/host/e/${slug}/guests/${id}`;
   // Replied with more people than the card's cap (the cap is a guide; guests aren't stopped).
   const overCap = (g: (typeof guests)[number]) => g.softCap !== null && g.maxHeads > g.softCap;
@@ -199,6 +228,7 @@ export default async function GuestList({
           </div>
         ) : (
           <>
+            {pager("top")}
             <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
               <table className="table-p min-w-[960px]">
                 <thead>
@@ -214,7 +244,7 @@ export default async function GuestList({
                   </tr>
                 </thead>
                 <tbody>
-                  {shown.map((g) => (
+                  {pageRows.map((g) => (
                     <tr key={g.id}>
                       <td className="max-w-[18rem]">
                         <Link href={link(g.id)} className="wrap-names font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
@@ -281,7 +311,7 @@ export default async function GuestList({
               </button>
             </form>
             <ul className="mt-3 space-y-3 lg:hidden">
-              {shown.map((g) => (
+              {pageRows.map((g) => (
                 <li key={g.id}>
                   <Link href={link(g.id)} className="card block p-4 hover:border-kumkum">
                     <div className="flex items-start justify-between gap-3">
@@ -329,8 +359,12 @@ export default async function GuestList({
                 </li>
               ))}
             </ul>
+            {pager("bottom")}
             <p className="hint mt-3">
-              Showing {n(shown.length)} of {n(guests.length)} · each name opens the household page.
+              {pages > 1
+                ? `Showing ${n((pageNo - 1) * PER_PAGE + 1)}–${n(Math.min(shown.length, pageNo * PER_PAGE))} of ${n(shown.length)}${q ? ` found (${n(guests.length)} in all)` : ""}`
+                : `Showing ${n(shown.length)} of ${n(guests.length)}`}{" "}
+              · each name opens the household page.
             </p>
           </>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight, Printer, Search } from "lucide-react";
 
 /*
@@ -97,6 +98,20 @@ export function SlipSheets({
   const { ids, ticked, toggle, setMany } = useSelection();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
+  // The print copy (every ticked slip) is built only while printing, not sent and
+  // drawn with every visit: the browser fires beforeprint for the Print button and
+  // for Ctrl+P alike, and flushSync puts the slips on the page before it prints.
+  const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    const before = () => flushSync(() => setPrinting(true));
+    const after = () => setPrinting(false);
+    window.addEventListener("beforeprint", before);
+    window.addEventListener("afterprint", after);
+    return () => {
+      window.removeEventListener("beforeprint", before);
+      window.removeEventListener("afterprint", after);
+    };
+  }, []);
   const chosen = items.filter((it) => ticked.has(it.id));
   const printSheets = chunk(chosen, perSheet).length;
 
@@ -180,7 +195,8 @@ export function SlipSheets({
 
       {/* Print: only the ticked slips, 8 to a sheet. */}
       <div className="hidden print:block">
-        {chunk(chosen, perSheet).map((page, i) => (
+        {printing &&
+          chunk(chosen, perSheet).map((page, i) => (
           <div key={i} className="sheet">
             {page.map((it) => (
               <div key={it.id} className="slip-cell">
@@ -188,7 +204,7 @@ export function SlipSheets({
               </div>
             ))}
           </div>
-        ))}
+          ))}
       </div>
     </>
   );

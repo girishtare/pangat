@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Languages, Printer } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { chunk, displayPhone, guestLink } from "@/lib/outreach";
-import { qrPath } from "@/lib/qr";
+import { QrCode } from "../../../../ui/QrCode";
 import { publicBaseUrl } from "@/lib/site";
 import { listGuests, type GuestRow, type SlipLang } from "@/lib/store/supabase";
 import { slipDate } from "@/lib/when";
@@ -65,8 +65,7 @@ function Slip({
 }) {
   const lang = g.slipLang;
   const eventName = lang === "en" ? event.en : event.mr || event.en;
-  const qr = qrPath(guestLink(base, g.token, "qr", lang === "both" ? undefined : lang));
-  const q = 4; // quiet zone, in modules
+  const qrLink = guestLink(base, g.token, "qr", lang === "both" ? undefined : lang);
   const en = lang !== "mr";
   const mr = lang !== "en";
   // The family's name: Marathi on top when Marathi is printed and known; English only on English slips.
@@ -112,16 +111,7 @@ function Slip({
             </div>
           </div>
           <div className="flex flex-none flex-col items-center">
-            <svg
-              viewBox={`${-q} ${-q} ${qr.size + 2 * q} ${qr.size + 2 * q}`}
-              style={{ width: "30mm", height: "30mm", flex: "none" }}
-              shapeRendering="crispEdges"
-              role="img"
-              aria-label={`QR code for ${g.nameEn}`}
-            >
-              <rect x={-q} y={-q} width={qr.size + 2 * q} height={qr.size + 2 * q} fill="#fff" />
-              <path d={qr.d} fill="#000" />
-            </svg>
+            <QrCode text={qrLink} label={`QR code for ${g.nameEn}`} />
             <div className="text-kumkum" style={{ fontSize: "6.5pt" }}>
               {mr && <span lang="mr">कोड</span>}
               {lang === "both" && " · "}
