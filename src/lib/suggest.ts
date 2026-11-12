@@ -6,8 +6,8 @@ import { cleanSuggestion, geminiReplyText, suggestPrompt, SUGGEST_SYSTEM, type S
  * Asks an AI model for the Marathi of an English name or title ("Suggest Marathi").
  *
  * Provider, by environment variable (secret):
- *   GEMINI_API_KEY      Google Gemini (used first when set). Model gemini-3.5-flash-lite,
- *                       minimal thinking. On Google's free tier, Google may use what is
+ *   GEMINI_API_KEY      Google Gemini (used first when set). Model gemini-3.8-flash,
+ *                       low thinking. On Google's free tier, Google may use what is
  *                       sent (household names) to improve its products; a project with
  *                       billing on (paid tier) doesn't.
  *   ANTHROPIC_API_KEY   Claude Opus 5.5 at low effort, server-side fallback on.
@@ -41,7 +41,10 @@ export async function suggestMarathi(kind: SuggestKind, english: string): Promis
   }
 }
 
-const GEMINI_MODEL = "gemini-3.5-flash-lite";
+// Stable, Google's strongest Flash model. 3.5 Flash-Lite with minimal thinking changed
+// or dropped names in a live test (11 Nov). Its lowest thinking level is LOW (MINIMAL
+// returns an error); temperature is ignored on 3.6+ models, so it isn't sent.
+const GEMINI_MODEL = "gemini-3.8-flash";
 
 /** Gemini generateContent (REST, v1beta). The key goes in a header, never in the URL. */
 async function askGemini(prompt: string): Promise<string | null> {
@@ -51,7 +54,8 @@ async function askGemini(prompt: string): Promise<string | null> {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: SUGGEST_SYSTEM }] },
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 1024, temperature: 0.2, thinkingConfig: { thinkingLevel: "MINIMAL" } },
+      // maxOutputTokens counts thinking too, so leave room for it.
+      generationConfig: { maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: "LOW" } },
     }),
     signal: AbortSignal.timeout(30_000),
   });
