@@ -25,7 +25,7 @@ Read `README.md` for how to run it and what is and isn't built.
 - 20 Nov: guest lists frozen, one mobile number per household.
 - 22 Nov: v1 live.
 - 23 to 24 Nov: dry run with ten relatives, at least two over 65.
-- 25 Nov: slips printed; remaining cards go out with them, each followed by the WhatsApp link.
+- 25 Nov (planned): slips printed; remaining cards go out with them, each followed by the WhatsApp link. **Done early: owner, 12 Nov, slips already printed and shipped to guests (bride's side; the groom's side had no households yet, so it gets WhatsApp links only).**
 - 6 Dec: first nudge to pending households. 12 Dec: phone round.
 - 19 Dec: Pangat's number frozen beside the family's baseline (Caterer numbers). 20 Dec: first count to the caterer. 25 Dec: last change to the caterer.
 - 28 Dec: arrivals counted per function. 3 Jan 2027: review.
@@ -43,6 +43,8 @@ Three numbers: **baseline** (what the family would have ordered anyway), **predi
 - 11 Nov (owner): co-owner view tested by the owner, all good. Marathi wording on the guest page and in WhatsApp messages accepted as is. The family's baseline per function has been discussed with them. "Coming soon" event kinds on Create an event: decide in December (for now Wedding only). Supabase: the owner keeps the project active so it doesn't pause. Vercel Pro and commercial launch only after this wedding.
 
 - 11 Nov, end-to-end test on a throwaway event: replies are written only when they change (`src/lib/store/changed.ts`), so a host correcting one function no longer turns the guest's other replies into "on behalf", and re-sending an unchanged reply adds no history row. Caterer numbers are readable by the owner only at database level too (migration 0017). Supabase is on the Free plan: leaked-password protection needs Pro (turn on after the wedding); minimum password length set to 10 in Supabase by the owner.
+
+- 12 Nov (owner): **slips are printed and with guests.** Each printed QR and short code belongs to one household for good. So: never delete and re-add a household (use Edit; deleting kills its slip, re-adding makes a new code); never move the reply cut-off earlier than the printed "Reply by" date (24 Dec as printed; later is fine); don't re-upload an old Excel file after correcting households on the site. Changing a slip's language no longer affects printed slips. Warnings for all three are on the household Delete, the cut-off in Event settings and the Import pop-up. To get replies in before the 19 Dec freeze, ask for them earlier in the WhatsApp reminder texts, not on the slips.
 
 ## Evidence to collect for the 3 January decision
 
