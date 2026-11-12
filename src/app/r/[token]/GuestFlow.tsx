@@ -265,7 +265,7 @@ export default function GuestFlow({
                           "—"
                         ) : a.coming ? (
                           <>
-                            {t(lang, "coming")} · {a.heads} {t(lang, "people")}
+                            {t(lang, "coming")} · {a.heads} {t(lang, a.heads === 1 ? "person" : "people")}
                           </>
                         ) : (
                           <span className="text-ink-e-soft">{t(lang, "notComing")}</span>

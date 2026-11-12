@@ -182,11 +182,19 @@ export function StatusSwitch({ slug, id, status, title }: { slug: string; id: st
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // The tapped status shows at once; the saved one takes over after the refresh (Codex test, 12 Nov: a save took seconds).
+  const [tapped, setTapped] = useState<TaskStatus | null>(null);
+  const current = pending && tapped ? tapped : status;
   return (
     <div>
-      <div role="group" aria-label={`Status of ${title}`} className="inline-flex gap-1 rounded-xl bg-paper-deep p-1">
+      <div
+        role="group"
+        aria-label={`Status of ${title}`}
+        aria-busy={pending}
+        className={`inline-flex gap-1 rounded-xl bg-paper-deep p-1 transition-opacity ${pending ? "opacity-70" : ""}`}
+      >
         {TASK_STATUSES.map((s) => {
-          const on = s === status;
+          const on = s === current;
           const tone = !on ? "text-ink hover:bg-card/70" : s === "done" ? "bg-leaf text-white" : s === "doing" ? "bg-haldi text-ink" : "bg-card text-kumkum shadow-sm";
           return (
             <button
@@ -196,11 +204,12 @@ export function StatusSwitch({ slug, id, status, title }: { slug: string; id: st
               disabled={pending}
               onClick={() =>
                 !on &&
+                (setTapped(s),
                 start(async () => {
                   const r = await setTodoStatus(slug, id, s);
                   setError(r && !r.ok ? r.message : null);
                   router.refresh();
-                })
+                }))
               }
               className={`min-h-10 whitespace-nowrap rounded-lg px-2.5 text-sm font-bold ${tone}`}
             >
