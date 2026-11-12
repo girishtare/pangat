@@ -133,7 +133,7 @@ export function Section({
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
         <div className="flex min-w-0 flex-1 basis-60 items-start gap-3">
           {n !== undefined && (
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-lg text-white">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-base text-white">
               {n}
             </span>
           )}
@@ -227,7 +227,7 @@ export function EmptyState({ icon: Icon, title, children }: { icon: LucideIcon; 
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-haldi-soft text-haldi-deep">
         <Icon className="h-7 w-7" aria-hidden="true" />
       </span>
-      <p className="mt-3 font-display text-lg text-ink">{title}</p>
+      <p className="mt-3 font-display text-base text-ink">{title}</p>
       {children && <div className="mt-1 max-w-md text-ink-soft">{children}</div>}
     </div>
   );

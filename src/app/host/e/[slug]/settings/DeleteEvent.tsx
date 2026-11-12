@@ -72,7 +72,7 @@ export default function DeleteEvent({ slug, eventName, households }: { slug: str
         onClick={(e) => {
           if (e.target === dialog.current) close(); // click on the backdrop
         }}
-        className="card m-auto w-[calc(100%-2rem)] max-w-lg p-0 text-base outline-none"
+        className="card m-auto w-[calc(100%-2rem)] max-w-lg p-0 text-[0.9375rem] outline-none"
       >
         <div className="flex items-center justify-between gap-3 border-b border-line bg-kumkum-soft px-5 py-4">
           <h2 id="delete-event-title" className="flex items-center gap-2 font-display text-[1.125rem] leading-tight text-kumkum">

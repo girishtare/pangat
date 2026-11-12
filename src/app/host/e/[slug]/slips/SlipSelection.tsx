@@ -68,7 +68,7 @@ export function PrintButton() {
   const { ticked } = useSelection();
   const n = ticked.size;
   return (
-    <button type="button" disabled={n === 0} onClick={() => window.print()} className="btn btn-primary min-h-14 w-full text-lg">
+    <button type="button" disabled={n === 0} onClick={() => window.print()} className="btn btn-primary min-h-14 w-full text-base">
       <Printer className="h-5 w-5" aria-hidden="true" />
       {n === 0 ? "Tick slips to print" : `Print ${n.toLocaleString("en-IN")} slip${n === 1 ? "" : "s"}`}
     </button>

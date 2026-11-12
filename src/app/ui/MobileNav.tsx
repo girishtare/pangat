@@ -33,13 +33,13 @@ export default function MobileNav({
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="event-menu"
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border-2 border-kumkum bg-card px-3 text-base font-bold text-kumkum hover:bg-kumkum-soft"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border-2 border-kumkum bg-card px-3 text-[0.9375rem] font-bold text-kumkum hover:bg-kumkum-soft"
         >
           {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           <span>{open ? "Close" : "Menu"}</span>
         </button>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display text-xl leading-[1.25] text-kumkum">{eventName}</div>
+          <div className="truncate font-display text-lg leading-[1.25] text-kumkum">{eventName}</div>
           <div className="truncate text-[0.8125rem] text-ink-soft">
             {active?.label}
             {eventDate ? ` · ${eventDate}` : ""}
@@ -54,7 +54,7 @@ export default function MobileNav({
                 <Link
                   href={item.href}
                   aria-current={item.active ? "page" : undefined}
-                  className={`flex min-h-12 items-center gap-3 rounded-xl px-3.5 text-base ${
+                  className={`flex min-h-12 items-center gap-3 rounded-xl px-3.5 text-[0.9375rem] ${
                     item.active ? "bg-kumkum font-bold text-white" : "font-semibold text-ink hover:bg-paper"
                   }`}
                 >

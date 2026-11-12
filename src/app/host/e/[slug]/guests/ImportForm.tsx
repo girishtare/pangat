@@ -82,7 +82,7 @@ export default function ImportForm({ slug }: { slug: string }) {
     });
 
   const step = (k: number) => (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-base text-white" aria-hidden="true">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-kumkum font-display text-[0.9375rem] text-white" aria-hidden="true">
       {k}
     </span>
   );
@@ -191,7 +191,7 @@ export default function ImportForm({ slug }: { slug: string }) {
         </div>
       )}
 
-      <button type="button" onClick={onSave} disabled={pending || !canSave} className="btn btn-primary min-h-[52px] w-full text-lg sm:w-auto">
+      <button type="button" onClick={onSave} disabled={pending || !canSave} className="btn btn-primary min-h-[52px] w-full text-base sm:w-auto">
         <Check className="h-5 w-5" aria-hidden="true" />
         {current && current.counts.new > 0 ? `Add ${current.counts.new} household${current.counts.new === 1 ? "" : "s"}` : "Add households"}
       </button>

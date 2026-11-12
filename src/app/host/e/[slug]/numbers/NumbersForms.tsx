@@ -114,7 +114,7 @@ export function ActualForm({
         ))}
       </div>
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full px-7 text-lg sm:w-auto">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full px-7 text-base sm:w-auto">
         <Save className="h-5 w-5" aria-hidden="true" />
         {pending ? "Saving…" : "Save counts"}
       </button>

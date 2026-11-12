@@ -57,7 +57,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
             {hh.mobile ? <span>{displayPhone(hh.mobile)}</span> : <span className="font-bold text-kumkum">No mobile</span>}
             {hh.location && <span>{hh.location}</span>}
             <span>
-              Code <span className="font-display text-lg tracking-[0.2em]">{hh.shortCode}</span>
+              Code <span className="font-display text-base tracking-[0.2em]">{hh.shortCode}</span>
             </span>
           </div>
         </div>

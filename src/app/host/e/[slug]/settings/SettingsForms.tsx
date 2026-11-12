@@ -44,7 +44,7 @@ export function EventForm(props: {
       </div>
 
       <fieldset className="grid gap-4 md:grid-cols-2">
-        <legend className="mb-1 text-lg font-bold">The caterer&apos;s dates</legend>
+        <legend className="mb-1 text-base font-bold">The caterer&apos;s dates</legend>
         <label className="block">
           <span className="label">Caterer needs the first count by</span>
           <input name="catererDueOn" type="date" defaultValue={props.catererDueOn ?? ""} className="input" />
@@ -56,28 +56,28 @@ export function EventForm(props: {
       </fieldset>
 
       <fieldset>
-        <legend className="text-lg font-bold">How &quot;Expected&quot; is worked out</legend>
+        <legend className="text-base font-bold">How &quot;Expected&quot; is worked out</legend>
         <p className="hint mb-3">Your family&apos;s experience beats our guess. Leave these alone unless you know better.</p>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="label">Of those who say yes, how many come?</span>
             <span className="flex items-center gap-2">
-              <input name="yesShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.yesShowRate * 100)} className="input w-28 text-lg font-bold" />
-              <span className="text-lg text-ink-soft">%</span>
+              <input name="yesShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.yesShowRate * 100)} className="input w-28 text-base font-bold" />
+              <span className="text-base text-ink-soft">%</span>
             </span>
           </label>
           <label className="block">
             <span className="label">Of households that never reply, how many come?</span>
             <span className="flex items-center gap-2">
-              <input name="pendingShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.pendingShowRate * 100)} className="input w-28 text-lg font-bold" />
-              <span className="text-lg text-ink-soft">%</span>
+              <input name="pendingShowRate" type="number" min={0} max={100} required defaultValue={Math.round(props.pendingShowRate * 100)} className="input w-28 text-base font-bold" />
+              <span className="text-base text-ink-soft">%</span>
             </span>
           </label>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend className="text-lg font-bold">Contact numbers printed on slips</legend>
+        <legend className="text-base font-bold">Contact numbers printed on slips</legend>
         <p className="hint mb-3">For guests without a smartphone: they call this number and give their code.</p>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">

@@ -76,7 +76,7 @@ export function SignUpForm() {
         <input name="email" type="email" autoComplete="email" required className="input" placeholder="you@example.com" />
       </label>
       <PasswordFields first="Choose a password" hint="We'll email you a link to confirm it's you." error={state && "error" in state ? state.error : undefined} />
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-base">
         {pending ? "Creating your account…" : "Create account"}
       </button>
       <p className="hint">Sign-up with a mobile number is coming later.</p>
@@ -106,7 +106,7 @@ export function ResetForm() {
         />
       </label>
       {error && <FieldError id="reset-error" text={error} />}
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-base">
         {pending ? "Sending…" : "Email me a link"}
       </button>
     </form>
@@ -118,7 +118,7 @@ export function SetPasswordForm() {
   return (
     <form onSubmit={action} className="space-y-4">
       <PasswordFields first="New password" error={state?.error} />
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[3.25rem] w-full text-base">
         {pending ? "Saving…" : "Save and continue"}
       </button>
     </form>

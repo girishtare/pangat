@@ -50,7 +50,7 @@ export default function Dashboard({
       <div className="hidden lg:block">
         <h2 className="mb-3 mt-9 font-display text-[1.3125rem] text-kumkum">All the numbers</h2>
         <div className="overflow-x-auto rounded-2xl border border-line bg-card">
-          <table className="w-full min-w-[820px] border-collapse text-base">
+          <table className="w-full min-w-[820px] border-collapse text-[0.9375rem]">
             <thead>
               <tr className="bg-paper-deep text-center">
                 <th scope="col" className="px-4 py-3 text-left">
@@ -89,8 +89,8 @@ export default function Dashboard({
         <p className="mt-2.5 text-sm text-ink-soft">{footnote}</p>
       </div>
       <div className="mt-6 rounded-2xl bg-sand px-5 py-[18px] lg:mt-8">
-        <h2 className="mb-1 text-lg font-bold">How &quot;Expected&quot; is worked out</h2>
-        <p className="text-base">
+        <h2 className="mb-1 text-base font-bold">How &quot;Expected&quot; is worked out</h2>
+        <p className="text-[0.9375rem]">
           Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + households not replied yet × the
           function&apos;s average people per &quot;yes&quot; × <strong>{pct(rates.pendingShowRate)}</strong>.{" "}
           {settingsHref ? (
@@ -188,7 +188,7 @@ function Count({ label, value, tone }: { label: string; value: string; tone: str
   return (
     <div>
       <dt className="text-ink-soft">{label}</dt>
-      <dd className={`text-lg font-bold ${tone}`}>{value}</dd>
+      <dd className={`text-base font-bold ${tone}`}>{value}</dd>
     </div>
   );
 }

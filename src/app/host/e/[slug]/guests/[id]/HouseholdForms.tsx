@@ -50,7 +50,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
   const [coming, setComing] = useState<"yes" | "no" | "">(f.current?.status ?? "");
   const [heads, setHeads] = useState(f.current?.status === "yes" ? f.current.heads : 2);
   const [veg, setVeg] = useState(f.current?.status === "yes" ? f.current.veg : 0);
-  const num = "input min-h-12 w-full min-w-0 px-3 text-lg font-bold tabular-nums sm:w-20";
+  const num = "input min-h-12 w-full min-w-0 px-3 text-base font-bold tabular-nums sm:w-20";
   return (
     <fieldset className="min-w-0 rounded-[14px] border border-line px-4 pb-4 pt-1">
       <legend className="px-1.5 font-bold">
@@ -146,7 +146,7 @@ export function ReplyForm({ slug, id, functions }: { slug: string; id: string; f
         ))}
       </div>
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-base">
         {pending ? "Saving…" : "Save reply on their behalf"}
       </button>
     </form>
@@ -243,7 +243,7 @@ export function DeleteHousehold({ slug, id, name, replied }: { slug: string; id:
         if (!confirm(`Delete ${name} from the guest list? Their link and short code will stop working.`)) e.preventDefault();
       }}
     >
-      <h2 className="text-lg font-bold">Delete household</h2>
+      <h2 className="text-base font-bold">Delete household</h2>
       <p className="text-[0.9375rem] text-ink-soft">
         {replied
           ? "Not possible: they have replied, so they can't be deleted. Mark them as not coming instead."

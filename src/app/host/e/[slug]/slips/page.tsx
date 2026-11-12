@@ -228,7 +228,7 @@ export default async function Slips({
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] print:block">
         <div className="space-y-4 print:hidden">
           <section className="card p-[18px] sm:p-[22px]" aria-labelledby="which-slips">
-            <h2 id="which-slips" className="mb-3 text-lg font-bold">
+            <h2 id="which-slips" className="mb-3 text-base font-bold">
               Which slips
             </h2>
             {ids ? (
@@ -278,7 +278,7 @@ export default async function Slips({
                 </div>
               </form>
             )}
-            <p className="mt-4 text-lg">
+            <p className="mt-4 text-base">
               <span className="font-display text-[1.75rem] leading-none text-kumkum">{guests.length.toLocaleString("en-IN")}</span> slip
               {guests.length === 1 ? "" : "s"} · <b>{sheets.length}</b> A4 sheet{sheets.length === 1 ? "" : "s"}
             </p>
@@ -314,7 +314,7 @@ export default async function Slips({
           )}
 
           <div className="rounded-[1.25rem] bg-sand px-5 py-4">
-            <h2 className="mb-1.5 text-lg font-bold">Before you print</h2>
+            <h2 className="mb-1.5 text-base font-bold">Before you print</h2>
             <ul className="list-disc space-y-1 pl-5">
               <li>
                 A4 paper, scale <b>100%</b> (not &quot;fit to page&quot;), headers and footers off.

@@ -95,7 +95,7 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
         </Alert>
       )}
 
-      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-lg">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-[52px] w-full text-base">
         {pending ? "Adding…" : "Add household"}
       </button>
     </form>

@@ -56,7 +56,7 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
               <p className="text-sm font-semibold text-ink-soft">
                 Sending {queueTotal - queue!.length + 1} of {queueTotal}
               </p>
-              <p className="wrap-names text-lg font-bold">{current.nameEn}</p>
+              <p className="wrap-names text-base font-bold">{current.nameEn}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <a

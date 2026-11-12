@@ -257,9 +257,10 @@ export default function GuestFlow({
                 const a = answers[f.id];
                 return (
                   <li key={f.id} className="border-b border-dashed border-sand py-3 last:border-b-0">
-                    <div className="flex items-baseline justify-between gap-2.5">
-                      <span className={`${heading} wrap-names min-w-0 text-xl text-maroon`}>{pick(f.name, lang)}</span>
-                      <span className="text-right font-bold">
+                    {/* Wraps instead of squeezing: the status drops to its own line rather than breaking the name mid-word. */}
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2.5">
+                      <span className={`${heading} wrap-names text-xl text-maroon`}>{pick(f.name, lang)}</span>
+                      <span className="ml-auto text-right font-bold">
                         {a.coming === null ? (
                           "—"
                         ) : a.coming ? (

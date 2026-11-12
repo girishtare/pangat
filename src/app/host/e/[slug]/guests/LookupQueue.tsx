@@ -98,7 +98,7 @@ export default function LookupQueue({ slug, items }: { slug: string; items: Look
   if (items.length === 0) return null;
   return (
     <section className="mt-6 rounded-[1.25rem] border border-haldi bg-haldi-soft p-4 sm:p-5" aria-labelledby="wrong-link-title">
-      <h2 id="wrong-link-title" className="text-xl font-bold">
+      <h2 id="wrong-link-title" className="text-lg font-bold">
         Wrong-link requests · {items.length} waiting
       </h2>
       <p className="mt-0.5 text-sm text-ink-soft">
