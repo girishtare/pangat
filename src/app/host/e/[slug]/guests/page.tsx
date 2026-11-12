@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, Search, Settings, TriangleAlert, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, CircleCheck, Search, Settings, TriangleAlert, Users } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { householdWhatsApp } from "@/lib/hostMessages";
 import { parseSort, sortGuests, type GuestSort, type SortDir } from "@/lib/guestSort";
@@ -124,8 +124,17 @@ export default async function GuestList({
           label="households"
           sub={host.side ? undefined : `${n(bySide.bride)} bride's side · ${n(bySide.groom)} groom's side`}
         />
-        <CountCard value={n(noMobile)} label="have no mobile" sub="They can only reply by QR or phone" />
-        <CountCard value={n(noMarathi)} label="have no Marathi name" sub="Their slip shows the English name" />
+        {/* Nothing missing: an all-clear instead of "0 have no …", which read like a problem (owner, 12 Nov). */}
+        {guests.length > 0 && noMobile === 0 ? (
+          <CountCard ok label={guests.length === 1 ? "It has a mobile" : `All ${n(guests.length)} have a mobile`} sub="Each can get its WhatsApp link" />
+        ) : (
+          <CountCard value={n(noMobile)} label="have no mobile" sub="They can only reply by QR or phone" />
+        )}
+        {guests.length > 0 && noMarathi === 0 ? (
+          <CountCard ok label={guests.length === 1 ? "It has a Marathi name" : `All ${n(guests.length)} have a Marathi name`} sub="Their slips show it" />
+        ) : (
+          <CountCard value={n(noMarathi)} label="have no Marathi name" sub="Their slip shows the English name" />
+        )}
         {overCount > 0 && (
           <Link href={`/host/e/${slug}/guests?sort=cap&dir=desc`} className="block rounded-[1.25rem] hover:opacity-90">
             <CountCard value={n(overCount)} label="over their cap" sub="Replied with more people than the card allows. Check with them." warn />
@@ -338,10 +347,29 @@ export default async function GuestList({
   );
 }
 
-function CountCard({ value, label, sub, warn = false, className = "" }: { value: string; label: string; sub?: string; warn?: boolean; className?: string }) {
+function CountCard({
+  value,
+  label,
+  sub,
+  warn = false,
+  ok = false,
+  className = "",
+}: {
+  /** The number; left out for an all-clear card (`ok`), which shows a tick instead. */
+  value?: string;
+  label: string;
+  sub?: string;
+  warn?: boolean;
+  ok?: boolean;
+  className?: string;
+}) {
   return (
     <div className={`card h-full px-3.5 py-3 sm:px-[18px] sm:py-4 ${warn ? "border-kumkum" : ""} ${className}`}>
-      <p className={`font-display text-[1.5rem] leading-none sm:text-[1.75rem] ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
+      {ok ? (
+        <CircleCheck className="h-6 w-6 text-leaf sm:h-7 sm:w-7" aria-hidden="true" />
+      ) : (
+        <p className={`font-display text-[1.5rem] leading-none sm:text-[1.75rem] ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
+      )}
       <p className="mt-1.5 font-bold leading-snug max-sm:text-sm">{label}</p>
       {sub && <p className="text-sm text-ink-soft max-sm:text-xs">{sub}</p>}
     </div>
