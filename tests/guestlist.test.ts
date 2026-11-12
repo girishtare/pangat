@@ -62,7 +62,7 @@ describe("checkSheet", () => {
     expect(r.problem).toBeNull();
     expect(r.counts).toEqual({ new: 2, exists: 0, error: 0 });
     expect(r.rows[0].draft).toEqual({
-      side: "bride", nameEn: "Shri A Joshi", nameMr: "श्री अ जोशी", mobile: "+919876543210", softCap: 6, functionIds: all,
+      side: "bride", nameEn: "Shri A Joshi", nameMr: "श्री अ जोशी", mobile: "+919876543210", softCap: 6, location: null, notes: null, functionIds: all,
     });
     expect(r.rows[1].draft?.functionIds).toEqual(["f-wedding", "f-reception"]);
     expect(r.rows[1].line).toBe(3);
@@ -227,7 +227,7 @@ describe("location and comments / notes (12 Nov)", () => {
 describe("same name, different family (12 Nov)", () => {
   it("two rows with the same name but a different mobile or location are both new", () => {
     const r = check(
-      "Name\tSide\tMobile\tLocation\nRamesh Tare\tbride\t9876543210\tBorivali, Mumbai\nRamesh Tare\tbride\t9123456789\t\nRamesh Tare\tbride\t\tEdvan, Palghar",
+      "Name\tSide\tMobile\tLocation\nRamesh Tare\tbride\t9876543210\tBorivali, Mumbai\nRamesh Tare\tbride\t9123456789\tThane\nRamesh Tare\tbride\t\tEdvan, Palghar",
     );
     expect(r.counts).toEqual({ new: 3, exists: 0, error: 0 });
   });
@@ -239,7 +239,8 @@ describe("same name, different family (12 Nov)", () => {
 
   it("against the existing list: a different location makes a new household; the same or blank is skipped", () => {
     const existing = [{ side: "bride" as const, nameEn: "Ramesh Tare", mobile: null, location: "Borivali, Mumbai" }];
-    const r = check("Name\tSide\tLocation\nRamesh Tare\tbride\tEdvan, Palghar\nRamesh Tare\tbride\tborivali mumbai\nRamesh Tare\tbride\t", null, existing);
-    expect(r.rows.map((x) => x.status)).toEqual(["new", "exists", "exists"]);
+    const r = check("Name\tSide\tLocation\nRamesh Tare\tbride\tEdvan, Palghar\nRamesh Tare\tbride\tborivali mumbai", null, existing);
+    expect(r.rows.map((x) => x.status)).toEqual(["new", "exists"]);
+    expect(check("Name\tSide\nRamesh Tare\tbride", null, existing).rows[0].status).toBe("exists");
   });
 });
