@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Languages, Printer } from "lucide-react";
 import { hostGate } from "@/lib/host";
+import { sortGuests } from "@/lib/guestSort";
 import { chunk, displayPhone, guestLink } from "@/lib/outreach";
 import { QrCode } from "../../../../ui/QrCode";
 import { publicBaseUrl } from "@/lib/site";
@@ -138,7 +139,7 @@ export default async function Slips({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ side?: string; since?: string; ids?: string; lang?: string; tab?: string }>;
+  searchParams: Promise<{ side?: string; since?: string; ids?: string; lang?: string; tab?: string; place?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -146,7 +147,8 @@ export default async function Slips({
   if (!gate.ok) return <GateMessage gate={gate} title="Slips" />;
   const { host } = gate;
 
-  const all = await listGuests(host.client, host.event.id);
+  // By household name, A to Z, on both tabs and in print (owner, 12 Nov).
+  const all = sortGuests(await listGuests(host.client, host.event.id), "name", "asc");
   const tab: "print" | "language" = sp.tab === "language" ? "language" : "print";
   const header = (
     <div className="print:hidden">
@@ -197,9 +199,27 @@ export default async function Slips({
   const since = sp.since && /^\d{4}-\d{2}-\d{2}$/.test(sp.since) ? sp.since : null;
   // Optional filter: only the slips printed in one language (e.g. to print the Marathi ones on their own).
   const lang: SlipLang | null = sp.lang === "en" || sp.lang === "mr" || sp.lang === "both" ? sp.lang : null;
+  // Where households stay (owner, 12 Nov): one place at a time, or "-" for no place given.
+  // The choices are the places on the side shown, spelt as first typed, case ignored.
+  const placeKey = (s: string | null) => (s ?? "").trim().toLowerCase();
+  const places = [
+    ...new Map(
+      all
+        .filter((g) => (!side || g.side === side) && placeKey(g.location))
+        .map((g) => [placeKey(g.location), g.location!.trim()] as const)
+        .reverse(),
+    ).values(),
+  ].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+  const placeCount = (key: string) => all.filter((g) => (!side || g.side === side) && placeKey(g.location) === key).length;
+  const noPlace = placeCount("");
+  const place = sp.place === "-" ? "-" : (places.find((p) => placeKey(p) === placeKey(sp.place ?? null)) ?? null);
   // Before the language filter: these are the households whose language can be set here.
   const inView = all.filter(
-    (g) => (!side || g.side === side) && (!ids || ids.has(g.id)) && (!since || g.createdAt.slice(0, 10) >= since),
+    (g) =>
+      (!side || g.side === side) &&
+      (!ids || ids.has(g.id)) &&
+      (!since || g.createdAt.slice(0, 10) >= since) &&
+      (!place || placeKey(g.location) === (place === "-" ? "" : placeKey(place))),
   );
   const guests = lang ? inView.filter((g) => g.slipLang === lang) : inView;
 
@@ -209,7 +229,7 @@ export default async function Slips({
   const missingPhone = (["bride", "groom"] as const).filter((s) => !host.event.contactPhone[s] && guests.some((g) => g.side === s));
   const noMarathi = guests.filter((g) => g.slipLang !== "en" && !g.nameMr).length;
   const sheets = chunk(guests, PER_SHEET);
-  const filtered = !!(ids || since || lang || (side && !host.side));
+  const filtered = !!(ids || since || lang || place || (side && !host.side));
 
   return (
     <EventShell host={host} current="slips">
@@ -240,6 +260,20 @@ export default async function Slips({
                       <option value="">Both sides</option>
                       <option value="bride">Bride&apos;s side</option>
                       <option value="groom">Groom&apos;s side</option>
+                    </select>
+                  </label>
+                )}
+                {(places.length > 0 || place) && (
+                  <label className="block">
+                    <span className="label">Location</span>
+                    <select name="place" defaultValue={place ?? ""} className="input">
+                      <option value="">Every location</option>
+                      {places.map((p) => (
+                        <option key={p} value={p}>
+                          {p} ({placeCount(placeKey(p))})
+                        </option>
+                      ))}
+                      {noPlace > 0 && <option value="-">No location given ({noPlace})</option>}
                     </select>
                   </label>
                 )}
