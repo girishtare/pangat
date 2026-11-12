@@ -178,7 +178,7 @@ export default async function Slips({
       <EventShell host={host} current="slips">
         {header}
         <section className="card p-[18px] sm:p-[22px]" aria-labelledby="slip-lang">
-          <h2 id="slip-lang" className="font-display text-2xl text-kumkum">
+          <h2 id="slip-lang" className="font-display text-[1.3125rem] text-kumkum">
             Language of each slip
           </h2>
           <p className="mb-4 mt-0.5 text-[0.9375rem] text-ink-soft">
@@ -279,7 +279,7 @@ export default async function Slips({
               </form>
             )}
             <p className="mt-4 text-lg">
-              <span className="font-display text-[2.5rem] leading-none text-kumkum">{guests.length.toLocaleString("en-IN")}</span> slip
+              <span className="font-display text-[1.75rem] leading-none text-kumkum">{guests.length.toLocaleString("en-IN")}</span> slip
               {guests.length === 1 ? "" : "s"} · <b>{sheets.length}</b> A4 sheet{sheets.length === 1 ? "" : "s"}
             </p>
             <p className="mt-1 text-sm text-ink-soft">

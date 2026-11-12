@@ -66,7 +66,7 @@ export default async function EventDashboard({
                   key={s}
                   href={s === scopes[0] ? base : `${base}?side=${s}`}
                   aria-current={active ? "true" : undefined}
-                  className={`flex min-h-11 items-center justify-center rounded-[10px] px-2 text-[0.9375rem] lg:px-[18px] lg:text-[1.0625rem] ${
+                  className={`flex min-h-11 items-center justify-center rounded-[10px] px-2 text-[0.9375rem] lg:px-[18px] lg:text-[0.9375rem] ${
                     active ? "bg-card font-bold text-kumkum shadow-[0_1px_3px_rgba(46,26,28,0.15)]" : "font-semibold text-ink hover:bg-card/60"
                   }`}
                 >

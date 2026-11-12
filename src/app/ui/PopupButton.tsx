@@ -37,7 +37,7 @@ export default function PopupButton({
         }}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-paper-deep px-5 py-4">
-          <h2 id={id} className="font-display text-[1.375rem] leading-tight text-kumkum">
+          <h2 id={id} className="font-display text-[1.125rem] leading-tight text-kumkum">
             {title}
           </h2>
           <button type="button" onClick={() => dialog.current?.close()} className="btn btn-quiet btn-sm" aria-label="Close">

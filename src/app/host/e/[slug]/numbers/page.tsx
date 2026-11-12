@@ -150,7 +150,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
                       )}
                     </td>
                     <td className={tdNum}>{pair(n.predictedVeg, n.predictedNonveg)}</td>
-                    <td className="bg-sand-soft px-4 py-3 font-display text-[1.375rem] text-kumkum">{show(latestToCaterer(n))}</td>
+                    <td className="bg-sand-soft px-4 py-3 font-display text-[1.125rem] text-kumkum">{show(latestToCaterer(n))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -163,7 +163,7 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
                   <span className="font-bold">{fn.name.en}</span>
                   <span className="text-right">
                     <span className="block text-xs font-bold text-kumkum">To the caterer</span>
-                    <span className="font-display text-3xl text-kumkum">{show(latestToCaterer(n))}</span>
+                    <span className="font-display text-2xl text-kumkum">{show(latestToCaterer(n))}</span>
                   </span>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-1 px-4 py-3 text-sm">
@@ -348,7 +348,7 @@ function VerdictCard({
   return (
     <section className="rounded-[22px] border-2 border-kumkum bg-card px-5 py-6 sm:px-7">
       <p className="text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">4 · Which number was closer?</p>
-      <h2 className="mt-1 font-display text-[1.75rem] leading-[1.2] text-kumkum sm:text-4xl">{headline}</h2>
+      <h2 className="mt-1 font-display text-[1.375rem] leading-[1.2] text-kumkum sm:text-[1.75rem]">{headline}</h2>
       {judged > 0 ? (
         <p className="mt-1.5 text-lg">
           Across all functions, the family&apos;s guess was off by <strong>{familyOff.toLocaleString("en-IN")}</strong> people; Pangat was off by{" "}
@@ -369,7 +369,7 @@ function VerdictCard({
           return (
             <div key={fn.id}>
               <div className="flex flex-wrap items-baseline justify-between gap-2.5">
-                <h3 className="font-display text-2xl">
+                <h3 className="font-display text-[1.3125rem]">
                   {fn.name.en} <span className="font-sans text-base text-ink-soft">· {actual.toLocaleString("en-IN")} came</span>
                 </h3>
                 {v === "tool" && <span className="rounded-full bg-kumkum px-3 py-0.5 text-sm font-bold text-white">✓ Pangat was closer</span>}

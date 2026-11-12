@@ -153,7 +153,7 @@ export default async function GuestList({
 
       <section className="mt-9" aria-labelledby="households">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="households" className="font-display text-[1.625rem] text-kumkum">
+          <h2 id="households" className="font-display text-[1.3125rem] text-kumkum">
             Households
           </h2>
           <form className="w-full sm:w-auto sm:min-w-[22rem]" action={`/host/e/${slug}/guests`} role="search">
@@ -339,7 +339,7 @@ export default async function GuestList({
 function CountCard({ value, label, sub, warn = false }: { value: string; label: string; sub?: string; warn?: boolean }) {
   return (
     <div className={`card h-full px-[18px] py-4 ${warn ? "border-kumkum" : ""}`}>
-      <p className={`font-display text-4xl leading-none ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
+      <p className={`font-display text-[1.75rem] leading-none ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
       <p className="mt-1.5 font-bold">{label}</p>
       {sub && <p className="text-sm text-ink-soft">{sub}</p>}
     </div>

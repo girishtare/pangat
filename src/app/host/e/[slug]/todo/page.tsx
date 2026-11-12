@@ -135,7 +135,7 @@ export default async function Todo({
 
       <section className="mt-6" aria-labelledby="tasks-title">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 id="tasks-title" className="font-display text-[1.625rem] text-kumkum">
+          <h2 id="tasks-title" className="font-display text-[1.3125rem] text-kumkum">
             Tasks{person ? ` · ${person.fullName}` : ""}
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -378,7 +378,7 @@ function Side({ side }: { side: SideType | null }) {
 function Count({ value, label, warn = false }: { value: number; label: string; warn?: boolean }) {
   return (
     <div className={`card px-[18px] py-4 ${warn ? "border-kumkum" : ""}`}>
-      <p className={`font-display text-4xl leading-none ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
+      <p className={`font-display text-[1.75rem] leading-none ${warn ? "text-kumkum" : "text-ink"}`}>{value}</p>
       <p className="mt-1.5 font-bold">{label}</p>
     </div>
   );

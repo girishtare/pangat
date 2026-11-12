@@ -6,7 +6,7 @@ import { Alert } from "../../../../ui/kit";
 import { freezePredicted, freezeRevised, saveActuals, saveBaselines, type FormState } from "./actions";
 import { useFormAction } from "../../../../ui/useFormAction";
 
-const num = "input min-h-[52px] text-[1.375rem] tabular-nums";
+const num = "input min-h-[52px] text-[1.125rem] tabular-nums";
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -83,7 +83,7 @@ export function ActualForm({
   values: Record<string, { actual: number | null; veg: number | null; nonveg: number | null }>;
 }) {
   const [state, action, pending] = useFormAction(saveActuals.bind(null, slug));
-  const box = "input mt-1 min-h-12 px-2 text-[1.1875rem] tabular-nums";
+  const box = "input mt-1 min-h-12 px-2 text-[1.0625rem] tabular-nums";
   return (
     <form onSubmit={action} className="space-y-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">

@@ -22,7 +22,7 @@ export default function Stepper({
   onChange: (v: number) => void;
   name?: string;
   size?: "md" | "lg";
-  /** "guest": palette E look for the guest reply page (48 px buttons, Playfair number); size is ignored. */
+  /** "guest": palette E look for the guest reply page (48 px buttons, Space Grotesk number); size is ignored. */
   variant?: "app" | "guest";
   lessLabel?: string;
   moreLabel?: string;

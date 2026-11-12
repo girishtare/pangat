@@ -22,7 +22,7 @@ interface Answer {
 
 const SLOTS: ArrivalSlot[] = ["early", "on_time", "late"];
 
-/* Pieces shared by the screens. Headings: Playfair Display bold; Marathi falls through to Noto Sans Devanagari bold. */
+/* Pieces shared by the screens. Headings: Space Grotesk bold; Marathi falls through to Noto Sans Devanagari bold. */
 const heading = "font-heading-e font-bold [font-synthesis-weight:none]";
 const card = "rounded-[18px] border border-sand bg-card-e";
 const infoBox = "rounded-[14px] border border-sky bg-[#dfe8ef] px-3.5 py-3 text-base text-ink-e";

@@ -1,19 +1,19 @@
-import { Noto_Sans, Noto_Sans_Devanagari, Playfair_Display } from "next/font/google";
+import { IBM_Plex_Sans, Noto_Sans, Noto_Sans_Devanagari, Space_Grotesk } from "next/font/google";
 
 // The app's fonts, set on <html> in the root layout, for every page (guest
-// screens, host pages, forms, tables, buttons and printed slips):
-//   Noto Sans               text, English and Marathi (400, 600, 700)
+// screens, host pages, forms, tables, buttons and printed slips). English
+// matches the owner's Sutradhar app (owner, 12 Nov); Marathi is unchanged.
+//   IBM Plex Sans           English text (400, 500, 600, 700)
+//   Space Grotesk           English headings (500, 600, 700)
+//   Noto Sans               Marathi in text: Google's Noto Sans carries a Devanagari
+//                           subset, and Plex Sans has no Devanagari, so Marathi falls
+//                           through to it (not preloaded: only Marathi uses it now)
 //   Noto Sans Devanagari    Marathi in headings (700)
-//   Playfair Display        large English headings (bold only)
-// How Marathi is drawn (checked on the live site, 11 Nov):
-// - In text, Google's Noto Sans carries its own Devanagari subset, so Marathi
-//   comes from Noto Sans itself (the same Noto design).
-// - In headings, Playfair has no Devanagari, so Marathi falls through to
-//   Noto Sans Devanagari, the next font in the heading list (globals.css).
-// Latin files are preloaded; Devanagari files load only when Marathi appears.
-const notoSans = Noto_Sans({ weight: ["400", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-noto-sans" });
+// Marathi is drawn at the same size as the English around it, so it scales with it.
+const plexSans = IBM_Plex_Sans({ weight: ["400", "500", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-plex-sans" });
+const spaceGrotesk = Space_Grotesk({ weight: ["500", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-space-grotesk" });
+const notoSans = Noto_Sans({ weight: ["400", "600", "700"], subsets: ["latin"], display: "swap", preload: false, variable: "--font-noto-sans" });
 const notoDeva = Noto_Sans_Devanagari({ weight: "700", subsets: ["devanagari"], display: "swap", variable: "--font-noto-sans-deva" });
-const playfair = Playfair_Display({ weight: "700", subsets: ["latin"], display: "swap", variable: "--font-playfair-display" });
 
 /** The font variables; the root layout puts them on <html>. */
-export const paletteEFonts = `${notoSans.variable} ${notoDeva.variable} ${playfair.variable}`;
+export const paletteEFonts = `${plexSans.variable} ${spaceGrotesk.variable} ${notoSans.variable} ${notoDeva.variable}`;

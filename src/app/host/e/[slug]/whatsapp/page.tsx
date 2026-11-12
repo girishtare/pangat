@@ -146,7 +146,7 @@ export default async function WhatsApp({
       <section aria-labelledby="send-list">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 id="send-list" className="font-display text-[1.625rem] text-kumkum">
+            <h2 id="send-list" className="font-display text-[1.3125rem] text-kumkum">
               {listTitle} · {rows.length.toLocaleString("en-IN")}
             </h2>
             <p className="text-ink-soft">
@@ -210,7 +210,7 @@ export default async function WhatsApp({
       <section className="card p-[18px] sm:p-7" aria-labelledby="effort-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1 basis-60">
-            <h2 id="effort-title" className="font-display text-2xl text-kumkum">
+            <h2 id="effort-title" className="font-display text-[1.3125rem] text-kumkum">
               Time spent chasing replies
             </h2>
             <p className="text-[0.9375rem] text-ink-soft">
@@ -220,13 +220,13 @@ export default async function WhatsApp({
           </div>
           <dl className="flex gap-8">
             <div>
-              <dd className="font-display text-[2rem] leading-none">
+              <dd className="font-display text-[1.5rem] leading-none">
                 {hours} h {mins} m
               </dd>
               <dt className="mt-1 text-sm text-ink-soft">total time</dt>
             </div>
             <div>
-              <dd className="font-display text-[2rem] leading-none">{totals.calls.toLocaleString("en-IN")}</dd>
+              <dd className="font-display text-[1.5rem] leading-none">{totals.calls.toLocaleString("en-IN")}</dd>
               <dt className="mt-1 text-sm text-ink-soft">phone calls</dt>
             </div>
           </dl>

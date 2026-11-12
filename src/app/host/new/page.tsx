@@ -30,7 +30,7 @@ export default async function NewEvent() {
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 pb-14 pt-8 sm:px-6 sm:pt-10">
-        <h1 className="font-display text-[2rem] leading-tight text-kumkum sm:text-[2.5rem]">Create an event</h1>
+        <h1 className="font-display text-[1.5rem] leading-tight text-kumkum sm:text-[1.75rem]">Create an event</h1>
         <p className="mt-1.5 text-ink-soft">
           Takes a minute. You&apos;ll be its owner, can invite up to 3 co-owners from each side afterwards, and can change everything later in
           Event settings.

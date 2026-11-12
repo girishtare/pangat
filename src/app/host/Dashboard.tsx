@@ -48,7 +48,7 @@ export default function Dashboard({
       <p className="mt-4 text-[0.9375rem] text-ink-soft lg:hidden">{footnote}</p>
 
       <div className="hidden lg:block">
-        <h2 className="mb-3 mt-9 font-display text-[1.625rem] text-kumkum">All the numbers</h2>
+        <h2 className="mb-3 mt-9 font-display text-[1.3125rem] text-kumkum">All the numbers</h2>
         <div className="overflow-x-auto rounded-2xl border border-line bg-card">
           <table className="w-full min-w-[820px] border-collapse text-base">
             <thead>
@@ -80,7 +80,7 @@ export default function Dashboard({
                   <td className="px-2.5 py-3">{n(f.confirmedHeads)}</td>
                   <td className="px-2.5 py-3">{fn.catered ? n(f.veg) : "—"}</td>
                   <td className="px-2.5 py-3">{fn.catered ? n(f.nonveg) : "—"}</td>
-                  <td className="bg-sand-soft px-4 py-3 font-display text-[1.375rem] text-kumkum">{n(f.expected)}</td>
+                  <td className="bg-sand-soft px-4 py-3 font-display text-[1.125rem] text-kumkum">{n(f.expected)}</td>
                 </tr>
               ))}
             </tbody>
@@ -127,7 +127,7 @@ export default function Dashboard({
 }
 
 const label = "text-[0.8125rem] font-bold uppercase tracking-[0.08em] text-ink-soft lg:text-sm";
-const big = "font-display text-[3.5rem] leading-none text-kumkum lg:text-[4rem]";
+const big = "font-display text-[2.5rem] leading-none text-kumkum lg:text-[2.75rem]";
 
 function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
   const share = (v: number) => (f.invitedHouseholds ? `${(v / f.invitedHouseholds) * 100}%` : "0%");
@@ -135,7 +135,7 @@ function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
     <section className="rounded-[18px] border border-line bg-card p-[18px] lg:rounded-[20px] lg:p-[22px]">
       {/* A long name wraps whole words; the date drops under it rather than splitting the name. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-0.5">
-        <h2 className="wrap-names font-display text-2xl text-ink lg:text-[1.625rem]">{fn.name.en}</h2>
+        <h2 className="wrap-names font-display text-[1.3125rem] text-ink lg:text-[1.3125rem]">{fn.name.en}</h2>
         <span className="text-sm text-ink-soft">{shortWhen(fn.startsAt)}</span>
       </div>
 
