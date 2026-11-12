@@ -29,6 +29,7 @@ const PRINT_CSS = `
 .sheet { width: 194mm; height: 281mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); background: white; }
 .slip { border: 0.3mm dashed #9a8f86; padding: 3.5mm; overflow: hidden; color: #2e1a1c; }
 .slip-cell { position: relative; min-height: 0; display: grid; } /* a slip plus its screen-only tick box */
+.slip-pick .slip-inner > :first-child { padding-left: 5.5mm; } /* on screen, the header starts clear of the tick box */
 .slip-fill { min-height: 0; display: grid; }
 .slip-inner { height: 100%; border: 0.35mm solid transparent; border-radius: 2.5mm; /* same box as before, no visible frame */ padding: 2.5mm 3mm; display: flex; flex-direction: column; }
 @media screen {
