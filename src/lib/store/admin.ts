@@ -916,6 +916,19 @@ export async function setSlipLang(eventId: string, ids: string[], lang: "both" |
   return changed;
 }
 
+/** Marks one household's invitation sent (card, WhatsApp or both) or not sent. A one-side host only reaches their side. */
+export async function setInviteSent(eventId: string, id: string, via: "card" | "whatsapp" | "both" | null, side: Side | null): Promise<number> {
+  let q = admin()
+    .from("households")
+    .update({ invite_via: via, invite_sent_at: via ? new Date().toISOString() : null }, { count: "exact" })
+    .eq("event_id", eventId)
+    .eq("id", id);
+  if (side) q = q.eq("side", side);
+  const { error, count } = await q;
+  if (error) throw new Error(`saving invitation sent failed: ${error.message}`);
+  return count ?? 0;
+}
+
 /**
  * After someone is removed from an event: deletes their Pangat account too,
  * unless they are still a host of another event, or the database still points

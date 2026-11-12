@@ -37,6 +37,12 @@ describe("sortGuests", () => {
     expect(names(sortGuests(rows, "cap", "desc"))).toEqual(["Patil", "ajmera", "Joshi", "Deshpande"]);
   });
 
+  it("sorts by invitation sent (card, WhatsApp, both), not sent last either way", () => {
+    const sent = [g("Kale", { inviteVia: "both" }), g("Bhide"), g("Apte", { inviteVia: "whatsapp" }), g("Dange", { inviteVia: "card" })];
+    expect(names(sortGuests(sent, "sent", "asc"))).toEqual(["Dange", "Apte", "Kale", "Bhide"]);
+    expect(names(sortGuests(sent, "sent", "desc"))).toEqual(["Kale", "Apte", "Dange", "Bhide"]);
+  });
+
   it("sorts by side and by share replied, names breaking ties", () => {
     expect(names(sortGuests(rows, "side", "asc"))).toEqual(["ajmera", "Joshi", "Deshpande", "Patil"]);
     expect(names(sortGuests(rows, "replied", "desc"))).toEqual(["Patil", "Joshi", "ajmera", "Deshpande"]);
