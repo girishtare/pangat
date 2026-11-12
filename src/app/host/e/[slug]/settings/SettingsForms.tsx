@@ -29,7 +29,25 @@ export function EventForm(props: {
   const [state, action, pending] = useFormAction(saveEvent.bind(null, props.slug));
   const missing = "border-kumkum";
   return (
-    <form onSubmit={action} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        // Printed slips say "Reply by <this date>" (slips printed 12 Nov). Closing earlier than that would turn away
+        // guests who reply in time, so moving it earlier needs a second thought. Later is always fine.
+        const next = (e.currentTarget.elements.namedItem("cutoff") as HTMLInputElement | null)?.value ?? "";
+        if (
+          next &&
+          next < props.cutoff &&
+          !confirm(
+            "Move the reply cut-off earlier?\n\nPrinted slips show the current date as \"Reply by\". Guests who reply after the new date but before the printed one will be told replies are closed.",
+          )
+        ) {
+          e.preventDefault();
+          return;
+        }
+        action(e);
+      }}
+      className="space-y-6"
+    >
       <div className="grid gap-4 md:grid-cols-3">
         <label className="block">
           <span className="label">Event name in English</span>
@@ -39,7 +57,7 @@ export function EventForm(props: {
         <label className="block">
           <span className="label">Replies close on</span>
           <input name="cutoff" type="datetime-local" required defaultValue={props.cutoff} className="input" />
-          <span className="hint mt-1 block">After this, only hosts can change replies.</span>
+          <span className="hint mt-1 block">After this, only hosts can change replies. Printed slips show this date as &quot;Reply by&quot;, so once they&apos;re printed, only move it later.</span>
         </label>
       </div>
 

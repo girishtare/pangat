@@ -240,14 +240,21 @@ export function DeleteHousehold({ slug, id, name, replied }: { slug: string; id:
       action={action}
       className="space-y-3 rounded-[1.25rem] border-2 border-dashed border-line p-[18px] sm:p-[22px]"
       onSubmit={(e) => {
-        if (!confirm(`Delete ${name} from the guest list? Their link and short code will stop working.`)) e.preventDefault();
+        // Slips are printed and with guests (owner, 12 Nov): a deleted household's QR and code stop working for good,
+        // and adding them again makes a new code that isn't on their slip.
+        if (
+          !confirm(
+            `Delete ${name} from the guest list?\n\nIf they have a printed slip, its QR code and short code stop working for good. Adding them again makes a new code that isn't on their slip.\n\nTo correct a name, mobile or functions, use Edit instead: the slip keeps working.`,
+          )
+        )
+          e.preventDefault();
       }}
     >
       <h2 className="text-base font-bold">Delete household</h2>
       <p className="text-[0.9375rem] text-ink-soft">
         {replied
           ? "Not possible: they have replied, so they can't be deleted. Mark them as not coming instead."
-          : "Their link and short code will stop working."}
+          : "Their link, printed QR code and short code stop working for good. To correct details, use Edit above: their slip keeps working."}
       </p>
       <button type="submit" disabled={pending || replied} className="btn btn-secondary">
         <Trash className="h-5 w-5" aria-hidden="true" />
