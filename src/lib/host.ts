@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FunctionRef } from "./guestlist";
 import { isDemo } from "./store";
@@ -42,44 +43,68 @@ export type SignedIn =
   | { ok: true; client: SupabaseClient; userId: string; email: string }
   | { ok: false; reason: "demo" | "not_configured" | "signed_out" };
 
-export async function signedInUser(): Promise<SignedIn> {
+/**
+ * Who is signed in. Once per request (React cache).
+ *
+ * getClaims() checks the session token's signature locally (the project signs
+ * with ES256, public key cached), so there is no round trip to Supabase Auth
+ * here. src/proxy.ts still calls getUser() on every /host request, which
+ * refreshes the session and catches a signed-out or deleted account.
+ * (Before 12 Nov this called getUser() too: a second auth round trip per page.)
+ */
+export const signedInUser = cache(async (): Promise<SignedIn> => {
   if (isDemo()) return { ok: false, reason: "demo" };
   const client = await hostClient();
   if (!client) return { ok: false, reason: "not_configured" };
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-  if (!user) return { ok: false, reason: "signed_out" };
-  return { ok: true, client, userId: user.id, email: user.email ?? "you" };
-}
+  const { data, error } = await client.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub) return { ok: false, reason: "signed_out" };
+  return { ok: true, client, userId: claims.sub, email: typeof claims.email === "string" && claims.email ? claims.email : "you" };
+});
 
 export type HostGate =
   | { ok: true; host: HostContext }
   | { ok: false; reason: "demo" | "not_configured" | "signed_out" }
   | { ok: false; reason: "not_host"; email: string };
 
-/** Who is signed in, and are they a host of this event? Used by every host page and action. */
-export async function hostGate(slug: string): Promise<HostGate> {
+/**
+ * Who is signed in, and are they a host of this event? Used by every host page
+ * and action. Once per request (React cache). The host role and the event
+ * (with its functions embedded) are fetched together, in parallel: two
+ * database round trips became one (owner, 12 Nov: speed).
+ */
+export const hostGate = cache(async (slug: string): Promise<HostGate> => {
   const who = await signedInUser();
   if (!who.ok) return who;
   const { client } = who;
 
-  const access = await loadHostAccess(client, slug);
+  const [access, evRes] = await Promise.all([
+    loadHostAccess(client, slug),
+    client
+      .from("events")
+      .select(
+        "id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, functions(id, name_en, name_mr, starts_at, venue, map_url, catered, veg_only, sort_order)",
+      )
+      .eq("slug", slug)
+      .maybeSingle(),
+  ]);
   if (!access) return { ok: false, reason: "not_host", email: who.email };
-
-  const { data: ev, error } = await client
-    .from("events")
-    .select("id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path")
-    .eq("slug", slug)
-    .single();
-  if (error) throw new Error(`event lookup failed: ${error.message}`);
-  const { data: fns, error: fnErr } = await client
-    .from("functions")
-    .select("id, name_en, name_mr, starts_at, venue, map_url, catered, veg_only")
-    .eq("event_id", ev.id)
-    .order("starts_at")
-    .order("sort_order");
-  if (fnErr) throw new Error(`functions lookup failed: ${fnErr.message}`);
+  if (evRes.error) throw new Error(`event lookup failed: ${evRes.error.message}`);
+  const ev = evRes.data;
+  if (!ev) return { ok: false, reason: "not_host", email: who.email };
+  // Same order as before: by start time, then the host's order.
+  const fns = [...((ev.functions ?? []) as { starts_at: string; sort_order: number | null }[])].sort(
+    (a, b) => a.starts_at.localeCompare(b.starts_at) || (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  ) as unknown as {
+    id: string;
+    name_en: string;
+    name_mr: string | null;
+    starts_at: string;
+    venue: string | null;
+    map_url: string | null;
+    catered: boolean;
+    veg_only: boolean | null;
+  }[];
 
   return {
     ok: true,
@@ -117,7 +142,7 @@ export async function hostGate(slug: string): Promise<HostGate> {
       })),
     },
   };
-}
+});
 
 export interface MyEvent {
   slug: string;
