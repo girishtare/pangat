@@ -3,13 +3,14 @@ import ExcelJS from "exceljs";
 import { MAX_CAP, MAX_IMPORT_ROWS, TEMPLATE_SHEET } from "./guestlist";
 import type { Bilingual, Side } from "./types";
 
-const HEADERS = ["Name", "Marathi name", "Side", "Mobile", "Functions", "Cap"] as const;
+const FIXED = ["Name", "Marathi name", "Side", "Mobile"] as const;
 const SIDE_LABEL: Record<Side, string> = { bride: "bride's side", groom: "groom's side" };
 
 /**
  * The guest-list template for one event: a "Guests" sheet with the exact
- * columns the import expects, dropdowns for Side and Functions, Mobile kept as
- * text, and a "How to fill" sheet. Only the Guests sheet is ever imported.
+ * columns the import expects (one Yes column per function, owner 12 Nov),
+ * dropdowns for Side and the function columns, Mobile kept as text, and a
+ * "How to fill" sheet. Only the Guests sheet is ever imported.
  */
 export async function buildGuestTemplate(opts: {
   eventName: Bilingual;
@@ -27,16 +28,21 @@ export async function buildGuestTemplate(opts: {
   // Dropdown sources live on a hidden sheet, so long function names never hit Excel's 255-character limit.
   const sides: Side[] = opts.hostSide ? [opts.hostSide] : ["bride", "groom"];
   sides.forEach((s, i) => (lists.getCell(i + 1, 1).value = s));
-  const fnChoices = ["all", ...opts.functions.map((f) => f.en)];
-  fnChoices.forEach((f, i) => (lists.getCell(i + 1, 2).value = f));
+  const yesNo = ["Yes", "No"];
+  yesNo.forEach((v, i) => (lists.getCell(i + 1, 2).value = v));
 
+  // Name, Marathi name, Side, Mobile, then one column per function, then Cap.
+  const fnNames = opts.functions.map((f) => f.en);
+  const firstFn = FIXED.length + 1;
+  const capCol = firstFn + fnNames.length;
+  const headers = [...FIXED, ...fnNames, "Cap"];
   ws.columns = [
-    { header: HEADERS[0], key: "name", width: 34 },
-    { header: HEADERS[1], key: "nameMr", width: 34 },
-    { header: HEADERS[2], key: "side", width: 12 },
-    { header: HEADERS[3], key: "mobile", width: 18, style: { numFmt: "@" } },
-    { header: HEADERS[4], key: "functions", width: 34 },
-    { header: HEADERS[5], key: "cap", width: 8 },
+    { header: FIXED[0], key: "name", width: 34 },
+    { header: FIXED[1], key: "nameMr", width: 34 },
+    { header: FIXED[2], key: "side", width: 12 },
+    { header: FIXED[3], key: "mobile", width: 18, style: { numFmt: "@" } },
+    ...fnNames.map((n, i) => ({ header: n, key: `fn${i}`, width: Math.min(28, Math.max(12, n.length + 4)) })),
+    { header: "Cap", key: "cap", width: 8 },
   ];
   const header = ws.getRow(1);
   header.font = { bold: true };
@@ -52,8 +58,8 @@ export async function buildGuestTemplate(opts: {
     ? `Leave blank: everything you add goes to the ${SIDE_LABEL[opts.hostSide]}.`
     : "Pick bride or groom.";
   ws.getCell("D1").note = "One mobile per household: the one that gets the WhatsApp link. 10 digits is fine.";
-  ws.getCell("E1").note = "Blank = every function. Or pick one, or type several separated by commas.";
-  ws.getCell("F1").note = `Optional. The most people this card covers (1 to ${MAX_CAP}).`;
+  fnNames.forEach((n, i) => (ws.getCell(1, firstFn + i).note = `Yes = invited to ${n}. Blank = not invited.`));
+  ws.getCell(1, capCol).note = `Optional. The most people this card covers (1 to ${MAX_CAP}).`;
 
   const lastRow = MAX_IMPORT_ROWS + 1;
   for (let r = 2; r <= lastRow; r++) {
@@ -66,17 +72,17 @@ export async function buildGuestTemplate(opts: {
       error: opts.hostSide ? `Leave blank, or choose ${opts.hostSide}.` : "Choose bride or groom.",
     };
     ws.getCell(r, 4).numFmt = "@";
-    ws.getCell(r, 5).dataValidation = {
-      type: "list",
-      allowBlank: true,
-      formulae: [`Lists!$B$1:$B$${fnChoices.length}`],
-      // Typing several names separated by commas must stay allowed.
-      showErrorMessage: false,
-      showInputMessage: true,
-      promptTitle: "Functions",
-      prompt: "Blank = all. Pick one, or type several separated by commas.",
-    };
-    ws.getCell(r, 6).dataValidation = {
+    for (let c = firstFn; c < capCol; c++) {
+      ws.getCell(r, c).dataValidation = {
+        type: "list",
+        allowBlank: true,
+        formulae: [`Lists!$B$1:$B$${yesNo.length}`],
+        showErrorMessage: true,
+        errorTitle: "Invited?",
+        error: "Choose Yes, or leave it blank.",
+      };
+    }
+    ws.getCell(r, capCol).dataValidation = {
       type: "whole",
       operator: "between",
       allowBlank: true,
@@ -103,8 +109,8 @@ export async function buildGuestTemplate(opts: {
     ],
     ["• Mobile: one number per household, the one that should get the WhatsApp link. 98765 43210 is fine; +91 is added."],
     ["   For a number outside India, start with + and the country code, e.g. +44 7700 900123."],
-    [`• Functions: leave blank if they are invited to everything. Otherwise pick one, or type several separated by commas.`],
-    [`   This event's functions: ${opts.functions.map((f) => f.en).join(", ") || "(none yet)"}.`],
+    [`• One column per function (${fnNames.join(", ") || "none yet"}): pick Yes under each function this household is invited to.`],
+    ["   Blank means not invited. Every household needs at least one Yes. Tip: fill one row, then drag the Yes cells down."],
     [`• Cap: optional. The most people this card covers (1 to ${MAX_CAP}).`],
     [""],
     ["When it's ready: Pangat → Guest list → Import from a sheet → Choose file.", true],
@@ -120,9 +126,9 @@ export async function buildGuestTemplate(opts: {
   });
   help.getCell(1, 1).font = { bold: true, size: 14 };
   const example = [
-    [...HEADERS],
-    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "98765 43210", "", 6],
-    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+91 91234 56789", fnChoices.slice(2, 4).join(", "), ""],
+    headers,
+    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "98765 43210", ...fnNames.map(() => "Yes"), 6],
+    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+91 91234 56789", ...fnNames.map((_, i) => (i === fnNames.length - 1 ? "Yes" : "")), ""],
   ];
   example.forEach((row) => help.addRow([row.map(String).join("   |   ")]));
 

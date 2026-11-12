@@ -95,7 +95,7 @@ export default function ImportForm({ slug }: { slug: string }) {
           {step(1)}
           <div className="min-w-0">
             <p>
-              <b>Download the template.</b> It already lists this event&apos;s functions, with drop-downs.
+              <b>Download the template.</b> It has a column for each of this event&apos;s functions: pick Yes under the ones each household is invited to.
             </p>
             <a href={`/host/e/${slug}/guests/template`} className="btn btn-secondary mt-2">
               <Download className="h-5 w-5" aria-hidden="true" />
@@ -142,7 +142,7 @@ export default function ImportForm({ slug }: { slug: string }) {
                 }}
                 rows={7}
                 aria-label="Pasted guest list"
-                placeholder={"Name\tMarathi name\tSide\tMobile\tFunctions\tCap\nShri. A. Joshi & family\tश्री. अ. जोशी सहपरिवार\tbride\t98765 43210\t\t6"}
+                placeholder={"Name\tMarathi name\tSide\tMobile\tHaldi\tWedding\tCap\nShri. A. Joshi & family\tश्री. अ. जोशी सहपरिवार\tbride\t98765 43210\tYes\tYes\t6"}
                 className="input mt-1 font-mono text-sm"
               />
               <button type="button" onClick={onCheck} disabled={pending || !text.trim()} className="btn btn-secondary btn-sm mt-2">

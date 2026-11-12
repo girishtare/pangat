@@ -5,8 +5,12 @@ import type { Bilingual, Side } from "./types";
  *
  * One row per household (one card). A header row names the columns; only
  * "Name" is required. Columns, in any order:
- *   Name | Marathi name | Side | Mobile | Functions | Cap
- * Functions: names separated by commas, or blank / "all" for every function.
+ *   Name | Marathi name | Side | Mobile | <one column per function> | Cap
+ * Function columns (the template's way, owner 12 Nov): a column headed with
+ * the function's name; "Yes" (or ✓, x, हो) invites the household, blank or
+ * "No" doesn't. A household must be invited to at least one.
+ * Older sheets and pastes may instead have one "Functions" column: names
+ * separated by commas, or blank / "all" for every function.
  *
  * Pure logic, no database: the caller passes in the event's functions, the
  * host's side and the households that already exist.
@@ -67,6 +71,19 @@ const HEADER_ALIASES: Record<Field, string[]> = {
 };
 
 const headerKey = (s: string) => s.trim().toLowerCase().replace(/[\s_().'’:-]/g, "");
+
+const YES = new Set(["yes", "y", "✓", "✔", "x", "true", "1", "हो", "होय"]);
+const NO = new Set(["no", "n", "false", "0", "नाही"]);
+/** Words that mark a column as a function column (not numbers, so a Count column isn't mistaken for one). */
+const YES_NO_WORDS = new Set(["yes", "no", "y", "n", "✓", "✔", "हो", "होय", "नाही"]);
+
+/** A function column's cell: true = invited, false = not, null = unreadable. */
+export function parseInvited(raw: string): boolean | null {
+  const s = raw.trim().toLowerCase();
+  if (s === "" || NO.has(s)) return false;
+  if (YES.has(s)) return true;
+  return null;
+}
 
 /** Split pasted text into rows of cells. Tab-separated (copied from a sheet) or CSV. */
 export function parseTable(text: string): string[][] {
@@ -174,6 +191,37 @@ export function checkSheet(input: {
   const allFunctionIds = input.functions.map((f) => f.id);
   const functionList = input.functions.map((f) => f.name.en).join(", ");
 
+  // One column per function: a header that is a function's English or Marathi name
+  // (and not already one of the fields above).
+  const taken = new Set(Object.values(col));
+  const fnCols: { index: number; fn: FunctionRef }[] = [];
+  const fnUsed = new Set<string>();
+  table[headerIndex].forEach((raw, index) => {
+    if (taken.has(index) || !raw.trim()) return;
+    const key = headerKey(raw);
+    const fn = input.functions.find((f) => !fnUsed.has(f.id) && (headerKey(f.name.en) === key || (!!f.name.mr && f.name.mr.trim() === raw.trim())));
+    if (fn) {
+      fnUsed.add(fn.id);
+      fnCols.push({ index, fn });
+    }
+  });
+  const byColumns = fnCols.length > 0;
+
+  // A column of Yes / No answers whose header isn't one of this event's functions:
+  // a function renamed since the template was downloaded. Ignoring it would drop
+  // those invitations silently, so stop. (Other extra columns, like Notes, are ignored.)
+  const fnTaken = new Set(fnCols.map((c) => c.index));
+  for (let index = 0; index < table[headerIndex].length; index++) {
+    const head = table[headerIndex][index].trim();
+    if (!head || taken.has(index) || fnTaken.has(index)) continue;
+    const values = dataRows.map((r) => (r[index] ?? "").trim().toLowerCase()).filter(Boolean);
+    if (values.length && values.every((v) => YES_NO_WORDS.has(v))) {
+      return empty(
+        `Column "${head}" isn't one of this event's functions (${functionList || "none yet"}). Rename the column to match, or download a fresh template.`,
+      );
+    }
+  }
+
   const existingByMobile = new Map(input.existing.filter((e) => e.mobile).map((e) => [e.mobile as string, e]));
   const existingByName = new Map(input.existing.map((e) => [`${e.side}|${nameKey(e.nameEn)}`, e]));
   const seenMobile = new Map<string, number>();
@@ -216,7 +264,18 @@ export function checkSheet(input: {
 
     let functionIds = allFunctionIds;
     const fnRaw = cell("functions");
-    if (fnRaw && fnRaw.trim().toLowerCase() !== "all") {
+    if (byColumns) {
+      const ids = new Set<string>();
+      for (const { index, fn } of fnCols) {
+        const raw = (cells[index] ?? "").trim();
+        const v = parseInvited(raw);
+        if (v === null) errors.push(`Under "${fn.name.en}", "${raw}" should be Yes or blank.`);
+        else if (v) ids.add(fn.id);
+      }
+      functionIds = allFunctionIds.filter((id) => ids.has(id));
+      if (fnRaw) warnings.push('The "Functions" column is ignored: the Yes columns say which functions.');
+      if (functionIds.length === 0 && !errors.length) errors.push("Not invited to any function: put Yes under at least one.");
+    } else if (fnRaw && fnRaw.trim().toLowerCase() !== "all") {
       const ids = new Set<string>();
       for (const part of fnRaw.split(/[,;/\n]/).map((p) => p.trim()).filter(Boolean)) {
         const f = fnByName.get(part.toLowerCase()) ?? fnByName.get(part);

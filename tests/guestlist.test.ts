@@ -167,3 +167,46 @@ describe("Excel rows", () => {
     expect(rowsToText([[new Date("2026-12-28T00:00:00Z"), 919876543210, 1.5, true]])).toBe("2026-12-28\t919876543210\t1.5\tyes");
   });
 });
+
+describe("one Yes column per function (template, 12 Nov)", () => {
+  it("invites each household to the functions marked Yes", () => {
+    const r = check("Name\tSide\tHaldi\tWedding\tReception\nJoshi\tbride\tYes\t\tyes\nSathe\tgroom\t\tYes\tNo\nPatil\tbride\t✓\tx\tहो");
+    expect(r.counts).toEqual({ new: 3, exists: 0, error: 0 });
+    expect(r.rows[0].draft?.functionIds).toEqual(["f-haldi", "f-reception"]);
+    expect(r.rows[1].draft?.functionIds).toEqual(["f-wedding"]);
+    expect(r.rows[2].draft?.functionIds).toEqual(all);
+  });
+
+  it("needs at least one Yes, and flags anything other than Yes / No / blank", () => {
+    const r = check("Name\tSide\tHaldi\tWedding\nJoshi\tbride\t\t\nSathe\tgroom\tmaybe\tYes");
+    expect(r.rows[0].errors).toContain("Not invited to any function: put Yes under at least one.");
+    expect(r.rows[1].errors).toContain('Under "Haldi", "maybe" should be Yes or blank.');
+  });
+
+  it("matches headers by Marathi name and ignores a leftover Functions column", () => {
+    const r = check("Name\tSide\tFunctions\tहळद\tविवाह\nJoshi\tbride\tall\tYes\t");
+    expect(r.rows[0].draft?.functionIds).toEqual(["f-haldi"]);
+    expect(r.rows[0].warnings.some((w) => w.includes("Functions"))).toBe(true);
+  });
+
+  it("only the listed function columns count; functions without a column are not invited", () => {
+    const r = check("Name\tSide\tWedding\nJoshi\tbride\tYes");
+    expect(r.rows[0].draft?.functionIds).toEqual(["f-wedding"]);
+  });
+});
+
+describe("columns from an out-of-date template", () => {
+  it("stops on a Yes column that isn't one of the event's functions (renamed since download)", () => {
+    const r = check("Name\tSide\tSangeet\tWedding\nJoshi\tbride\tYes\tYes\nSathe\tgroom\t\tYes");
+    expect(r.problem).toBe(
+      'Column "Sangeet" isn\'t one of this event\'s functions (Haldi, Wedding, Reception). Rename the column to match, or download a fresh template.',
+    );
+    expect(r.rows).toEqual([]);
+  });
+
+  it("still ignores other extra columns, like notes or numbers", () => {
+    const r = check("Name\tSide\tNotes\tCount\tWedding\nJoshi\tbride\tuncle's side\t3\tYes\nSathe\tgroom\t\t1\tYes");
+    expect(r.problem).toBeNull();
+    expect(r.counts.new).toBe(2);
+  });
+});
