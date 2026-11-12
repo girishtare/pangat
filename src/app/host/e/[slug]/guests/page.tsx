@@ -105,7 +105,7 @@ export default async function GuestList({
               <PopupButton label="Import from Excel" title="Import from Excel" className="btn btn-secondary">
                 <ImportForm slug={slug} />
                 <p className="hint mt-4">
-                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Functions (blank = all), Cap. Households already on
+                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, a Yes column for each function, Cap. Households already on
                   the list are skipped, so the same file can be uploaded again after adding rows.
                 </p>
               </PopupButton>

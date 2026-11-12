@@ -28,14 +28,14 @@ describe("Excel template", () => {
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     expect(wb.worksheets.map((w) => w.name)).toEqual([TEMPLATE_SHEET, "How to fill", "Lists"]);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Functions", "Cap"]);
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Haldi", "Wedding", "Reception", "Cap"]);
     expect(ws.getCell("C2").dataValidation?.type).toBe("list");
-    expect(ws.getCell("E500").dataValidation?.type).toBe("list");
-    expect(ws.getCell("F2").dataValidation?.type).toBe("whole");
+    for (const c of ["E2", "F500", "G2"]) expect(ws.getCell(c).dataValidation?.type).toBe("list");
+    expect(ws.getCell("H2").dataValidation?.type).toBe("whole");
     expect(ws.getCell("D2").numFmt).toBe("@");
     const lists = wb.getWorksheet("Lists")!;
     expect(lists.state).toBe("veryHidden");
-    expect(lists.getColumn(2).values.slice(1)).toEqual(["all", "Haldi", "Wedding", "Reception"]);
+    expect(lists.getColumn(2).values.slice(1)).toEqual(["Yes", "No"]);
   });
 
   it("offers only the host's own side to a one-side host", async () => {
@@ -54,8 +54,8 @@ describe("Excel template", () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    ws.getRow(2).values = ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", "bride", "98765 43210", null, 6];
-    ws.getRow(3).values = ["Dr. G. Sathe", null, "groom", 9123456789, "Wedding, Reception", null];
+    ws.getRow(2).values = ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", "bride", "98765 43210", "Yes", "Yes", "Yes", 6];
+    ws.getRow(3).values = ["Dr. G. Sathe", null, "groom", 9123456789, null, "Yes", "Yes", null];
     const filled = Buffer.from(await wb.xlsx.writeBuffer());
 
     const { text } = await readBack(filled);
