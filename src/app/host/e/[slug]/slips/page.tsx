@@ -94,18 +94,19 @@ function Slip({
               </div>
             )}
             <div className="mt-[2mm]" style={{ fontSize: lang === "both" ? "7.5pt" : "8.5pt", lineHeight: 1.35 }}>
-              {en && (
-                <>
-                  <div className="font-bold">Scan to tell us who&apos;s coming.</div>
-                  <div>Reply by {replyBy.en}.</div>
-                </>
-              )}
+              {/* Marathi first, then English, like the name above (owner, 12 Nov). */}
               {mr && (
                 <>
-                  <div lang="mr" className={`font-bold ${en ? "mt-[1.6mm]" : ""}`}>
+                  <div lang="mr" className="font-bold">
                     QR स्कॅन करून कोण कोण येणार ते कळवा.
                   </div>
                   <div lang="mr">{replyBy.mr} पर्यंत.</div>
+                </>
+              )}
+              {en && (
+                <>
+                  <div className={`font-bold ${mr ? "mt-[1.6mm]" : ""}`}>Scan to tell us who&apos;s coming.</div>
+                  <div>Reply by {replyBy.en}.</div>
                 </>
               )}
             </div>
@@ -133,8 +134,8 @@ function Slip({
         </div>
         {phone && (
           <div className="mt-[1.5mm] border-t border-line pt-[1.2mm]" style={{ fontSize: lang === "both" ? "6.6pt" : "7.2pt", lineHeight: 1.3 }}>
-            {en && <div>No smartphone? Call {phone} and give your code.</div>}
             {mr && <div lang="mr">स्मार्टफोन नाही? {phone} वर फोन करून कोड सांगा.</div>}
+            {en && <div>No smartphone? Call {phone} and give your code.</div>}
           </div>
         )}
       </div>
