@@ -23,14 +23,19 @@ const CHOICES: { value: SlipLang; label: string; short: string; title: string; l
   { value: "both", label: "Both", short: "Both", title: "English and Marathi" },
 ];
 
-const SIDES: { value: Side; label: string; short: string }[] = [
-  { value: "bride", label: "Bride's side", short: "Bride" },
-  { value: "groom", label: "Groom's side", short: "Groom" },
+const SIDES: { value: Side; label: string }[] = [
+  { value: "bride", label: "Bride's side" },
+  { value: "groom", label: "Groom's side" },
 ];
+
+/** Places compare without case or outer spaces ("borivali " = "Borivali"). */
+const placeKey = (s: string | null) => (s ?? "").trim().toLowerCase();
+const NO_PLACE = "-";
 
 /**
  * The language each household's slip is printed in, saved on the household.
- * Search, or filter by language and (for the owner) side; one tap changes one
+ * Search, or filter by side (owner), location and language, each a drop-down
+ * with counts (owner, 12 Nov); one tap changes one
  * household; tick several (or every one shown) to change them at once.
  * Phones get smaller text and a drop-down per row instead of three buttons.
  */
@@ -44,21 +49,36 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState<SlipLang | null>(null);
   const [side, setSide] = useState<Side | null>(null);
+  // A place key, NO_PLACE for households with no location, or null for every location.
+  const [place, setPlace] = useState<string | null>(null);
   const langOf = (r: SlipLangRow) => local[r.id] ?? r.lang;
 
-  // Language counts follow the side filter; side counts are for every household.
+  // Each drop-down counts within the filters before it: side, then location, then language.
+  const sideCount = (s: Side) => rows.filter((r) => r.side === s).length;
+  const bySide = side ? rows.filter((r) => r.side === side) : rows;
+  const places = useMemo(() => {
+    const m = new Map<string, { label: string; n: number }>();
+    for (const r of bySide) {
+      const k = placeKey(r.location);
+      if (!k) continue;
+      const e = m.get(k);
+      if (e) e.n += 1;
+      else m.set(k, { label: r.location!.trim(), n: 1 });
+    }
+    return [...m.entries()].sort((a, b) => a[1].label.localeCompare(b[1].label, "en", { sensitivity: "base" }));
+  }, [bySide]);
+  const noPlace = bySide.filter((r) => !placeKey(r.location)).length;
+  const inPlace = (r: SlipLangRow) => !place || placeKey(r.location) === (place === NO_PLACE ? "" : place);
+  const byPlace = bySide.filter(inPlace);
   const counts = useMemo(() => {
     const c: Record<SlipLang, number> = { en: 0, mr: 0, both: 0 };
-    for (const r of rows) if (!side || r.side === side) c[local[r.id] ?? r.lang] += 1;
+    for (const r of byPlace) c[local[r.id] ?? r.lang] += 1;
     return c;
-  }, [rows, local, side]);
-  const sideCount = (s: Side) => rows.filter((r) => r.side === s).length;
-  const inSide = side ? rows.filter((r) => r.side === side).length : rows.length;
+  }, [byPlace, local]);
 
   const q = query.trim().toLowerCase();
-  const shown = rows.filter(
+  const shown = byPlace.filter(
     (r) =>
-      (!side || r.side === side) &&
       (!only || langOf(r) === only) &&
       (!q || r.nameEn.toLowerCase().includes(q) || (r.nameMr ?? "").includes(query.trim()) || (r.location ?? "").toLowerCase().includes(q)),
   );
@@ -93,59 +113,62 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
       return n;
     });
 
-  const chip = (active: boolean) =>
-    `inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-bold sm:px-3.5 ${active ? "bg-kumkum text-white" : "bg-paper-deep text-ink hover:bg-sand"}`;
   // Location is its own column from 640 px; on phones it sits under the names.
   const cols = showSide ? 5 : 4;
 
   return (
     <div>
-      {/* Search and filters */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      {/* Search on the left; side, location and language as drop-downs with counts (owner, 12 Nov). */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <label className="relative block lg:w-80">
           <span className="sr-only">Search households by name or location</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
           <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name or place" className="input pl-10" />
         </label>
-        <div className="space-y-2 lg:text-right">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:justify-end">
           {showSide && (
-            <div className="flex flex-wrap items-center gap-2 lg:justify-end" role="group" aria-label="Side">
-              <span className="text-sm font-semibold text-ink-soft">Side</span>
-              <button type="button" onClick={() => setSide(null)} aria-pressed={side === null} className={chip(side === null)}>
-                Both {rows.length}
-              </button>
-              {SIDES.map((s) => (
-                <button key={s.value} type="button" onClick={() => setSide(s.value)} aria-pressed={side === s.value} className={chip(side === s.value)}>
-                  {s.short} {sideCount(s.value)}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-2 lg:justify-end" role="group" aria-label="Language">
-            {/* Phones: no label and short chip names (En / म), so the row fits; the group is still named for screen readers. */}
-            <span className="hidden text-sm font-semibold text-ink-soft sm:inline">Language</span>
-            <button type="button" onClick={() => setOnly(null)} aria-pressed={only === null} className={chip(only === null)}>
-              All {inSide}
-            </button>
-            {CHOICES.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                onClick={() => setOnly(c.value)}
-                aria-pressed={only === c.value}
-                aria-label={`${c.title}: ${counts[c.value]}`}
-                className={chip(only === c.value)}
+            <label className="block sm:w-44">
+              <span className="label">Side</span>
+              <select
+                value={side ?? ""}
+                onChange={(e) => {
+                  setSide(e.target.value === "bride" || e.target.value === "groom" ? e.target.value : null);
+                  setPlace(null);
+                }}
+                className="input"
               >
-                <span lang={c.lang} className="sm:hidden">
-                  {c.short}
-                </span>
-                <span lang={c.lang} className="hidden sm:inline">
-                  {c.label}
-                </span>{" "}
-                {counts[c.value]}
-              </button>
-            ))}
-          </div>
+                <option value="">Both sides ({rows.length})</option>
+                {SIDES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label} ({sideCount(s.value)})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="block sm:w-56">
+            <span className="label">Location</span>
+            <select value={place ?? ""} onChange={(e) => setPlace(e.target.value || null)} className="input">
+              <option value="">Every location ({bySide.length})</option>
+              {places.map(([k, p]) => (
+                <option key={k} value={k}>
+                  {p.label} ({p.n})
+                </option>
+              ))}
+              {noPlace > 0 && <option value={NO_PLACE}>No location given ({noPlace})</option>}
+            </select>
+          </label>
+          <label className={`block sm:w-48 ${showSide ? "col-span-2 sm:col-span-1" : ""}`}>
+            <span className="label">Language</span>
+            <select value={only ?? ""} onChange={(e) => setOnly(CHOICES.find((c) => c.value === e.target.value)?.value ?? null)} className="input">
+              <option value="">Every language ({byPlace.length})</option>
+              {CHOICES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.title} ({counts[c.value]})
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
