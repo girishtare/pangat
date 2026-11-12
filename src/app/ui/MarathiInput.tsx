@@ -60,7 +60,8 @@ export function MarathiInput(props: {
       <label htmlFor={id} className="label">
         {props.label}
       </label>
-      <div className="flex gap-2">
+      {/* Phones: Suggest sits under the field, so the field gets the full width (Codex test, 12 Nov). */}
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           id={id}
           ref={ref}
@@ -77,7 +78,7 @@ export function MarathiInput(props: {
           type="button"
           onClick={suggest}
           disabled={pending}
-          className="btn btn-secondary shrink-0 px-3"
+          className="btn btn-secondary shrink-0 self-start px-3 sm:self-auto"
           title="Suggest the Marathi from the English"
         >
           <Languages className="h-5 w-5" aria-hidden="true" />

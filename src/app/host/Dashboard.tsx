@@ -205,7 +205,7 @@ function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
         <span>
           · {pct(f.responseRate)} of {n(f.invitedHouseholds)} replied
         </span>
-        {f.invitedPeople > 0 && <span>· {n(f.invitedPeople)} people invited</span>}
+        {f.invitedPeople > 0 && <span>· {n(f.invitedPeople)} {f.invitedPeople === 1 ? "person" : "people"} invited</span>}
       </p>
     </section>
   );
