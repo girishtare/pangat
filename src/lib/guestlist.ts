@@ -74,6 +74,8 @@ const headerKey = (s: string) => s.trim().toLowerCase().replace(/[\s_().'’:-]/
 
 const YES = new Set(["yes", "y", "✓", "✔", "x", "true", "1", "हो", "होय"]);
 const NO = new Set(["no", "n", "false", "0", "नाही"]);
+/** Words that mark a column as a function column (not numbers, so a Count column isn't mistaken for one). */
+const YES_NO_WORDS = new Set(["yes", "no", "y", "n", "✓", "✔", "हो", "होय", "नाही"]);
 
 /** A function column's cell: true = invited, false = not, null = unreadable. */
 export function parseInvited(raw: string): boolean | null {
@@ -204,6 +206,21 @@ export function checkSheet(input: {
     }
   });
   const byColumns = fnCols.length > 0;
+
+  // A column of Yes / No answers whose header isn't one of this event's functions:
+  // a function renamed since the template was downloaded. Ignoring it would drop
+  // those invitations silently, so stop. (Other extra columns, like Notes, are ignored.)
+  const fnTaken = new Set(fnCols.map((c) => c.index));
+  for (let index = 0; index < table[headerIndex].length; index++) {
+    const head = table[headerIndex][index].trim();
+    if (!head || taken.has(index) || fnTaken.has(index)) continue;
+    const values = dataRows.map((r) => (r[index] ?? "").trim().toLowerCase()).filter(Boolean);
+    if (values.length && values.every((v) => YES_NO_WORDS.has(v))) {
+      return empty(
+        `Column "${head}" isn't one of this event's functions (${functionList || "none yet"}). Rename the column to match, or download a fresh template.`,
+      );
+    }
+  }
 
   const existingByMobile = new Map(input.existing.filter((e) => e.mobile).map((e) => [e.mobile as string, e]));
   const existingByName = new Map(input.existing.map((e) => [`${e.side}|${nameKey(e.nameEn)}`, e]));

@@ -194,3 +194,19 @@ describe("one Yes column per function (template, 12 Nov)", () => {
     expect(r.rows[0].draft?.functionIds).toEqual(["f-wedding"]);
   });
 });
+
+describe("columns from an out-of-date template", () => {
+  it("stops on a Yes column that isn't one of the event's functions (renamed since download)", () => {
+    const r = check("Name\tSide\tSangeet\tWedding\nJoshi\tbride\tYes\tYes\nSathe\tgroom\t\tYes");
+    expect(r.problem).toBe(
+      'Column "Sangeet" isn\'t one of this event\'s functions (Haldi, Wedding, Reception). Rename the column to match, or download a fresh template.',
+    );
+    expect(r.rows).toEqual([]);
+  });
+
+  it("still ignores other extra columns, like notes or numbers", () => {
+    const r = check("Name\tSide\tNotes\tCount\tWedding\nJoshi\tbride\tuncle's side\t3\tYes\nSathe\tgroom\t\t1\tYes");
+    expect(r.problem).toBeNull();
+    expect(r.counts.new).toBe(2);
+  });
+});
