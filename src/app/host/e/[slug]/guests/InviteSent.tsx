@@ -5,16 +5,17 @@ import { useState, useTransition } from "react";
 import type { InviteVia } from "@/lib/store/supabase";
 import { saveInviteSent } from "./inviteActions";
 
-const VIA: { value: InviteVia; label: string }[] = [
-  { value: "card", label: "Card" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "both", label: "Card and WhatsApp" },
+const CHOICES: { value: InviteVia | ""; label: string }[] = [
+  { value: "", label: "Not Sent" },
+  { value: "card", label: "Card Sent" },
+  { value: "whatsapp", label: "WA Sent" },
+  { value: "both", label: "Card & WA Sent" },
 ];
 
 /**
- * "Invitation sent" for one household, ticked by hand, and how it went out:
- * the printed card, WhatsApp, or both (owner, 12 Nov). Saved as soon as it
- * changes; ticking starts on Card, since the cards carry the printed slips.
+ * Whether one household's invitation has gone out, and how: one drop-down,
+ * Not Sent / Card Sent / WA Sent / Card & WA Sent (owner, 12 Nov; was a tick
+ * box plus a drop-down). Saved as soon as it changes.
  */
 export default function InviteSent({ slug, id, name, via }: { slug: string; id: string; name: string; via: InviteVia | null }) {
   const router = useRouter();
@@ -42,33 +43,21 @@ export default function InviteSent({ slug, id, name, via }: { slug: string; id: 
   };
 
   return (
-    <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${pending ? "opacity-70" : ""}`} aria-busy={pending}>
-      <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 text-sm font-semibold">
-        <input
-          type="checkbox"
-          checked={shown !== null}
-          onChange={(e) => save(e.target.checked ? "card" : null)}
-          className="h-5 w-5 accent-kumkum"
-          aria-label={`Invitation sent to ${name}`}
-        />
-        <span>{shown ? "Sent" : "Not sent"}</span>
-      </label>
-      {shown && (
-        <select
-          value={shown}
-          onChange={(e) => save(e.target.value as InviteVia)}
-          className="input min-h-10 w-auto py-1 text-sm"
-          aria-label={`How the invitation went to ${name}`}
-        >
-          {VIA.map((v) => (
-            <option key={v.value} value={v.value}>
-              {v.label}
-            </option>
-          ))}
-        </select>
-      )}
+    <div className={pending ? "opacity-70" : undefined} aria-busy={pending}>
+      <select
+        value={shown ?? ""}
+        onChange={(e) => save(e.target.value === "" ? null : (e.target.value as InviteVia))}
+        aria-label={`Invitation for ${name}`}
+        className={`input min-h-10 w-auto py-1 text-sm ${shown ? "border-leaf font-semibold" : ""}`}
+      >
+        {CHOICES.map((c) => (
+          <option key={c.value} value={c.value}>
+            {c.label}
+          </option>
+        ))}
+      </select>
       {error && (
-        <p role="alert" className="w-full text-sm text-kumkum">
+        <p role="alert" className="mt-1 text-sm text-kumkum">
           {error}
         </p>
       )}
