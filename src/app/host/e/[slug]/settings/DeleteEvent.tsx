@@ -75,7 +75,7 @@ export default function DeleteEvent({ slug, eventName, households }: { slug: str
         className="card m-auto w-[calc(100%-2rem)] max-w-lg p-0 text-base outline-none"
       >
         <div className="flex items-center justify-between gap-3 border-b border-line bg-kumkum-soft px-5 py-4">
-          <h2 id="delete-event-title" className="flex items-center gap-2 font-display text-[1.375rem] leading-tight text-kumkum">
+          <h2 id="delete-event-title" className="flex items-center gap-2 font-display text-[1.125rem] leading-tight text-kumkum">
             <TriangleAlert className="h-6 w-6 shrink-0" aria-hidden="true" />
             Delete this event?
           </h2>

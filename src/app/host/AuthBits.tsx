@@ -15,7 +15,7 @@ export function AuthShell({ title, subtitle, children, below }: { title: string;
         <Logo decorative className="h-12 sm:h-14" />
       </Link>
       <div className="card mt-6 p-5 sm:p-7">
-        <h1 className="font-display text-[1.875rem] leading-tight text-kumkum sm:text-[2.125rem]">{title}</h1>
+        <h1 className="font-display text-[1.5rem] leading-tight text-kumkum sm:text-[1.625rem]">{title}</h1>
         {subtitle && <div className="mt-1.5 text-ink-soft">{subtitle}</div>}
         <div className="mt-5">{children}</div>
       </div>

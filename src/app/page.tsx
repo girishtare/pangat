@@ -5,7 +5,7 @@ import { paletteEFonts } from "./fonts";
 import StartAtTop from "./ui/StartAtTop";
 import Logo from "./ui/Logo";
 
-// Headings in Playfair Display (bold); text in Noto Sans. Both come from the root layout.
+// Headings in Space Grotesk; text in IBM Plex Sans (Marathi: Noto). Both come from the root layout.
 const display = "font-playfair font-bold [font-synthesis-weight:none]";
 const wrap = "mx-auto max-w-[1200px] px-4 md:px-6";
 

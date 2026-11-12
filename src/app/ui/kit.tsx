@@ -50,13 +50,13 @@ export function WhatsAppIcon({ className = "h-5 w-5" }: { className?: string }) 
 
 /* Page structure */
 
-/** Page title: Playfair Display about 40 px in maroon, a short line under it, optional actions on the right. */
+/** Page title: Space Grotesk about 28 px in maroon, a short line under it, optional actions on the right. */
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="mb-5 lg:mb-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-display text-[1.875rem] leading-[1.2] text-kumkum lg:text-[2.5rem]">{title}</h1>
+          <h1 className="font-display text-[1.5rem] leading-[1.2] text-kumkum lg:text-[1.75rem]">{title}</h1>
           {subtitle && <div className="mt-1 text-ink-soft">{subtitle}</div>}
         </div>
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
@@ -108,7 +108,7 @@ export function PageTabs({
   );
 }
 
-/** A card with a Playfair Display title (optionally numbered), a subtitle and actions on the right. */
+/** A card with a Space Grotesk title (optionally numbered), a subtitle and actions on the right. */
 export function Section({
   n,
   title,
@@ -138,7 +138,7 @@ export function Section({
             </span>
           )}
           <div className="min-w-0">
-            <h2 className="font-display text-2xl leading-[1.3] text-kumkum">{title}</h2>
+            <h2 className="font-display text-[1.3125rem] leading-[1.3] text-kumkum">{title}</h2>
             {subtitle && <div className="mt-0.5 text-[0.9375rem] text-ink-soft">{subtitle}</div>}
           </div>
         </div>
@@ -173,7 +173,7 @@ export function Stat({
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="font-display text-2xl leading-tight text-ink sm:text-3xl">{value}</div>
+        <div className="font-display text-[1.3125rem] leading-tight text-ink sm:text-2xl">{value}</div>
         <div className="text-xs font-semibold text-ink-soft sm:text-sm">{label}</div>
         {sub && <div className="text-xs text-ink-soft">{sub}</div>}
         {progress && (

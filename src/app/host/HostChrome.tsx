@@ -155,7 +155,7 @@ export function GateMessage({ gate, title }: { gate: Exclude<HostGate, { ok: tru
       <Wordmark small />
       <div className="card mt-6 p-6">
         <ShieldAlert className="h-8 w-8 text-haldi-deep" aria-hidden="true" />
-        <h1 className="mt-2 font-display text-2xl text-kumkum">{title}</h1>
+        <h1 className="mt-2 font-display text-[1.3125rem] text-kumkum">{title}</h1>
         <p className="mt-2 text-ink">{text}</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link className="btn btn-secondary" href="/host?all=1">

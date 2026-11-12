@@ -19,7 +19,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
     const data = await getStore().getDashboard("demo-wedding");
     return (
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <h1 className="font-display text-3xl text-kumkum">{data?.event.name.en ?? "Demo"}</h1>
+        <h1 className="font-display text-2xl text-kumkum">{data?.event.name.en ?? "Demo"}</h1>
         <p className="mt-1 mb-6 text-ink-soft">Demo data. Sign-in, the guest list and event settings need a database.</p>
         {data && <Dashboard data={data} scope="both" settingsHref={null} />}
       </main>
@@ -29,7 +29,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
   if (!who.ok) {
     return (
       <main className="mx-auto max-w-md px-5 py-16">
-        <h1 className="text-2xl font-bold text-kumkum">Host</h1>
+        <h1 className="text-[1.3125rem] font-bold text-kumkum">Host</h1>
         <p className="mt-3">Host sign-in is not set up yet (SUPABASE_PUBLISHABLE_KEY is missing).</p>
       </main>
     );
@@ -62,7 +62,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
       <main className="mx-auto max-w-6xl px-4 pb-14 pt-6 sm:px-6 sm:pt-8">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <div>
-            <h1 className="font-display text-[2rem] leading-tight text-kumkum-dark sm:text-[2.75rem]">Your events</h1>
+            <h1 className="font-display text-[1.5rem] leading-tight text-kumkum-dark sm:text-[2rem]">Your events</h1>
             <p className="mt-1 text-lg text-ink-soft">Choose an event to continue.</p>
           </div>
           {events.length > 0 && create}
@@ -71,7 +71,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
         {events.length === 0 ? (
           <div className="card mt-8 flex flex-col items-center gap-4 px-6 py-10 text-center">
             <EventArt className="h-20 w-24" />
-            <p className="font-display text-2xl text-kumkum">No events yet</p>
+            <p className="font-display text-[1.3125rem] text-kumkum">No events yet</p>
             <p className="max-w-md text-ink-soft">You are not a host of any event yet. Create one, or ask the person running an event to add you.</p>
             {create}
           </div>
@@ -82,7 +82,7 @@ export default async function HostHome({ searchParams }: { searchParams: Promise
               <li key={e.slug} className="flex">
                 <article className="card relative flex w-full flex-col p-5 transition-colors hover:border-kumkum sm:p-6">
                   <EventArt className="h-20 w-24 shrink-0" />
-                  <h2 className="wrap-names mt-4 font-display text-[1.375rem] leading-snug text-ink sm:text-2xl">{e.name.en}</h2>
+                  <h2 className="wrap-names mt-4 font-display text-[1.125rem] leading-snug text-ink sm:text-[1.3125rem]">{e.name.en}</h2>
                   <p className="mt-1.5 flex items-center gap-2 text-ink-soft">
                     <CalendarDays className="h-5 w-5 shrink-0 text-kumkum" aria-hidden="true" />
                     {e.firstStartsAt ? `First function: ${dayMonthYear(e.firstStartsAt)}` : "No functions yet"}
