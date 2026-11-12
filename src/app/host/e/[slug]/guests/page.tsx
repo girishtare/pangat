@@ -180,14 +180,14 @@ export default async function GuestList({
           <CountCard
             ok
             label={guests.length === 1 ? "Invitation sent" : `All ${n(guests.length)} invitations sent`}
-            sub={`${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} both`}
+            sub={`${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} card & WA`}
           />
         ) : (
           <Link href={`/host/e/${slug}/guests?invite=not`} className="block rounded-[1.25rem] hover:opacity-90">
             <CountCard
               value={n(notSent)}
               label={notSent === 1 ? "invitation not sent" : "invitations not sent"}
-              sub={`Sent: ${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} both`}
+              sub={`Sent: ${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} card & WA`}
             />
           </Link>
         )}
