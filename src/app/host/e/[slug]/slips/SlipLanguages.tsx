@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { Search } from "lucide-react";
+import { Printer, Search } from "lucide-react";
 import type { SlipLang } from "@/lib/store/supabase";
 import type { Side } from "@/lib/types";
 import { saveSlipLang } from "./actions";
@@ -46,6 +47,9 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
   // Shown at once; the server copy follows on refresh.
   const [local, setLocal] = useState<Record<string, SlipLang>>({});
   const [ticked, setTicked] = useState<Set<string>>(new Set());
+  // Slips to print, chosen in the last column (owner, 12 Nov), apart from the language ticks.
+  // "Print these slips" opens Print slips with just these (?ids=), in name order.
+  const [toPrint, setToPrint] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState<SlipLang | null>(null);
   const [side, setSide] = useState<Side | null>(null);
@@ -94,6 +98,27 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
     });
   };
 
+  const shownPrint = shown.filter((r) => toPrint.has(r.id));
+  const allShownPrint = shown.length > 0 && shownPrint.length === shown.length;
+  const togglePrint = (id: string) =>
+    setToPrint((t) => {
+      const n = new Set(t);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const togglePrintShown = () =>
+    setToPrint((t) => {
+      const n = new Set(t);
+      for (const r of shown) {
+        if (allShownPrint) n.delete(r.id);
+        else n.add(r.id);
+      }
+      return n;
+    });
+  // In the list's order (household name), so the sheets come out the same way.
+  const printIds = rows.filter((r) => toPrint.has(r.id)).map((r) => r.id);
+
   const shownTicked = shown.filter((r) => ticked.has(r.id));
   const allShownTicked = shown.length > 0 && shownTicked.length === shown.length;
   const toggle = (id: string) =>
@@ -114,7 +139,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
     });
 
   // Location is its own column from 640 px; on phones it sits under the names.
-  const cols = showSide ? 5 : 4;
+  const cols = showSide ? 6 : 5;
 
   return (
     <div>
@@ -195,6 +220,33 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
 
       {error && <p className="mt-2 text-sm font-semibold text-kumkum">{error}</p>}
 
+      {/* Slips to print: chosen in the table's last column. */}
+      <div className="mt-3 flex flex-col gap-2 rounded-xl border-2 border-dashed border-line px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <span className="font-semibold">
+          {printIds.length
+            ? `${printIds.length} slip${printIds.length === 1 ? "" : "s"} to print`
+            : "Tick households in the Print column to print just their slips"}
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {printIds.length > 0 && (
+            <button type="button" onClick={() => setToPrint(new Set())} className="btn btn-quiet btn-sm min-h-10">
+              Clear
+            </button>
+          )}
+          {printIds.length > 0 ? (
+            <Link href={`/host/e/${slug}/slips?ids=${printIds.join(",")}`} className="btn btn-primary btn-sm min-h-10">
+              <Printer className="h-4 w-4" aria-hidden="true" />
+              Print these slips
+            </Link>
+          ) : (
+            <span className="btn btn-primary btn-sm pointer-events-none min-h-10 opacity-50" aria-disabled="true">
+              <Printer className="h-4 w-4" aria-hidden="true" />
+              Print these slips
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* The list: scrolls inside its box, header row pinned. Columns after the tick-box share the width evenly.
           The box is a size container: the three language buttons show only when the table is wide enough for
           them (56rem); narrower (phone, tablet, a narrow window) each row gets a drop-down, so it never scrolls sideways. */}
@@ -206,6 +258,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
             <col className="max-sm:hidden" />
             {showSide && <col className="max-sm:w-[4.75rem]" />}
             <col className="max-sm:w-[6.5rem]" />
+            <col className="w-12 sm:w-20" />
           </colgroup>
           <thead>
             <tr>
@@ -225,6 +278,19 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
               <th className="max-sm:px-1.5!">
                 <span className="sm:hidden">Language</span>
                 <span className="hidden sm:inline">Slip language</span>
+              </th>
+              <th className="max-sm:px-1!">
+                <label className="inline-flex cursor-pointer flex-col items-center gap-0.5">
+                  <span>Print</span>
+                  <input
+                    type="checkbox"
+                    checked={allShownPrint}
+                    onChange={togglePrintShown}
+                    disabled={shown.length === 0}
+                    aria-label={allShownPrint ? "Take every household shown off the print list" : "Add every household shown to the print list"}
+                    className="h-5 w-5 accent-kumkum"
+                  />
+                </label>
               </th>
             </tr>
           </thead>
@@ -306,6 +372,15 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
                           );
                         })}
                       </span>
+                    </td>
+                    <td className="max-sm:px-1!">
+                      <input
+                        type="checkbox"
+                        checked={toPrint.has(r.id)}
+                        onChange={() => togglePrint(r.id)}
+                        aria-label={`Print the slip for ${r.nameEn}`}
+                        className="h-5 w-5 align-middle accent-kumkum"
+                      />
                     </td>
                   </tr>
                 );
