@@ -52,6 +52,12 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
         <input name="mobile" inputMode="tel" autoComplete="off" className="input" placeholder="98765 43210" />
         <span className="hint mt-1 block">The number that should get the WhatsApp link. Leave blank if they have none.</span>
       </label>
+      <label className="block">
+        <span className="label">
+          Location <span className="font-normal text-ink-soft">(where they stay, optional)</span>
+        </span>
+        <input name="location" maxLength={80} className="input" placeholder="e.g. Borivali, Mumbai" />
+      </label>
       <fieldset>
         <legend className="label">Invited to</legend>
         <div className="flex flex-wrap gap-2">
@@ -67,6 +73,12 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
           Most people on this card <span className="font-normal text-ink-soft">(optional)</span>
         </span>
         <input name="cap" type="number" min={1} max={30} className="input max-w-[10rem]" placeholder="e.g. 6" />
+      </label>
+      <label className="block">
+        <span className="label">
+          Comments / Notes <span className="font-normal text-ink-soft">(optional)</span>
+        </span>
+        <textarea name="notes" maxLength={500} rows={2} className="input" />
       </label>
 
       {state && !state.ok && (

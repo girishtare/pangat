@@ -55,6 +55,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
               {hh.side === "bride" ? "Bride's side" : "Groom's side"}
             </span>
             {hh.mobile ? <span>{displayPhone(hh.mobile)}</span> : <span className="font-bold text-kumkum">No mobile</span>}
+            {hh.location && <span>{hh.location}</span>}
             <span>
               Code <span className="font-display text-lg tracking-[0.2em]">{hh.shortCode}</span>
             </span>
@@ -122,6 +123,8 @@ export default async function Household({ params }: { params: Promise<{ slug: st
               nameMr={hh.nameMr}
               mobile={displayPhone(hh.mobile)}
               softCap={hh.softCap}
+              location={hh.location}
+              notes={hh.notes}
               functions={host.functions.map((f) => ({
                 id: f.id,
                 name: f.name.en,

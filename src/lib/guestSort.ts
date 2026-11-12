@@ -2,7 +2,7 @@
  * Sorting the guest list by any column. Ties fall back to the English name, so
  * the order is always stable and predictable.
  */
-export const GUEST_SORTS = ["name", "side", "mobile", "code", "invited", "replied", "cap"] as const;
+export const GUEST_SORTS = ["name", "side", "mobile", "location", "code", "invited", "replied", "cap"] as const;
 export type GuestSort = (typeof GUEST_SORTS)[number];
 export type SortDir = "asc" | "desc";
 
@@ -10,6 +10,7 @@ export interface SortableGuest {
   nameEn: string;
   side: "bride" | "groom";
   mobile: string | null;
+  location?: string | null;
   shortCode: string;
   functionIds: string[];
   replied: string[];
@@ -26,7 +27,7 @@ const byName = (a: SortableGuest, b: SortableGuest) => a.nameEn.localeCompare(b.
 /** Share of invited functions answered: 0 = no reply, 1 = all. */
 const replyShare = (g: SortableGuest) => (g.functionIds.length ? g.replied.length / g.functionIds.length : 0);
 
-/** Returns a new, sorted array. Blanks (no mobile, no cap) always go last, whichever way. */
+/** Returns a new, sorted array. Blanks (no mobile, no location, no cap) always go last, whichever way. */
 export function sortGuests<T extends SortableGuest>(rows: T[], sort: GuestSort | null, dir: SortDir): T[] {
   if (!sort) return rows;
   const sign = dir === "desc" ? -1 : 1;
@@ -44,6 +45,8 @@ export function sortGuests<T extends SortableGuest>(rows: T[], sort: GuestSort |
         return sign * a.side.localeCompare(b.side);
       case "mobile":
         return blanksLast(a.mobile, b.mobile, () => a.mobile!.localeCompare(b.mobile!));
+      case "location":
+        return blanksLast(a.location ?? null, b.location ?? null, () => a.location!.localeCompare(b.location!, "en", { sensitivity: "base" }));
       case "code":
         return sign * a.shortCode.localeCompare(b.shortCode);
       case "invited":

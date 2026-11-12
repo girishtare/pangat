@@ -55,3 +55,11 @@ describe("parseSort", () => {
     expect(parseSort("drop table", "sideways")).toEqual({ sort: null, dir: "asc" });
   });
 });
+
+describe("sort by location", () => {
+  it("sorts places A to Z with blanks last, either way", () => {
+    const rows = [g("A", { location: "Thane" }), g("B", { location: null }), g("C", { location: "borivali" })];
+    expect(sortGuests(rows, "location", "asc").map((r) => r.nameEn)).toEqual(["C", "A", "B"]);
+    expect(sortGuests(rows, "location", "desc").map((r) => r.nameEn)).toEqual(["A", "C", "B"]);
+  });
+});

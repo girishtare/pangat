@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { normaliseMobile, parseSide } from "@/lib/guestlist";
+import { MAX_LOCATION, MAX_NOTES, sameHousehold, normaliseMobile, parseSide } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
 import { deleteHousehold, loadHousehold, saveOnBehalf, updateHousehold, type HouseholdDetail } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
@@ -81,6 +81,11 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   const mob = normaliseMobile(text(fd.get("mobile")));
   if (!mob.ok) return { ok: false, message: "That mobile number doesn't look right." };
 
+  const location = text(fd.get("location")) || null;
+  if (location && location.length > MAX_LOCATION) return { ok: false, message: `Keep the location short (up to ${MAX_LOCATION} characters), e.g. "Borivali, Mumbai".` };
+  const notes = text(fd.get("notes")) || null;
+  if (notes && notes.length > MAX_NOTES) return { ok: false, message: `Comments / Notes can be up to ${MAX_NOTES} characters.` };
+
   const capRaw = text(fd.get("cap"));
   const cap = capRaw === "" ? null : Number(capRaw);
   if (cap !== null && (!Number.isInteger(cap) || cap < 1 || cap > MAX_HEADS)) return { ok: false, message: `Cap must be from 1 to ${MAX_HEADS}, or blank.` };
@@ -92,14 +97,13 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   if (functionIds.length === 0) return { ok: false, message: "Tick at least one function." };
 
   const others = (await loadHouseholdKeys(host.event.id)).filter((k) => k.id !== hh.id);
-  const key = (s: string) => s.toLowerCase().replace(/[.,]/g, " ").replace(/\s+/g, " ").trim();
-  if (others.some((o) => o.side === side && key(o.nameEn) === key(nameEn))) {
-    return { ok: false, message: "Another household on this side already has that name." };
+  if (others.some((o) => sameHousehold(o, { side, nameEn, mobile: mob.value, location }))) {
+    return { ok: false, message: "Another household on this side has that name. Add a different mobile or location to tell them apart." };
   }
   const sameMobile = mob.value ? others.find((o) => o.mobile === mob.value) : undefined;
   if (sameMobile && sameMobile.side === side) return { ok: false, message: "Another household on this side already has that mobile." };
 
-  await updateHousehold(host.event.id, hh.id, { side, nameEn, nameMr, mobile: mob.value, softCap: cap }, functionIds);
+  await updateHousehold(host.event.id, hh.id, { side, nameEn, nameMr, mobile: mob.value, softCap: cap, location, notes }, functionIds);
   return done(sameMobile ? `Saved. Note: this mobile is also on the ${SIDE_NAMES[sameMobile.side]}.` : "Saved.");
 }
 

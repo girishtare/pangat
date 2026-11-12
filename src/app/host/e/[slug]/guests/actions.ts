@@ -104,20 +104,25 @@ const oneLine = (v: FormDataEntryValue | null) => String(v ?? "").replace(/[\t\r
 /** Add one late household. Goes through exactly the same checks as an import. */
 export async function addHousehold(slug: string, _prev: AddState, formData: FormData): Promise<AddState> {
   const functions = formData.getAll("functions").map(oneLine).filter(Boolean);
-  const header = ["Name", "Marathi name", "Side", "Mobile", "Functions", "Cap"];
+  const header = ["Name", "Marathi name", "Side", "Mobile", "Location", "Functions", "Cap", "Comments / Notes"];
   const row = [
     oneLine(formData.get("name")),
     oneLine(formData.get("nameMr")),
     oneLine(formData.get("side")),
     oneLine(formData.get("mobile")),
+    oneLine(formData.get("location")),
     functions.length ? functions.join(", ") : "none",
     oneLine(formData.get("cap")),
+    oneLine(formData.get("notes")),
   ];
   if (!row[0]) return { ok: false, error: "Enter the household's name." };
   if (!functions.length) return { ok: false, error: "Tick at least one function." };
   const result = await saveImport(slug, `${header.join("\t")}\n${row.join("\t")}`);
   if (!result.ok && result.check?.counts.exists) {
-    return { ...result, error: "This household is already on the guest list (same name, or same mobile, on this side). Nothing was added." };
+    return {
+      ...result,
+      error: "This household is already on the guest list (same mobile, or same name with no different mobile or location, on this side). Nothing was added.",
+    };
   }
   return result;
 }

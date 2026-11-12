@@ -162,6 +162,8 @@ export function DetailsForm(props: {
   nameMr: string | null;
   mobile: string | null;
   softCap: number | null;
+  location: string | null;
+  notes: string | null;
   functions: { id: string; name: string; invited: boolean; replied: boolean }[];
 }) {
   const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id));
@@ -184,6 +186,12 @@ export function DetailsForm(props: {
           <input name="cap" type="number" min={1} max={30} defaultValue={props.softCap ?? ""} className="input" />
         </label>
       </div>
+      <label className="block">
+        <span className="label">
+          Location <span className="font-normal text-ink-soft">(where they stay)</span>
+        </span>
+        <input name="location" maxLength={80} defaultValue={props.location ?? ""} className="input" placeholder="e.g. Borivali, Mumbai" />
+      </label>
       {!props.hostSide && (
         <fieldset>
           <legend className="label">Side</legend>
@@ -210,6 +218,12 @@ export function DetailsForm(props: {
         </div>
         {props.functions.some((f) => f.replied) && <p className="hint mt-1">Functions they have replied to stay ticked.</p>}
       </fieldset>
+      <label className="block">
+        <span className="label">
+          Comments / Notes <span className="font-normal text-ink-soft">(optional)</span>
+        </span>
+        <textarea name="notes" maxLength={500} rows={3} defaultValue={props.notes ?? ""} className="input" />
+      </label>
       <Message state={state} />
       <button type="submit" disabled={pending} className="btn btn-secondary w-full sm:w-auto">
         <Save className="h-5 w-5" aria-hidden="true" />

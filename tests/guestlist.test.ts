@@ -204,9 +204,42 @@ describe("columns from an out-of-date template", () => {
     expect(r.rows).toEqual([]);
   });
 
-  it("still ignores other extra columns, like notes or numbers", () => {
-    const r = check("Name\tSide\tNotes\tCount\tWedding\nJoshi\tbride\tuncle's side\t3\tYes\nSathe\tgroom\t\t1\tYes");
+  it("still ignores other extra columns, like a relation or numbers", () => {
+    const r = check("Name\tSide\tRelation\tCount\tWedding\nJoshi\tbride\tuncle's side\t3\tYes\nSathe\tgroom\t\t1\tYes");
     expect(r.problem).toBeNull();
     expect(r.counts.new).toBe(2);
+  });
+});
+
+describe("location and comments / notes (12 Nov)", () => {
+  it("reads both, from the template's headers", () => {
+    const r = check("Name\tSide\tMobile\tLocation\tWedding\tCap\tComments / Notes\nJoshi\tbride\t9876543210\t Borivali,  Mumbai \tYes\t4\tComing a day early");
+    expect(r.rows[0].draft).toMatchObject({ location: "Borivali, Mumbai", notes: "Coming a day early", softCap: 4, functionIds: ["f-wedding"] });
+  });
+
+  it("keeps them blank when missing, and flags ones that are too long", () => {
+    expect(check("Name\tSide\nJoshi\tbride").rows[0].draft).toMatchObject({ location: null, notes: null });
+    const r = check(`Name\tSide\tLocation\tNotes\nJoshi\tbride\t${"x".repeat(81)}\t${"y".repeat(501)}`);
+    expect(r.rows[0].errors).toHaveLength(2);
+  });
+});
+
+describe("same name, different family (12 Nov)", () => {
+  it("two rows with the same name but a different mobile or location are both new", () => {
+    const r = check(
+      "Name\tSide\tMobile\tLocation\nRamesh Tare\tbride\t9876543210\tBorivali, Mumbai\nRamesh Tare\tbride\t9123456789\t\nRamesh Tare\tbride\t\tEdvan, Palghar",
+    );
+    expect(r.counts).toEqual({ new: 3, exists: 0, error: 0 });
+  });
+
+  it("is still a duplicate when nothing tells them apart (blank doesn't count as different)", () => {
+    const r = check("Name\tSide\tMobile\tLocation\nRamesh Tare\tbride\t9876543210\tBorivali\nRamesh Tare\tbride\t\tborivali");
+    expect(r.rows[1].errors.join()).toMatch(/row 2/);
+  });
+
+  it("against the existing list: a different location makes a new household; the same or blank is skipped", () => {
+    const existing = [{ side: "bride" as const, nameEn: "Ramesh Tare", mobile: null, location: "Borivali, Mumbai" }];
+    const r = check("Name\tSide\tLocation\nRamesh Tare\tbride\tEdvan, Palghar\nRamesh Tare\tbride\tborivali mumbai\nRamesh Tare\tbride\t", null, existing);
+    expect(r.rows.map((x) => x.status)).toEqual(["new", "exists", "exists"]);
   });
 });

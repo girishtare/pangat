@@ -170,6 +170,7 @@ export interface HouseholdKey {
   side: Side;
   nameEn: string;
   mobile: string | null;
+  location: string | null;
   shortCode: string;
 }
 
@@ -181,11 +182,11 @@ export interface HouseholdKey {
 export async function loadHouseholdKeys(eventId: string): Promise<HouseholdKey[]> {
   const { data, error } = await db()
     .from("households")
-    .select("id, side, name_en, mobile, short_code")
+    .select("id, side, name_en, mobile, location, short_code")
     .eq("event_id", eventId)
     .range(0, 9999);
   if (error) throw new Error(`household keys lookup failed: ${error.message}`);
-  return (data ?? []).map((r: any) => ({ id: r.id, side: r.side, nameEn: r.name_en, mobile: r.mobile, shortCode: r.short_code }));
+  return (data ?? []).map((r: any) => ({ id: r.id, side: r.side, nameEn: r.name_en, mobile: r.mobile, location: r.location ?? null, shortCode: r.short_code }));
 }
 
 export interface NewHousehold {
@@ -194,6 +195,8 @@ export interface NewHousehold {
   nameMr: string | null;
   mobile: string | null;
   softCap: number | null;
+  location: string | null;
+  notes: string | null;
   functionIds: string[];
   token: string;
   shortCode: string;
@@ -209,6 +212,8 @@ export async function insertHouseholds(eventId: string, rows: NewHousehold[]): P
     token: r.token,
     short_code: r.shortCode,
     soft_cap: r.softCap,
+    location: r.location,
+    notes: r.notes,
     function_ids: r.functionIds,
   }));
   const { data, error } = await db().rpc("import_households", { p_event: eventId, p_households: payload });
@@ -225,6 +230,8 @@ export interface GuestRow {
   shortCode: string;
   token: string;
   softCap: number | null;
+  location: string | null;
+  notes: string | null;
   createdAt: string;
   functionIds: string[];
   replied: string[]; // function ids with a reply
@@ -240,7 +247,7 @@ export type SlipLang = "both" | "en" | "mr";
 export async function listGuests(client: SupabaseClient, eventId: string): Promise<GuestRow[]> {
   const { data, error } = await client
     .from("households")
-    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, created_at, slip_lang, invites(function_id), responses(function_id, heads)")
+    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, created_at, slip_lang, invites(function_id), responses(function_id, heads)")
     .eq("event_id", eventId)
     .order("side")
     .order("created_at")
@@ -255,6 +262,8 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     shortCode: r.short_code,
     token: r.token,
     softCap: r.soft_cap,
+    location: r.location ?? null,
+    notes: r.notes ?? null,
     createdAt: r.created_at,
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     replied: (r.responses ?? []).map((x: any) => x.function_id),
