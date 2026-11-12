@@ -266,14 +266,21 @@ export default function GuestFlow({
                         ) : a.coming ? (
                           <>
                             {t(lang, "coming")} · {a.heads} {t(lang, "people")}
-                            {f.catered && <span className="font-normal text-ink-e-soft">{` (${f.vegOnly ? t(lang, "allVeg") : dietSplit(a.heads, a.veg, lang)})`}</span>}
                           </>
                         ) : (
                           <span className="text-ink-e-soft">{t(lang, "notComing")}</span>
                         )}
                       </span>
                     </div>
-                    <FunctionWhen f={f} lang={lang} showMap small />
+                    {/* Date and time on the left, the veg / non-veg split on the right, same line and size (owner, 12 Nov). */}
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2.5">
+                      <FunctionWhen f={f} lang={lang} showMap small />
+                      {a.coming && f.catered && (
+                        <span className="mt-0.5 ml-auto text-right text-sm text-ink-e-soft">
+                          {f.vegOnly ? t(lang, "allVeg") : dietSplit(a.heads, a.veg, lang)}
+                        </span>
+                      )}
+                    </div>
                   </li>
                 );
               })}
