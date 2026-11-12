@@ -36,3 +36,28 @@ describe("forecast", () => {
     expect(f.responseRate).toBe(0);
   });
 });
+
+describe("people by cap (owner, 12 Nov)", () => {
+  const waiting = (cap: number | null): ForecastInput => ({ status: "pending", heads: 0, veg: 0, nonveg: 0, cap });
+
+  it("adds up the caps of the invited cards, and counts cards without one", () => {
+    const f = forecast([{ ...yes(3), cap: 4 }, waiting(5), waiting(null), { ...no, cap: 2 }], { yesShowRate: 0.9, pendingShowRate: 0.4 });
+    expect(f.invitedHouseholds).toBe(4);
+    expect(f.invitedPeople).toBe(11);
+    expect(f.invitedWithoutCap).toBe(1);
+  });
+
+  it("estimates a pending card by its cap, and a card without a cap by the average per yes", () => {
+    // Average per yes = 4. Pending people = 6 (cap) + 4 (no cap) = 10 -> 10 x 0.5 = 5. Plus 4 x 1 = 4 -> 9.
+    const f = forecast([yes(4), waiting(6), waiting(null)], { yesShowRate: 1, pendingShowRate: 0.5 });
+    expect(f.pendingPeople).toBe(10);
+    expect(f.expectedFromPending).toBeCloseTo(5);
+    expect(f.expected).toBe(9);
+  });
+
+  it("72 cards with a cap of 3 and no replies: 216 people, expected 216 x 40%", () => {
+    const f = forecast(Array.from({ length: 72 }, () => waiting(3)), { yesShowRate: 0.9, pendingShowRate: 0.4 });
+    expect(f.invitedPeople).toBe(216);
+    expect(f.expected).toBe(86);
+  });
+});

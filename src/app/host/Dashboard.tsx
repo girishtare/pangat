@@ -30,7 +30,8 @@ export default function Dashboard({
   // Any "yes" yet? (Until then each function assumes 2 people per household.)
   const yes = facts.filter((x) => x.status === "yes");
 
-  const footnote = "Invited, yes, no and waiting count households (one card each). Confirmed, veg and non-veg count people.";
+  const footnote =
+    "Cards, yes, no and waiting count households (one card each). People adds up the caps on the invited cards. Confirmed, veg and non-veg count people who replied.";
 
   return (
     <div>
@@ -56,7 +57,7 @@ export default function Dashboard({
                 <th scope="col" className="px-4 py-3 text-left">
                   Function
                 </th>
-                {["Invited", "Yes", "No", "Waiting", "Replied", "Confirmed", "Veg", "Non-veg"].map((h) => (
+                {["Cards", "People", "Yes", "No", "Waiting", "Replied", "Confirmed", "Veg", "Non-veg"].map((h) => (
                   <th key={h} scope="col" className="px-2.5 py-3">
                     {h}
                   </th>
@@ -73,6 +74,14 @@ export default function Dashboard({
                     {fn.name.en}
                   </th>
                   <td className="px-2.5 py-3">{n(f.invitedHouseholds)}</td>
+                  <td className="px-2.5 py-3">
+                    {n(f.invitedPeople)}
+                    {f.invitedWithoutCap > 0 && (
+                      <div className="text-xs text-ink-soft" title="Cards with no cap aren't in this number">
+                        + {n(f.invitedWithoutCap)} {f.invitedWithoutCap === 1 ? "card" : "cards"} with no cap
+                      </div>
+                    )}
+                  </td>
                   <td className="px-2.5 py-3">{n(f.yesHouseholds)}</td>
                   <td className="px-2.5 py-3">{n(f.noHouseholds)}</td>
                   <td className="px-2.5 py-3">{n(f.pendingHouseholds)}</td>
@@ -91,8 +100,9 @@ export default function Dashboard({
       <div className="mt-6 rounded-2xl bg-sand px-5 py-[18px] lg:mt-8">
         <h2 className="mb-1 text-base font-bold">How &quot;Expected&quot; is worked out</h2>
         <p className="text-[0.9375rem]">
-          Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + households not replied yet × the
-          function&apos;s average people per &quot;yes&quot; × <strong>{pct(rates.pendingShowRate)}</strong>.{" "}
+          Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + people on the cards not replied
+          yet × <strong>{pct(rates.pendingShowRate)}</strong>. A card&apos;s people are its cap; a card with no cap counts the function&apos;s
+          average people per &quot;yes&quot;.{" "}
           {settingsHref ? (
             <>
               You can change both percentages in{" "}
@@ -111,14 +121,15 @@ export default function Dashboard({
             <li key={fn.id} className="flex flex-wrap items-baseline justify-between gap-x-3 rounded-lg bg-card/70 px-3 py-1.5">
               <span className="font-bold">{fn.name.en}</span>
               <span className="tabular-nums text-ink-soft">
-                {n(f.confirmedHeads)} × {pct(rates.yesShowRate)} + {n(f.pendingHouseholds)} × {oneDecimal(f.avgHeadsPerYes)} ×{" "}
-                {pct(rates.pendingShowRate)} = <strong className="text-kumkum">{n(f.expected)}</strong>
+                {n(f.confirmedHeads)} × {pct(rates.yesShowRate)} + {oneDecimal(f.pendingPeople)} people on {n(f.pendingHouseholds)}{" "}
+                {f.pendingHouseholds === 1 ? "card" : "cards"} × {pct(rates.pendingShowRate)} = <strong className="text-kumkum">{n(f.expected)}</strong>
               </span>
             </li>
           ))}
         </ul>
         <p className="mt-2 text-sm text-ink-soft">
-          The average is people per &quot;yes&quot; for that function so far{yes.length ? "" : " (2 until the first yes comes in)"}.
+          The average (for cards with no cap) is people per &quot;yes&quot; for that function so far
+          {yes.length ? "" : " (2 until the first yes comes in)"}.
         </p>
       </div>
 
@@ -179,6 +190,7 @@ function FunctionCard({ fn, f }: { fn: FunctionInfo; f: Forecast }) {
         <span>
           · {pct(f.responseRate)} of {n(f.invitedHouseholds)} replied
         </span>
+        {f.invitedPeople > 0 && <span>· {n(f.invitedPeople)} people invited</span>}
       </p>
     </section>
   );
