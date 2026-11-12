@@ -7,6 +7,7 @@ import { scopeLabel } from "@/lib/sides";
 import { shortDay } from "@/lib/when";
 import { Wordmark } from "../ui/kit";
 import MobileNav from "../ui/MobileNav";
+import { NavPending } from "../ui/NavPending";
 import { NavIcon, type NavItem, type NavKey } from "../ui/navIcons";
 import { signOut } from "./actions";
 import Logo from "../ui/Logo";
@@ -95,6 +96,7 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
                 >
                   <NavIcon name={item.icon} />
                   {item.label}
+                  <NavPending className="ml-auto" />
                 </Link>
               </li>
             ))}

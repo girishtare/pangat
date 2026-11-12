@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { NavPending } from "./NavPending";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LayoutList, Menu, X } from "lucide-react";
@@ -60,6 +61,7 @@ export default function MobileNav({
                 >
                   <NavIcon name={item.icon} />
                   {item.label}
+                  <NavPending className="ml-auto" />
                 </Link>
               </li>
             ))}

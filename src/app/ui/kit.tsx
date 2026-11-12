@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { CircleCheck, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import type { Side } from "@/lib/types";
 import Logo from "./Logo";
+import { NavPending } from "./NavPending";
 
 /* Small, restrained wedding details: the mark and a divider. */
 
@@ -99,6 +100,7 @@ export function PageTabs({
                 {count !== undefined && (
                   <span className={`rounded-full px-2 text-sm ${on ? "bg-kumkum text-white" : "bg-paper-deep text-ink"}`}>{count}</span>
                 )}
+                <NavPending />
               </Link>
             </li>
           );
