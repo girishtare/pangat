@@ -91,7 +91,7 @@ export function SlipSheets({
   items,
   perSheet,
 }: {
-  items: { id: string; name: string; nameMr: string | null; code: string; slip: ReactNode }[];
+  items: { id: string; name: string; nameMr: string | null; location?: string | null; code: string; slip: ReactNode }[];
   perSheet: number;
 }) {
   const { ids, ticked, toggle, setMany } = useSelection();
@@ -100,11 +100,11 @@ export function SlipSheets({
   const chosen = items.filter((it) => ticked.has(it.id));
   const printSheets = chunk(chosen, perSheet).length;
 
-  // Search by English or Marathi name, or the slip's code.
+  // Search by English or Marathi name, place, or the slip's code.
   const q = query.trim();
   const ql = q.toLowerCase();
   const shown = q
-    ? items.filter((it) => it.name.toLowerCase().includes(ql) || (it.nameMr ?? "").includes(q) || it.code.toLowerCase().includes(ql))
+    ? items.filter((it) => it.name.toLowerCase().includes(ql) || (it.nameMr ?? "").includes(q) || (it.location ?? "").toLowerCase().includes(ql) || it.code.toLowerCase().includes(ql))
     : items;
   const shownIds = shown.map((it) => it.id);
   const screenSheets = chunk(shown, perSheet);
@@ -126,7 +126,7 @@ export function SlipSheets({
             setQuery(e.target.value);
             setPage(0);
           }}
-          placeholder="Search by name or code"
+          placeholder="Search by name, place or code"
           className="input pl-10"
         />
       </label>

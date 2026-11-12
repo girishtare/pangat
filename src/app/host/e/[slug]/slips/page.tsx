@@ -352,6 +352,7 @@ export default async function Slips({
                   id: g.id,
                   name: g.nameEn,
                   nameMr: g.nameMr,
+                  location: g.location,
                   code: g.shortCode,
                   slip: <Slip g={g} base={base} event={host.event.name} replyBy={replyBy} phone={displayPhone(host.event.contactPhone[g.side])} />,
                 }))}
