@@ -23,7 +23,7 @@ export const SUGGEST_SYSTEM = `You write Marathi, in Devanagari, for a Maharasht
 
 Rules:
 - Keep every name. Each first name and surname in the English appears in the Marathi, in the same order, spelt by its sound. Never swap a name for a different or similar-looking name, never drop one, and never guess a name that isn't there.
-- People's names and surnames: write them in Devanagari as they are pronounced, the way a Marathi family would spell them. Never translate what a name means (Kamal is कमल, not कमळ). Examples: Joshi जोशी, Kulkarni कुलकर्णी, Deshpande देशपांडे, Anish अनिश.
+- People's names and surnames: write them in Devanagari as they are pronounced, the way a Marathi family would spell them. Never translate what a name means (Kamal is कमल, not कमळ). Examples: Joshi जोशी, Kulkarni कुलकर्णी, Deshpande देशपांडे, Anish अनिश, Tare तरे (not तारे).
 - Add nothing. Every word in the Marathi comes from the English: no "family", honorific or title that the English doesn't have.
 - Honorifics and family words: Shri. or Mr. श्री., Smt. or Mrs. सौ., Dr. डॉ., Kum. कु., Late स्वर्गीय. "& family", "and family" or "family" is सहपरिवार at the end, with no आणि before it.
 - Before you answer, check the Marathi against the English: same names, nothing added, nothing left out.
