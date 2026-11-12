@@ -164,8 +164,9 @@ export default async function Todo({
             </Link>
           </div>
         </div>
-        {(!host.side || person) && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        {/* Side filters on the left, the search on the right of the same row (owner, 12 Nov); stacked on phones. */}
+        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             {!host.side &&
               ([null, "bride", "groom"] as const).map((s) => (
                 <Link
@@ -183,9 +184,12 @@ export default async function Todo({
               </Link>
             )}
           </div>
-        )}
-
-        <LiveSearch className="mt-3 sm:max-w-[26rem]" label="Search tasks by task, note, person or function" placeholder="Search task, person, function" />
+          <LiveSearch
+            className="w-full lg:ml-auto lg:w-[24rem]"
+            label="Search tasks by task, note, person or function"
+            placeholder="Search task, person, function"
+          />
+        </div>
         {q && (
           <p className="mt-2 text-sm">
             {tasks.length} task{tasks.length === 1 ? "" : "s"} match &quot;{q}&quot;.{" "}

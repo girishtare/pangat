@@ -67,25 +67,6 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
 
   return (
     <div>
-      <label className="relative mt-4 block sm:max-w-[26rem]">
-        <span className="sr-only">Search the list by name, mobile, place or code</span>
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          enterKeyHint="search"
-          autoComplete="off"
-          placeholder="Search name, mobile, place, code"
-          className="input min-h-12 pl-11"
-        />
-      </label>
-      {q && (
-        <p className="mt-2 text-sm">
-          {shown.length} of {rows.length} households match &quot;{q}&quot;. Ticked households stay ticked when you search again.
-        </p>
-      )}
-
       {/* Ticking and the send walk-through */}
       <div className="mt-4 rounded-[1.25rem] border border-line bg-paper-deep/70 p-3.5">
         {current ? (
@@ -142,7 +123,22 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
               />
               {ticked.size ? `${ticked.size} ticked` : q ? "Tick all found with a mobile" : "Tick all with a mobile"}
             </label>
-            <button
+            {/* Search sits on the right of this row, next to Send (owner, 12 Nov); stacked on phones. */}
+            <div className="flex flex-col gap-3 sm:ml-auto sm:flex-row sm:items-center">
+              <label className="relative block w-full sm:w-[20rem] lg:w-[22rem]">
+                <span className="sr-only">Search the list by name, mobile, place or code</span>
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  enterKeyHint="search"
+                  autoComplete="off"
+                  placeholder="Search name, mobile, place, code"
+                  className="input min-h-12 pl-11"
+                />
+              </label>
+              <button
               type="button"
               disabled={ticked.size === 0}
               onClick={() => {
@@ -156,6 +152,7 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
               <WhatsAppIcon className="h-5 w-5" />
               Send {verb} to {ticked.size || "ticked"}
             </button>
+            </div>
           </div>
         )}
         {queue && queue.length === 0 && (
@@ -165,6 +162,11 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
           </p>
         )}
       </div>
+      {q && (
+        <p className="mt-2 text-sm">
+          {shown.length} of {rows.length} households match &quot;{q}&quot;. Ticked households stay ticked when you search again.
+        </p>
+      )}
 
       {/* Laptop: table */}
       <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
