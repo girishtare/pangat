@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ClipboardList, ListTodo, Pencil, Users } from "lucide-react";
+import { LiveSearch } from "../../../../ui/LiveSearch";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
 import { displayPhone, whatsappLink } from "@/lib/outreach";
@@ -23,7 +24,7 @@ export default async function Todo({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ show?: string; side?: string; person?: string; tab?: string }>;
+  searchParams: Promise<{ show?: string; side?: string; person?: string; tab?: string; q?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -55,7 +56,18 @@ export default async function Todo({
     done: inScope.filter((t) => t.status === "done").length,
     overdue: inScope.filter((t) => isOverdue(t, today)).length,
   };
-  const tasks = sortTasks(inScope.filter((t) => (show === "all" ? true : show === "done" ? t.status === "done" : t.status !== "done")));
+  // Search (as you type): the task, its note, who it's with, or its function.
+  const q = (sp.q ?? "").trim().slice(0, 60);
+  const ql = q.toLowerCase();
+  const matches = (t: (typeof allTasks)[number]) =>
+    !ql ||
+    t.title.toLowerCase().includes(ql) ||
+    (t.note ?? "").toLowerCase().includes(ql) ||
+    (helperById.get(t.helperId)?.fullName ?? "").toLowerCase().includes(ql) ||
+    (t.functionId ? (fnName.get(t.functionId) ?? "").toLowerCase().includes(ql) : false);
+  const tasks = sortTasks(
+    inScope.filter((t) => matches(t) && (show === "all" ? true : show === "done" ? t.status === "done" : t.status !== "done")),
+  );
   const openFor = (helperId: string) => allTasks.filter((t) => t.helperId === helperId && t.status !== "done").length;
 
   // Hosts first (owner, then co-owners), then everyone else, by name.
@@ -67,7 +79,7 @@ export default async function Todo({
   const functionOptions = host.functions.map((f) => ({ id: f.id, name: f.name.en }));
 
   const base = `/host/e/${slug}/todo`;
-  const href = (o: { show?: Show; side?: SideType | null; person?: string | null }) => {
+  const href = (o: { show?: Show; side?: SideType | null; person?: string | null; q?: string | null }) => {
     const q = new URLSearchParams();
     const s = o.show ?? show;
     if (s !== "open") q.set("show", s);
@@ -75,6 +87,8 @@ export default async function Todo({
     if (sd) q.set("side", sd);
     const p = o.person === undefined ? person?.id : o.person;
     if (p) q.set("person", p);
+    const sq = o.q === undefined ? sp.q : o.q;
+    if (sq) q.set("q", sq);
     const qs = q.toString();
     return qs ? `${base}?${qs}` : base;
   };
@@ -171,6 +185,16 @@ export default async function Todo({
           </div>
         )}
 
+        <LiveSearch className="mt-3 sm:max-w-[26rem]" label="Search tasks by task, note, person or function" placeholder="Search task, person, function" />
+        {q && (
+          <p className="mt-2 text-sm">
+            {tasks.length} task{tasks.length === 1 ? "" : "s"} match &quot;{q}&quot;.{" "}
+            <Link href={href({ q: null })} className="font-semibold text-kumkum underline">
+              Clear search
+            </Link>
+          </p>
+        )}
+
         {tasks.length === 0 ? (
           <div className="mt-4">
             <EmptyState icon={ClipboardList} title={allTasks.length === 0 ? "No tasks yet" : "Nothing here"}>
@@ -178,9 +202,11 @@ export default async function Todo({
                 ? helpers.length === 0
                   ? "Add the people who are helping, then give each of them tasks with a deadline."
                   : "Use + Add a task to give someone a job with a deadline."
-                : show === "open"
-                  ? "Every task here is done."
-                  : "No tasks match."}
+                : q
+                  ? "No task matches the search."
+                  : show === "open"
+                    ? "Every task here is done."
+                    : "No tasks match."}
             </EmptyState>
           </div>
         ) : (

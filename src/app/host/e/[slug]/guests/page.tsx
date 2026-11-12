@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, CircleCheck, Search, Settings, TriangleAlert, Users } from "lucide-react";
+import { LiveSearch } from "../../../../ui/LiveSearch";
 import { hostGate } from "@/lib/host";
 import { householdWhatsApp } from "@/lib/hostMessages";
 import { parseSort, sortGuests, type GuestSort, type SortDir } from "@/lib/guestSort";
@@ -167,20 +168,11 @@ export default async function GuestList({
           <h2 id="households" className="font-display text-[1.3125rem] text-kumkum">
             Households
           </h2>
-          <form className="w-full sm:w-auto sm:min-w-[22rem]" action={`/host/e/${slug}/guests`} role="search">
-            <label className="relative block">
-              <span className="sr-only">Find a household by name, mobile, code, location or notes</span>
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
-              <input
-                type="search"
-                name="q"
-                defaultValue={q}
-                enterKeyHint="search"
-                placeholder="Search name, mobile, code, place"
-                className="input min-h-12 pl-11"
-              />
-            </label>
-          </form>
+          <LiveSearch
+            className="w-full sm:w-auto sm:min-w-[22rem]"
+            label="Find a household by name, mobile, code, location or notes"
+            placeholder="Search name, mobile, code, place"
+          />
         </div>
         {q && (
           <p className="mt-2 text-sm">

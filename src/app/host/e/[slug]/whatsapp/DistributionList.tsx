@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, Phone, SkipForward, X } from "lucide-react";
+import { Check, Phone, Search, SkipForward, X } from "lucide-react";
 import type { MessageKind } from "@/lib/outreach";
 import { ReplyBadge, SideBadge, WhatsAppIcon } from "../../../../ui/kit";
 import { recordSend } from "./actions";
@@ -11,6 +11,9 @@ import { SendButton } from "./WhatsAppForms";
 export interface ListRow {
   id: string;
   nameEn: string;
+  nameMr: string | null;
+  location: string | null;
+  shortCode: string;
   side: "bride" | "groom";
   mobile: string | null; // shown as written
   replied: number;
@@ -31,7 +34,23 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
   const [queue, setQueue] = useState<string[] | null>(null); // ids still to send, in order
   const [done, setDone] = useState<Set<string>>(new Set());
   const [queueTotal, setQueueTotal] = useState(0);
-  const sendable = rows.filter((r) => r.href);
+  const [query, setQuery] = useState("");
+  // Search as you type: name (English or Marathi), mobile digits, place or code.
+  const q = query.trim();
+  const ql = q.toLowerCase();
+  const qDigits = q.replace(/\D/g, "");
+  const shown = q
+    ? rows.filter(
+        (r) =>
+          r.nameEn.toLowerCase().includes(ql) ||
+          (r.nameMr ?? "").includes(q) ||
+          (r.location ?? "").toLowerCase().includes(ql) ||
+          r.shortCode.toLowerCase() === ql ||
+          (qDigits.length >= 4 && (r.mobile ?? "").replace(/\D/g, "").includes(qDigits)),
+      )
+    : rows;
+  // "Tick all" acts on the households shown (all of them, or the ones found).
+  const sendable = shown.filter((r) => r.href);
   const allTicked = sendable.length > 0 && sendable.every((r) => ticked.has(r.id));
   const byId = new Map(rows.map((r) => [r.id, r]));
   const current = queue && queue.length ? byId.get(queue[0]) : null;
@@ -48,6 +67,25 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
 
   return (
     <div>
+      <label className="relative mt-4 block sm:max-w-[26rem]">
+        <span className="sr-only">Search the list by name, mobile, place or code</span>
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          enterKeyHint="search"
+          autoComplete="off"
+          placeholder="Search name, mobile, place, code"
+          className="input min-h-12 pl-11"
+        />
+      </label>
+      {q && (
+        <p className="mt-2 text-sm">
+          {shown.length} of {rows.length} households match &quot;{q}&quot;. Ticked households stay ticked when you search again.
+        </p>
+      )}
+
       {/* Ticking and the send walk-through */}
       <div className="mt-4 rounded-[1.25rem] border border-line bg-paper-deep/70 p-3.5">
         {current ? (
@@ -90,10 +128,19 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
                 type="checkbox"
                 checked={allTicked}
                 disabled={sendable.length === 0}
-                onChange={() => setTicked(allTicked ? new Set() : new Set(sendable.map((r) => r.id)))}
+                onChange={() =>
+                  setTicked((t) => {
+                    const n = new Set(t);
+                    for (const r of sendable) {
+                      if (allTicked) n.delete(r.id);
+                      else n.add(r.id);
+                    }
+                    return n;
+                  })
+                }
                 className="h-5 w-5 accent-kumkum"
               />
-              {ticked.size ? `${ticked.size} ticked` : "Tick all with a mobile"}
+              {ticked.size ? `${ticked.size} ticked` : q ? "Tick all found with a mobile" : "Tick all with a mobile"}
             </label>
             <button
               type="button"
@@ -138,7 +185,7 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {shown.map((r) => (
               <tr key={r.id} className={done.has(r.id) ? "bg-leaf-soft/60" : ""}>
                 <td>
                   <input
@@ -175,7 +222,7 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
 
       {/* Phone: cards */}
       <ul className="mt-4 space-y-3 lg:hidden">
-        {rows.map((r) => (
+        {shown.map((r) => (
           <li key={r.id} className={`card p-4 ${done.has(r.id) ? "border-leaf" : ""}`}>
             <div className="flex items-start gap-3">
               <input

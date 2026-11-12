@@ -187,6 +187,9 @@ export default async function WhatsApp({
               return {
                 id: g.id,
                 nameEn: g.nameEn,
+                nameMr: g.nameMr,
+                location: g.location,
+                shortCode: g.shortCode,
                 side: g.side,
                 mobile: g.mobile ? displayPhone(g.mobile) : null,
                 replied: g.replied.length,
