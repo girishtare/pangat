@@ -31,7 +31,7 @@ export default function Dashboard({
   const yes = facts.filter((x) => x.status === "yes");
 
   const footnote =
-    "Cards, yes, no and waiting count households (one card each). People adds up the caps on the invited cards. Confirmed, veg and non-veg count people who replied.";
+    "Cards: households, one card each. People: invited adds up the caps on the invited cards; confirmed, veg and non-veg are people from the replies; expected is people too.";
 
   return (
     <div>
@@ -52,13 +52,28 @@ export default function Dashboard({
         <h2 className="mb-3 mt-9 font-display text-[1.3125rem] text-kumkum">All the numbers</h2>
         <div className="overflow-x-auto rounded-2xl border border-line bg-card">
           <table className="w-full min-w-[820px] border-collapse text-[0.9375rem]">
+            {/* Two groups (owner, 12 Nov): cards (households) first, then people: invited (caps), confirmed, veg, non-veg, expected. */}
             <thead>
+              <tr className="bg-paper-deep text-center text-sm">
+                <td aria-hidden="true" />
+                <th scope="colgroup" colSpan={5} className="px-2.5 pt-2.5 pb-0 font-semibold text-ink-soft">
+                  Cards (households)
+                </th>
+                <th scope="colgroup" colSpan={5} className="border-l border-line px-2.5 pt-2.5 pb-0 font-semibold text-ink-soft">
+                  People
+                </th>
+              </tr>
               <tr className="bg-paper-deep text-center">
                 <th scope="col" className="px-4 py-3 text-left">
                   Function
                 </th>
-                {["Cards", "People", "Yes", "No", "Waiting", "Replied", "Confirmed", "Veg", "Non-veg"].map((h) => (
+                {["Invited", "Yes", "No", "Waiting", "Replied"].map((h) => (
                   <th key={h} scope="col" className="px-2.5 py-3">
+                    {h}
+                  </th>
+                ))}
+                {["Invited", "Confirmed", "Veg", "Non-veg"].map((h, i) => (
+                  <th key={`p-${h}`} scope="col" className={`px-2.5 py-3 ${i === 0 ? "border-l border-line" : ""}`}>
                     {h}
                   </th>
                 ))}
@@ -74,7 +89,11 @@ export default function Dashboard({
                     {fn.name.en}
                   </th>
                   <td className="px-2.5 py-3">{n(f.invitedHouseholds)}</td>
-                  <td className="px-2.5 py-3">
+                  <td className="px-2.5 py-3">{n(f.yesHouseholds)}</td>
+                  <td className="px-2.5 py-3">{n(f.noHouseholds)}</td>
+                  <td className="px-2.5 py-3">{n(f.pendingHouseholds)}</td>
+                  <td className="px-2.5 py-3">{pct(f.responseRate)}</td>
+                  <td className="border-l border-line px-2.5 py-3">
                     {n(f.invitedPeople)}
                     {f.invitedWithoutCap > 0 && (
                       <div className="text-xs text-ink-soft" title="Cards with no cap aren't in this number">
@@ -82,10 +101,6 @@ export default function Dashboard({
                       </div>
                     )}
                   </td>
-                  <td className="px-2.5 py-3">{n(f.yesHouseholds)}</td>
-                  <td className="px-2.5 py-3">{n(f.noHouseholds)}</td>
-                  <td className="px-2.5 py-3">{n(f.pendingHouseholds)}</td>
-                  <td className="px-2.5 py-3">{pct(f.responseRate)}</td>
                   <td className="px-2.5 py-3">{n(f.confirmedHeads)}</td>
                   <td className="px-2.5 py-3">{fn.catered ? n(f.veg) : "—"}</td>
                   <td className="px-2.5 py-3">{fn.catered ? n(f.nonveg) : "—"}</td>
