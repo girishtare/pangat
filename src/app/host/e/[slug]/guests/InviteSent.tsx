@@ -7,15 +7,15 @@ import { saveInviteSent } from "./inviteActions";
 
 const CHOICES: { value: InviteVia | ""; label: string }[] = [
   { value: "", label: "Not Sent" },
-  { value: "card", label: "Card Sent" },
-  { value: "whatsapp", label: "WA Sent" },
-  { value: "both", label: "Card & WA Sent" },
+  { value: "card", label: "Card" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "both", label: "Card & WA" },
 ];
 
 /**
  * Whether one household's invitation has gone out, and how: one drop-down,
- * Not Sent / Card Sent / WA Sent / Card & WA Sent (owner, 12 Nov; was a tick
- * box plus a drop-down). Saved as soon as it changes.
+ * Not Sent / Card / WhatsApp / Card & WA (owner, 12 Nov; was a tick box
+ * plus a drop-down). Saved as soon as it changes.
  */
 export default function InviteSent({ slug, id, name, via }: { slug: string; id: string; name: string; via: InviteVia | null }) {
   const router = useRouter();
