@@ -1,5 +1,6 @@
 "use client";
 
+import PhoneInput from "../../../../../ui/PhoneInput";
 import { useActionState, useState } from "react";
 import { Check, Copy, Save, Trash } from "lucide-react";
 import type { Side } from "@/lib/types";
@@ -179,7 +180,7 @@ export function DetailsForm(props: {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="label">Mobile</span>
-          <input name="mobile" inputMode="tel" defaultValue={props.mobile ?? ""} className="input" placeholder="98765 43210" />
+          <PhoneInput name="mobile" label="Mobile" defaultValue={props.mobile} />
         </label>
         <label className="block">
           <span className="label">

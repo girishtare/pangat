@@ -1,5 +1,6 @@
 "use client";
 
+import PhoneInput from "../../../../ui/PhoneInput";
 import { useEffect, useRef } from "react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../ui/kit";
@@ -49,7 +50,7 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
         <span className="label">
           Mobile <span className="font-normal text-ink-soft">(for WhatsApp)</span>
         </span>
-        <input name="mobile" inputMode="tel" autoComplete="off" className="input" placeholder="98765 43210" />
+        <PhoneInput name="mobile" label="Mobile" />
         <span className="hint mt-1 block">The number that should get the WhatsApp link. Leave blank if they have none.</span>
       </label>
       <label className="block">

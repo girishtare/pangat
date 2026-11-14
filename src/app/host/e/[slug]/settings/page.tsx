@@ -74,7 +74,7 @@ export default async function EventSettings({
           userId: h.userId,
           fullName: h.fullName ?? (h.displayName !== h.email ? h.displayName : null),
           email: h.email,
-          phone: h.phone ? displayPhone(h.phone) : null,
+          phone: h.phone ?? null,
           side: h.side,
           role: h.role,
         }}
@@ -126,8 +126,8 @@ export default async function EventSettings({
             cutoff={isoToIstInput(host.event.cutoffAt)}
             yesShowRate={host.event.yesShowRate}
             pendingShowRate={host.event.pendingShowRate}
-            contactBride={displayPhone(host.event.contactPhone.bride)}
-            contactGroom={displayPhone(host.event.contactPhone.groom)}
+            contactBride={host.event.contactPhone.bride}
+            contactGroom={host.event.contactPhone.groom}
             catererDueOn={host.event.catererDueOn}
             catererFinalOn={host.event.catererFinalOn}
           />

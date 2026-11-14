@@ -1,5 +1,6 @@
 "use client";
 
+import PhoneInput from "../../../../ui/PhoneInput";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { FUNCTION_ICONS, suggestIcon } from "@/lib/functionIcons";
 import { FunctionIcon } from "../../../../ui/FunctionIcon";
@@ -102,22 +103,22 @@ export function EventForm(props: {
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="label">Bride&apos;s side</span>
-            <input
+            <PhoneInput
               name="contactBride"
-              inputMode="tel"
-              defaultValue={props.contactBride ?? ""}
+              label="Bride's side contact number"
+              defaultValue={props.contactBride}
               className={`input ${props.contactBride ? "" : missing}`}
-              placeholder="Not set: slips will have no call-us line"
+              placeholder="Not set: no call-us line"
             />
           </label>
           <label className="block">
             <span className="label">Groom&apos;s side</span>
-            <input
+            <PhoneInput
               name="contactGroom"
-              inputMode="tel"
-              defaultValue={props.contactGroom ?? ""}
+              label="Groom's side contact number"
+              defaultValue={props.contactGroom}
               className={`input ${props.contactGroom ? "" : missing}`}
-              placeholder="Not set: slips will have no call-us line"
+              placeholder="Not set: no call-us line"
             />
           </label>
         </div>
@@ -462,7 +463,7 @@ function HostFields({
         <span className="label">
           Mobile <span className="font-normal text-ink-soft">(for WhatsApp)</span>
         </span>
-        <input name="phone" type="tel" inputMode="tel" required autoComplete="off" defaultValue={values?.phone ?? ""} className="input" placeholder="98765 43210" />
+        <PhoneInput name="phone" label="Mobile" required defaultValue={values?.phone} />
       </label>
       {isOwner ? (
         <div>
