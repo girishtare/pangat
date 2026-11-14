@@ -16,6 +16,7 @@ import { EventShell, GateMessage } from "../../../HostChrome";
 import AddHouseholdForm from "./AddHouseholdForm";
 import ImportForm from "./ImportForm";
 import InviteSent from "./InviteSent";
+import PrintRequest from "./PrintRequest";
 import { FunctionIcon } from "../../../../ui/FunctionIcon";
 import PopupButton from "../../../../ui/PopupButton";
 import LookupQueue, { type LookupItem } from "./LookupQueue";
@@ -303,7 +304,7 @@ export default async function GuestList({
             {legend}
             {pager("top")}
             <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
-              <table className="table-p min-w-[1120px]">
+              <table className="table-p min-w-[1240px]">
                 <thead>
                   <tr>
                     {th("name", "Household")}
@@ -315,6 +316,7 @@ export default async function GuestList({
                     {th("invited", "Invited to")}
                     {th("replied", "Replied")}
                     {th("sent", "Invitation")}
+                    <th>Slips</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -353,6 +355,9 @@ export default async function GuestList({
                       </td>
                       <td className="text-left!">
                         <InviteSent slug={slug} id={g.id} name={g.nameEn} via={g.inviteVia} />
+                      </td>
+                      <td>
+                        <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} sent={g.inviteVia !== null} />
                       </td>
                     </tr>
                   ))}
@@ -434,8 +439,9 @@ export default async function GuestList({
                       )}
                     </dl>
                   </Link>
-                  <div className="border-t border-line px-4 py-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-1.5">
                     <InviteSent slug={slug} id={g.id} name={g.nameEn} via={g.inviteVia} />
+                    <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} sent={g.inviteVia !== null} />
                   </div>
                 </li>
               ))}

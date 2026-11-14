@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight, Printer, Search } from "lucide-react";
 
@@ -112,6 +112,23 @@ export function SlipSheets({
       window.removeEventListener("afterprint", after);
     };
   }, []);
+  // On screen the sheet is laid out to fit its box (owner, 14 Nov: "landscape so it fits a horizontal screen"):
+  // where there's room, its 8 slips sit 4 across and 2 down; on a narrow screen, 2 across as on paper. Either way it is
+  // scaled to the box's width. Printing is unchanged: A4 portrait, 2 x 4.
+  const box = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState<{ wide: boolean; zoom: number } | null>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const PX_PER_MM = 96 / 25.4;
+    const ro = new ResizeObserver(([e]) => {
+      const w = e.contentRect.width;
+      const wide = w >= 700;
+      setFit({ wide, zoom: Math.min(1, w / ((wide ? 388 : 194) * PX_PER_MM)) });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const chosen = items.filter((it) => ticked.has(it.id));
   const printSheets = chunk(chosen, perSheet).length;
 
@@ -172,9 +189,9 @@ export function SlipSheets({
 
       {/* Screen: one sheet at a time (or of the ones found), each slip with its tick box. */}
       {sheetCount > 1 && <SheetPager at={at} count={sheetCount} perSheet={perSheet} total={shown.length} onGo={setPage} />}
-      <div className="overflow-hidden print:hidden">
+      <div ref={box} className="overflow-hidden print:hidden">
         {screenSheets.slice(at, at + 1).map((sheet) => (
-          <div key={at} className="sheet">
+          <div key={at} className={`sheet ${fit?.wide ? "sheet-wide" : ""}`} style={fit ? { zoom: fit.zoom } : undefined}>
             {sheet.map((it) => {
               const on = ticked.has(it.id);
               return (

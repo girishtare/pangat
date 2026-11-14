@@ -242,6 +242,8 @@ export interface GuestRow {
   slipLang: SlipLang;
   /** How the invitation went out; null = not marked sent yet (migration 0021). */
   inviteVia: InviteVia | null;
+  /** On the print list (Slips → Print list; migration 0023). */
+  printRequested: boolean;
 }
 
 export type SlipLang = "both" | "en" | "mr";
@@ -251,7 +253,7 @@ export type InviteVia = "card" | "whatsapp" | "both";
 export async function listGuests(client: SupabaseClient, eventId: string): Promise<GuestRow[]> {
   const { data, error } = await client
     .from("households")
-    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, created_at, slip_lang, invite_via, invites(function_id), responses(function_id, heads)")
+    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, created_at, slip_lang, invite_via, print_requested_at, invites(function_id), responses(function_id, heads)")
     .eq("event_id", eventId)
     .order("side")
     .order("created_at")
@@ -274,6 +276,7 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     maxHeads: Math.max(0, ...(r.responses ?? []).map((x: any) => Number(x.heads) || 0)),
     slipLang: r.slip_lang === "en" || r.slip_lang === "mr" ? r.slip_lang : "both",
     inviteVia: r.invite_via === "card" || r.invite_via === "whatsapp" || r.invite_via === "both" ? r.invite_via : null,
+    printRequested: !!r.print_requested_at,
   }));
 }
 
