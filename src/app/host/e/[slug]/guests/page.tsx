@@ -16,6 +16,7 @@ import { EventShell, GateMessage } from "../../../HostChrome";
 import AddHouseholdForm from "./AddHouseholdForm";
 import ImportForm from "./ImportForm";
 import InviteSent from "./InviteSent";
+import { FunctionIcon } from "../../../../ui/FunctionIcon";
 import PopupButton from "../../../../ui/PopupButton";
 import LookupQueue, { type LookupItem } from "./LookupQueue";
 
@@ -126,8 +127,38 @@ export default async function GuestList({
     return `/host/e/${slug}/guests?${qs}`;
   };
   const th = (col: GuestSort, label: string) => <SortHeader key={col} label={label} active={sort === col} dir={dir} href={sortHref(col)} />;
-  // In date order, like the functions themselves.
-  const invitedTo = (ids: string[]) => host.functions.filter((f) => ids.includes(f.id)).map((f) => f.name.en).join(" · ");
+  // In date order, like the functions themselves: each function's icon (owner, 14 Nov), named for screen readers and on hover.
+  const invitedTo = (ids: string[]) => (
+    <span className="inline-flex flex-wrap items-center justify-center gap-1.5 text-kumkum">
+      {host.functions
+        .filter((f) => ids.includes(f.id))
+        .map((f) =>
+          f.icon ? (
+            <span key={f.id} title={f.name.en} className="inline-flex">
+              <FunctionIcon icon={f.icon} label={f.name.en} />
+            </span>
+          ) : (
+            <span key={f.id} className="text-sm text-ink">
+              {f.name.en}
+            </span>
+          ),
+        )}
+    </span>
+  );
+  // What each icon stands for, above the list.
+  const legend = host.functions.some((f) => f.icon) ? (
+    <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
+      <span className="font-semibold text-ink-soft">Invited to:</span>
+      {host.functions.map((f) => (
+        <span key={f.id} className="inline-flex items-center gap-1.5">
+          <span className="text-kumkum">
+            <FunctionIcon icon={f.icon} className="h-[18px] w-[18px]" />
+          </span>
+          {f.name.en}
+        </span>
+      ))}
+    </p>
+  ) : null;
 
   const bySide = { bride: guests.filter((g) => g.side === "bride").length, groom: guests.filter((g) => g.side === "groom").length };
   const n = (v: number) => v.toLocaleString("en-IN");
@@ -269,12 +300,14 @@ export default async function GuestList({
           </div>
         ) : (
           <>
+            {legend}
             {pager("top")}
             <div className="table-scroll mt-4 hidden rounded-[1.25rem] border border-line bg-card lg:block">
               <table className="table-p min-w-[1120px]">
                 <thead>
                   <tr>
                     {th("name", "Household")}
+                    {th("cap", "Cap")}
                     {th("side", "Side")}
                     {th("mobile", "Mobile")}
                     {th("location", "Location")}
@@ -282,7 +315,6 @@ export default async function GuestList({
                     {th("invited", "Invited to")}
                     {th("replied", "Replied")}
                     {th("sent", "Invitation")}
-                    {th("cap", "Cap")}
                   </tr>
                 </thead>
                 <tbody>
@@ -305,6 +337,10 @@ export default async function GuestList({
                           </div>
                         )}
                       </td>
+                      <td className="whitespace-nowrap">
+                        {g.softCap ?? "—"}
+                        {overCap(g) && <OverCap heads={g.maxHeads} />}
+                      </td>
                       <td>
                         <SideBadge side={g.side} />
                       </td>
@@ -317,10 +353,6 @@ export default async function GuestList({
                       </td>
                       <td className="text-left!">
                         <InviteSent slug={slug} id={g.id} name={g.nameEn} via={g.inviteVia} />
-                      </td>
-                      <td className="whitespace-nowrap">
-                        {g.softCap ?? "—"}
-                        {overCap(g) && <OverCap heads={g.maxHeads} />}
                       </td>
                     </tr>
                   ))}
@@ -335,6 +367,7 @@ export default async function GuestList({
                 <span className="label">Sort by</span>
                 <select name="sort" defaultValue={sort} className="input">
                   <option value="name">Household name</option>
+                  <option value="cap">Cap</option>
                   <option value="side">Side</option>
                   <option value="mobile">Mobile</option>
                   <option value="location">Location</option>
@@ -342,7 +375,6 @@ export default async function GuestList({
                   <option value="invited">Functions invited to</option>
                   <option value="replied">Replied</option>
                   <option value="sent">Invitation sent</option>
-                  <option value="cap">Cap</option>
                 </select>
               </label>
               <label className="block w-32">

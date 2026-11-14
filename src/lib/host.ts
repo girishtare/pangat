@@ -36,7 +36,7 @@ export interface HostContext {
   /** Only the owner manages the event: details, functions, co-owners, caterer numbers. */
   canManage: boolean;
   event: HostEvent;
-  functions: (FunctionRef & { startsAt: string; venue: string | null; mapUrl: string | null; catered: boolean; vegOnly: boolean })[];
+  functions: (FunctionRef & { startsAt: string; venue: string | null; mapUrl: string | null; catered: boolean; vegOnly: boolean; icon: string | null })[];
 }
 
 export type SignedIn =
@@ -83,7 +83,7 @@ export const hostGate = cache(async (slug: string): Promise<HostGate> => {
     client
       .from("events")
       .select(
-        "id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, functions(id, name_en, name_mr, starts_at, venue, map_url, catered, veg_only, sort_order)",
+        "id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, functions(id, name_en, name_mr, starts_at, venue, map_url, catered, veg_only, sort_order, icon)",
       )
       .eq("slug", slug)
       .maybeSingle(),
@@ -104,6 +104,7 @@ export const hostGate = cache(async (slug: string): Promise<HostGate> => {
     map_url: string | null;
     catered: boolean;
     veg_only: boolean | null;
+    icon: string | null;
   }[];
 
   return {
@@ -139,6 +140,7 @@ export const hostGate = cache(async (slug: string): Promise<HostGate> => {
         mapUrl: f.map_url,
         catered: f.catered,
         vegOnly: !!f.veg_only,
+        icon: f.icon ?? null,
       })),
     },
   };
