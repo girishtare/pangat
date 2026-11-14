@@ -184,7 +184,7 @@ export default async function GuestList({
               <PopupButton label="Import from Excel" title="Import from Excel" className="btn btn-secondary">
                 <ImportForm slug={slug} />
                 <p className="hint mt-4">
-                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Location, a Yes column for each function, Cap, Comments / Notes. Households already on
+                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Location, a Yes column for each function, Guest Count, Comments / Notes. Households already on
                   the list are skipped, so the same file can be uploaded again after adding rows. If you corrected a household&apos;s name or
                   mobile here, correct it in your file too: otherwise it may be added a second time, with a new QR code that isn&apos;t on their slip.
                 </p>
@@ -237,7 +237,7 @@ export default async function GuestList({
         )}
         {overCount > 0 && (
           <Link href={`/host/e/${slug}/guests?sort=cap&dir=desc`} className="block rounded-[1.25rem] hover:opacity-90">
-            <CountCard value={n(overCount)} label="over their cap" sub="Replied with more people than the card allows. Check with them." warn />
+            <CountCard value={n(overCount)} label="over their guest count" sub="Replied with more people than the card allows. Check with them." warn />
           </Link>
         )}
       </div>
@@ -313,7 +313,7 @@ export default async function GuestList({
                 <thead>
                   <tr>
                     {th("name", "Household")}
-                    {th("cap", "Cap")}
+                    {th("cap", "Guest Count")}
                     {th("side", "Side")}
                     {th("mobile", "Mobile")}
                     {th("location", "Location")}
@@ -358,7 +358,7 @@ export default async function GuestList({
                       <td>
                         <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
                       </td>
-                      <td className="text-left!">
+                      <td>
                         <InviteSent slug={slug} id={g.id} name={g.nameEn} modes={g.invite} />
                       </td>
                       <td>
@@ -384,7 +384,7 @@ export default async function GuestList({
                 <span className="label">Sort by</span>
                 <select name="sort" defaultValue={sort} className="input">
                   <option value="name">Household name</option>
-                  <option value="cap">Cap</option>
+                  <option value="cap">Guest Count</option>
                   <option value="side">Side</option>
                   <option value="mobile">Mobile</option>
                   <option value="location">Location</option>
@@ -442,7 +442,7 @@ export default async function GuestList({
                       {g.notes && <dd className="col-span-2 mt-1 line-clamp-2 italic text-ink-soft">Note: {g.notes}</dd>}
                       {g.softCap !== null && (
                         <>
-                          <dt className="text-ink-soft">Cap</dt>
+                          <dt className="text-ink-soft">Guest Count</dt>
                           <dd className="text-right">
                             {g.softCap}
                             {overCap(g) && <OverCap heads={g.maxHeads} />}

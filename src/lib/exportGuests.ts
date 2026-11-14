@@ -68,7 +68,7 @@ export async function buildGuestExport(opts: { eventName: Bilingual; functions: 
     { header: "Location", key: "location", width: 22 },
     { header: "Code", key: "code", width: 10 },
     ...fns.map((f, i) => ({ header: `Invited: ${f.name.en}`, key: `inv${i}`, width: Math.min(28, Math.max(12, f.name.en.length + 10)) })),
-    { header: "Cap", key: "cap", width: 7 },
+    { header: "Guest Count", key: "cap", width: 12 },
     { header: "Invitation mode", key: "invite", width: 30 },
     { header: "Slip language", key: "slip", width: 20 },
     ...fns.map((f, i) => ({ header: `Reply: ${f.name.en}`, key: `rep${i}`, width: Math.min(30, Math.max(16, f.name.en.length + 8)) })),

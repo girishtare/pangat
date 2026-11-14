@@ -99,7 +99,7 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
       </fieldset>
       <label className="block">
         <span className="label">
-          Most people on this card <span className="font-normal text-ink-soft">(optional)</span>
+          Guest Count <span className="font-normal text-ink-soft">(most people on this card, optional)</span>
         </span>
         <input name="cap" type="number" min={1} max={30} className="input max-w-[10rem]" placeholder="e.g. 6" />
       </label>

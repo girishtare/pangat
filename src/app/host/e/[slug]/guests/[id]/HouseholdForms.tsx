@@ -183,7 +183,7 @@ export function DetailsForm(props: {
         </label>
         <label className="block">
           <span className="label">
-            Most people <span className="font-normal text-ink-soft">(optional)</span>
+            Guest Count <span className="font-normal text-ink-soft">(optional)</span>
           </span>
           <input name="cap" type="number" min={1} max={30} defaultValue={props.softCap ?? ""} className="input" />
         </label>

@@ -34,13 +34,13 @@ export async function buildGuestTemplate(opts: {
   const languages = ["Marathi", "English", "Both"];
   languages.forEach((v, i) => (lists.getCell(i + 1, 3).value = v));
 
-  // Name, Marathi name, Side, Mobile, Location, then one column per function, then Cap and Comments / Notes.
+  // Name, Marathi name, Side, Mobile, Location, then one column per function, then Guest Count and Comments / Notes.
   const fnNames = opts.functions.map((f) => f.en);
   const firstFn = FIXED.length + 1;
   const capCol = firstFn + fnNames.length;
   const notesCol = capCol + 1;
   const langCol = notesCol + 1;
-  const headers = [...FIXED, ...fnNames, "Cap", NOTES, "Language"];
+  const headers = [...FIXED, ...fnNames, "Guest Count", NOTES, "Language"];
   ws.columns = [
     { header: FIXED[0], key: "name", width: 34 },
     { header: FIXED[1], key: "nameMr", width: 34 },
@@ -48,7 +48,7 @@ export async function buildGuestTemplate(opts: {
     { header: FIXED[3], key: "mobile", width: 18, style: { numFmt: "@" } },
     { header: FIXED[4], key: "location", width: 24 },
     ...fnNames.map((n, i) => ({ header: n, key: `fn${i}`, width: Math.min(28, Math.max(12, n.length + 4)) })),
-    { header: "Cap", key: "cap", width: 8 },
+    { header: "Guest Count", key: "cap", width: 12 },
     { header: NOTES, key: "notes", width: 44 },
     { header: "Language", key: "lang", width: 12 },
   ];
@@ -107,7 +107,7 @@ export async function buildGuestTemplate(opts: {
       allowBlank: true,
       formulae: [1, MAX_CAP],
       showErrorMessage: true,
-      errorTitle: "Cap",
+      errorTitle: "Guest Count",
       error: `A whole number from 1 to ${MAX_CAP}, or leave it blank.`,
     };
   }
@@ -131,7 +131,7 @@ export async function buildGuestTemplate(opts: {
     ['• Location: optional. Where they stay, just the place: "Borivali, Mumbai", "Edvan, Palghar".'],
     [`• One column per function (${fnNames.join(", ") || "none yet"}): pick Yes under each function this household is invited to.`],
     ["   Blank means not invited. Every household needs at least one Yes. Tip: fill one row, then drag the Yes cells down."],
-    [`• Cap: optional. The most people this card covers (1 to ${MAX_CAP}).`],
+    [`• Guest Count: optional. The most people this card covers (1 to ${MAX_CAP}).`],
     ["• Comments / Notes: optional, anything to remember about the household."],
     ["• Language: optional. Marathi, English or Both (blank = Both). Their slip, WhatsApp message and reply page use it; Both opens in Marathi."],
     [""],
