@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { FUNCTION_ICONS } from "@/lib/functionIcons";
+import { FUNCTION_ICONS, suggestIcon } from "@/lib/functionIcons";
 import { FunctionIcon } from "../../../../ui/FunctionIcon";
 import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
 import { Alert, WhatsAppIcon } from "../../../../ui/kit";
@@ -149,11 +149,26 @@ function FunctionFields(props: {
   catered?: boolean;
   vegOnly?: boolean;
 }) {
+  // The icon follows the name as it's typed (owner, 14 Nov: "pull the icons based on the function name"),
+  // until the host picks one; a function that already has an icon keeps it.
+  const used = (props.usedIcons ?? []).map((u) => u.icon);
+  const [icon, setIcon] = useState<string | null>(props.icon ?? null);
+  const [picked, setPicked] = useState(!!props.icon);
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <label className="block">
         <span className="label">Name in English</span>
-        <input name="nameEn" required maxLength={60} defaultValue={props.nameEn ?? ""} className="input" placeholder="Sangeet" />
+        <input
+          name="nameEn"
+          required
+          maxLength={60}
+          defaultValue={props.nameEn ?? ""}
+          className="input"
+          placeholder="Sangeet"
+          onInput={(e) => {
+            if (!picked) setIcon(suggestIcon(e.currentTarget.value, used));
+          }}
+        />
       </label>
       <MarathiInput label="Name in Marathi" kind="function" from="nameEn" defaultValue={props.nameMr} placeholder="संगीत" />
       <label className="block">
@@ -193,7 +208,7 @@ function FunctionFields(props: {
         <legend className="label">Icon</legend>
         <p className="hint mb-2">
           Shown on the Guest list for the households invited to it. Each function has its own.
-          {props.icon ? "" : " Leave it and one is picked from the name."}
+          {picked ? "" : " Picked from the name as you type; tap another to change it."}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {FUNCTION_ICONS.map((ic) => {
@@ -206,7 +221,18 @@ function FunctionFields(props: {
                   by ? "cursor-not-allowed border-transparent bg-paper-deep opacity-35" : "cursor-pointer border-line bg-card hover:border-kumkum"
                 } has-[:checked]:border-kumkum has-[:checked]:bg-kumkum has-[:checked]:text-white has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-[#4f6b80]`}
               >
-                <input type="radio" name="icon" value={ic.key} defaultChecked={props.icon === ic.key} disabled={!!by} className="sr-only" />
+                <input
+                  type="radio"
+                  name="icon"
+                  value={ic.key}
+                  checked={icon === ic.key}
+                  onChange={() => {
+                    setIcon(ic.key);
+                    setPicked(true);
+                  }}
+                  disabled={!!by}
+                  className="sr-only"
+                />
                 <FunctionIcon icon={ic.key} />
                 <span className="sr-only">{by ? `${ic.label} (used by ${by})` : ic.label}</span>
               </label>
@@ -324,7 +350,7 @@ export function NewFunctionForm({ slug, households, usedIcons }: { slug: string;
         Add a function <span className="font-normal text-ink-soft">(for example Sangeet or Mehendi)</span>
       </summary>
       <form ref={form} onSubmit={action} className="space-y-4 border-t border-dashed border-line p-4">
-        <FunctionFields usedIcons={usedIcons} />
+        <FunctionFields key={state?.ok ? state.message : "new"} usedIcons={usedIcons} />
         <label className="flex min-h-11 items-center gap-3">
           <input type="checkbox" name="inviteAll" defaultChecked={households > 0} disabled={households === 0} className="h-6 w-6 accent-kumkum" />
           <span>{households > 0 ? `Invite all ${households} households already on the list` : "No households on the list yet"}</span>
