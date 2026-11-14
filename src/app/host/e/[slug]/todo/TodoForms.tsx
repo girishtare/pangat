@@ -1,5 +1,6 @@
 "use client";
 
+import PhoneInput from "../../../../ui/PhoneInput";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Trash } from "lucide-react";
@@ -142,7 +143,7 @@ export function PersonForm({
         <span className="label">
           Mobile <span className="font-normal text-ink-soft">(for WhatsApp)</span>
         </span>
-        <input name="phone" inputMode="tel" autoComplete="off" defaultValue={person?.phone ?? ""} className="input" placeholder="98765 43210" />
+        <PhoneInput name="phone" label="Mobile" defaultValue={person?.phone} />
       </label>
       {person?.hostUserId ? (
         <div>

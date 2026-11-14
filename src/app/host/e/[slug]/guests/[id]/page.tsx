@@ -121,7 +121,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
               side={hh.side}
               nameEn={hh.nameEn}
               nameMr={hh.nameMr}
-              mobile={displayPhone(hh.mobile)}
+              mobile={hh.mobile}
               softCap={hh.softCap}
               location={hh.location}
               notes={hh.notes}

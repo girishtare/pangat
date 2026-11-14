@@ -1,5 +1,6 @@
 "use client";
 
+import { COUNTRIES, joinPhone } from "@/lib/phone";
 import { useState, useTransition } from "react";
 import { Check, ChevronLeft, CircleAlert, FileText, Lock } from "lucide-react";
 import { formatDay, formatWhen, t } from "@/lib/i18n";
@@ -391,6 +392,7 @@ function ErrorLine({ children, className = "" }: { children: React.ReactNode; cl
 
 /** "This isn't us": take their mobile so a host can send them their own link. Reveals nothing about the guest list. */
 function NotUs({ token, lang, langButton, onBack }: { token: string; lang: Lang; langButton: React.ReactNode; onBack: () => void }) {
+  const [country, setCountry] = useState("IN");
   const [mobile, setMobile] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -424,9 +426,19 @@ function NotUs({ token, lang, langButton, onBack }: { token: string; lang: Lang;
             {t(lang, "mobileLabel")}
           </label>
           <div className="flex items-stretch overflow-hidden rounded-[14px] border-2 border-maroon bg-white focus-within:shadow-[0_0_0_4px_rgba(174,196,212,0.6)]">
-            <span aria-hidden="true" className="flex items-center border-r border-sand bg-cream px-3 font-bold text-ink-e-soft">
-              +91
-            </span>
+            {/* Country code (owner, 14 Nov): India first; relatives abroad pick theirs. */}
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              aria-label={lang === "mr" ? "देशाचा कोड" : "Country code"}
+              className="max-w-[6.5rem] border-0 border-r border-sand bg-cream px-2 font-bold text-ink-e-soft outline-none!"
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.iso} value={c.iso}>
+                  +{c.code} {c.name}
+                </option>
+              ))}
+            </select>
             <input
               id="notus-mobile"
               value={mobile}
@@ -453,7 +465,7 @@ function NotUs({ token, lang, langButton, onBack }: { token: string; lang: Lang;
             onClick={() =>
               startTransition(async () => {
                 setError(null);
-                const r = await reportNotUs(token, mobile);
+                const r = await reportNotUs(token, joinPhone(country, mobile));
                 if (r.ok) setSent(true);
                 else setError(t(lang, r.error === "bad_mobile" ? "badMobile" : "notUsHelp"));
               })
