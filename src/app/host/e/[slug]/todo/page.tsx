@@ -378,7 +378,7 @@ export default async function Todo({
                       <span className="inline-flex items-center gap-1">
                         {(!h.hostUserId || host.canManage || h.hostUserId === host.userId) && (
                           <PopupButton label={<Pencil className="h-4 w-4" aria-label={`Edit ${h.fullName}`} />} title="Edit person" className="btn btn-quiet btn-sm">
-                            <PersonForm slug={slug} hostSide={host.side} person={{ ...h, phone: h.phone ? displayPhone(h.phone) : null }} />
+                            <PersonForm slug={slug} hostSide={host.side} person={h} />
                           </PopupButton>
                         )}
                         {h.hostUserId ? (
