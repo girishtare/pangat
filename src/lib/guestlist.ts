@@ -6,7 +6,7 @@ import { parseInviteBy } from "./invites";
  *
  * One row per household (one card). A header row names the columns; only
  * "Name" is required. Columns, in any order:
- *   Name | Marathi name | Side | Mobile | Location | <one column per function> | Cap | Comments / Notes
+ *   Name | Marathi name | Side | Mobile | Location | <one column per function> | Guest Count | Comments / Notes
  * Location: where the household stays, a short place ("Borivali, Mumbai"), not an address.
  * Function columns (the template's way, owner 12 Nov): a column headed with
  * the function's name; "Yes" (or ✓, x, हो) invites the household, blank or
@@ -89,7 +89,7 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   side: ["side", "बाजू"],
   mobile: ["mobile", "mobileno", "mobilenumber", "phone", "phoneno", "phonenumber", "whatsapp", "whatsappnumber", "number", "contact", "मोबाईल"],
   functions: ["functions", "function", "invitedto", "events", "event", "invited"],
-  cap: ["cap", "softcap", "max", "maxpeople", "maxheads", "limit", "people"],
+  cap: ["guestcount", "cap", "softcap", "max", "maxpeople", "maxheads", "limit", "people"],
   location: ["location", "place", "city", "town", "village", "area", "stays", "staysat", "from", "गाव", "ठिकाण"],
   notes: ["commentsnotes", "comments", "comment", "notes", "note", "remarks", "remark", "टीप", "शेरा"],
   lang: ["language", "lang", "sliplanguage", "भाषा"],
@@ -343,7 +343,7 @@ export function checkSheet(input: {
     const capRaw = cell("cap");
     if (capRaw) {
       const n = Number(capRaw);
-      if (!Number.isInteger(n) || n < 1 || n > MAX_CAP) errors.push(`Cap "${capRaw}" should be a whole number from 1 to ${MAX_CAP}.`);
+      if (!Number.isInteger(n) || n < 1 || n > MAX_CAP) errors.push(`Guest Count "${capRaw}" should be a whole number from 1 to ${MAX_CAP}.`);
       else softCap = n;
     }
 

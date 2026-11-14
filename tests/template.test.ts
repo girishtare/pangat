@@ -28,7 +28,7 @@ describe("Excel template", () => {
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     expect(wb.worksheets.map((w) => w.name)).toEqual([TEMPLATE_SHEET, "How to fill", "Lists"]);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Location", "Haldi", "Wedding", "Reception", "Cap", "Comments / Notes", "Language"]);
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Location", "Haldi", "Wedding", "Reception", "Guest Count", "Comments / Notes", "Language"]);
     expect(ws.getCell("K2").dataValidation?.type).toBe("list");
     expect(ws.getCell("C2").dataValidation?.type).toBe("list");
     expect(ws.getCell("E2").dataValidation?.type).toBeUndefined();

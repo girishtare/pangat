@@ -97,8 +97,8 @@ export default function Dashboard({
                   <td className="border-l border-line px-2.5 py-3">
                     {n(f.invitedPeople)}
                     {f.invitedWithoutCap > 0 && (
-                      <div className="text-xs text-ink-soft" title="Cards with no cap aren't in this number">
-                        + {n(f.invitedWithoutCap)} {f.invitedWithoutCap === 1 ? "card" : "cards"} with no cap
+                      <div className="text-xs text-ink-soft" title="Cards with no guest count aren't in this number">
+                        + {n(f.invitedWithoutCap)} {f.invitedWithoutCap === 1 ? "card" : "cards"} with no guest count
                       </div>
                     )}
                   </td>
@@ -117,7 +117,7 @@ export default function Dashboard({
         <h2 className="mb-1 text-base font-bold">How &quot;Expected&quot; is worked out</h2>
         <p className="text-[0.9375rem]">
           Confirmed people × <strong>{pct(rates.yesShowRate)}</strong> (some who say yes don&apos;t come) + people on the cards not replied
-          yet × <strong>{pct(rates.pendingShowRate)}</strong>. A card&apos;s people are its cap; a card with no cap counts the function&apos;s
+          yet × <strong>{pct(rates.pendingShowRate)}</strong>. A card&apos;s people are its guest count; a card with no guest count counts the function&apos;s
           average people per &quot;yes&quot;.{" "}
           {settingsHref ? (
             <>
@@ -144,7 +144,7 @@ export default function Dashboard({
           ))}
         </ul>
         <p className="mt-2 text-sm text-ink-soft">
-          The average (for cards with no cap) is people per &quot;yes&quot; for that function so far
+          The average (for cards with no guest count) is people per &quot;yes&quot; for that function so far
           {yes.length ? "" : " (2 until the first yes comes in)"}.
         </p>
       </div>

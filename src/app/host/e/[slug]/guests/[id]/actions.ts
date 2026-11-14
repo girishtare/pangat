@@ -95,7 +95,7 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
 
   const capRaw = text(fd.get("cap"));
   const cap = capRaw === "" ? null : Number(capRaw);
-  if (cap !== null && (!Number.isInteger(cap) || cap < 1 || cap > MAX_HEADS)) return { ok: false, message: `Cap must be from 1 to ${MAX_HEADS}, or blank.` };
+  if (cap !== null && (!Number.isInteger(cap) || cap < 1 || cap > MAX_HEADS)) return { ok: false, message: `Guest Count must be from 1 to ${MAX_HEADS}, or blank.` };
 
   const valid = new Set(host.functions.map((f) => f.id));
   const functionIds = fd.getAll("functions").map(String).filter((f) => valid.has(f));
