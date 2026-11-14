@@ -92,6 +92,7 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   const by = fd.getAll("inviteBy").map(String);
   const inviteBy = { card: by.includes("card"), wa: by.includes("whatsapp") };
   if (!inviteBy.card && !inviteBy.wa) return { ok: false, message: "Choose how to send the invitation: card, WhatsApp or both." };
+  if (inviteBy.wa && !text(fd.get("mobile"))) return { ok: false, message: "Enter a phone number to invite them on WhatsApp." };
 
   const capRaw = text(fd.get("cap"));
   const cap = capRaw === "" ? null : Number(capRaw);
