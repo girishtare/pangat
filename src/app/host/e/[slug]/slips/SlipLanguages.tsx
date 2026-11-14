@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { Printer, Search } from "lucide-react";
@@ -15,6 +16,8 @@ export interface SlipLangRow {
   /** Where they stay ("Borivali, Mumbai"): helps choose the language. */
   location: string | null;
   lang: SlipLang;
+  /** On the print list (owner, 14 Nov: the Print column shows it). */
+  onList: boolean;
 }
 
 const CHOICES: { value: SlipLang; label: string; short: string; title: string; lang?: "mr" }[] = [
@@ -46,9 +49,9 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
   // Shown at once; the server copy follows on refresh.
   const [local, setLocal] = useState<Record<string, SlipLang>>({});
   const [ticked, setTicked] = useState<Set<string>>(new Set());
-  // Slips to print, chosen in the last column (owner, 12 Nov), apart from the language ticks.
-  // "Add to print list" puts them on the print list (the Slips tab's first tab; owner, 14 Nov).
-  const [toPrint, setToPrint] = useState<Set<string>>(new Set());
+  // The Print column is the print list itself (owner, 14 Nov): ticked = on the list, saved as you tick,
+  // so the Print list tab and Print slips see the same households.
+  const [toPrint, setToPrint] = useState<Set<string>>(() => new Set(rows.filter((r) => r.onList).map((r) => r.id)));
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState<SlipLang | null>(null);
   const [side, setSide] = useState<Side | null>(null);
@@ -99,22 +102,28 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
 
   const shownPrint = shown.filter((r) => toPrint.has(r.id));
   const allShownPrint = shown.length > 0 && shownPrint.length === shown.length;
-  const togglePrint = (id: string) =>
-    setToPrint((t) => {
-      const n = new Set(t);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  const togglePrintShown = () =>
-    setToPrint((t) => {
-      const n = new Set(t);
-      for (const r of shown) {
-        if (allShownPrint) n.delete(r.id);
-        else n.add(r.id);
+  const setPrint = (ids: string[], on: boolean) => {
+    if (ids.length === 0) return;
+    const flip = (set: Set<string>, add: boolean) => {
+      const n = new Set(set);
+      for (const id of ids) {
+        if (add) n.add(id);
+        else n.delete(id);
       }
       return n;
+    };
+    setToPrint((t) => flip(t, on));
+    start(async () => {
+      const r = await savePrintRequest(slug, ids, on);
+      if (!r.ok) {
+        setToPrint((t) => flip(t, !on));
+        setError(r.message ?? "Couldn't save. Please try again.");
+      } else setError(null);
+      router.refresh();
     });
+  };
+  const togglePrint = (id: string) => setPrint([id], !toPrint.has(id));
+  const togglePrintShown = () => setPrint(shown.map((r) => r.id), !allShownPrint);
   // In the list's order (household name), so the sheets come out the same way.
   const printIds = rows.filter((r) => toPrint.has(r.id)).map((r) => r.id);
 
@@ -223,34 +232,17 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
       <div className="mt-3 flex flex-col gap-2 rounded-xl border-2 border-dashed border-line px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
         <span className="font-semibold">
           {printIds.length
-            ? `${printIds.length} slip${printIds.length === 1 ? "" : "s"} to print`
-            : "Tick households in the Print column to add them to the print list"}
+            ? `${printIds.length} on the print list`
+            : "Tick households in the Print column to put them on the print list"}
         </span>
         <div className="flex flex-wrap gap-1.5">
-          {printIds.length > 0 && (
-            <button type="button" onClick={() => setToPrint(new Set())} className="btn btn-quiet btn-sm min-h-10">
-              Clear
-            </button>
-          )}
-          <button
-            type="button"
-            disabled={pending || printIds.length === 0}
-            onClick={() =>
-              start(async () => {
-                const r = await savePrintRequest(slug, printIds, true);
-                if (!r.ok) {
-                  setError(r.message ?? "Couldn't save. Please try again.");
-                  return;
-                }
-                setToPrint(new Set());
-                router.push(`/host/e/${slug}/slips`);
-              })
-            }
-            className="btn btn-primary btn-sm min-h-10"
-          >
+          <Link href={`/host/e/${slug}/slips`} className="btn btn-secondary btn-sm min-h-10">
+            Open print list
+          </Link>
+          <Link href={`/host/e/${slug}/slips?tab=print`} className="btn btn-primary btn-sm min-h-10">
             <Printer className="h-4 w-4" aria-hidden="true" />
-            Add to print list
-          </button>
+            Print slips
+          </Link>
         </div>
       </div>
 

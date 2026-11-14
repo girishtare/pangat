@@ -26,18 +26,24 @@ function useSelection(): Selection {
   return s;
 }
 
-/** Holds the ticks for the slips shown; wraps both the controls and the sheets. */
-export function SlipSelection({ ids, children }: { ids: string[]; children: ReactNode }) {
-  // A new set of slips (filters changed) starts all ticked again.
+/**
+ * Holds the ticks for the slips shown; wraps both the controls and the sheets.
+ * Ticked to start: the slips on the print list (Print / Print Again on the
+ * Guest list, or the Print column on Language), and nothing else; with an
+ * empty print list nothing is ticked (owner, 14 Nov). A one-off ?ids= view
+ * starts with all of its slips ticked.
+ */
+export function SlipSelection({ ids, initial, children }: { ids: string[]; initial: string[]; children: ReactNode }) {
+  // A new set of slips (filters changed, print list changed) starts again from the print list.
   return (
-    <SelectionState key={ids.join(",")} ids={ids}>
+    <SelectionState key={`${ids.join(",")}|${initial.join(",")}`} ids={ids} initial={initial}>
       {children}
     </SelectionState>
   );
 }
 
-function SelectionState({ ids, children }: { ids: string[]; children: ReactNode }) {
-  const [ticked, setTicked] = useState<Set<string>>(() => new Set(ids));
+function SelectionState({ ids, initial, children }: { ids: string[]; initial: string[]; children: ReactNode }) {
+  const [ticked, setTicked] = useState<Set<string>>(() => new Set(initial));
   const value = useMemo<Selection>(
     () => ({
       ids,
@@ -112,19 +118,16 @@ export function SlipSheets({
       window.removeEventListener("afterprint", after);
     };
   }, []);
-  // On screen the sheet is laid out to fit its box (owner, 14 Nov: "landscape so it fits a horizontal screen"):
-  // where there's room, its 8 slips sit 4 across and 2 down; on a narrow screen, 2 across as on paper. Either way it is
-  // scaled to the box's width. Printing is unchanged: A4 portrait, 2 x 4.
+  // On screen the A4 sheet (portrait, as printed) is scaled to fit its box, never above full size.
+  // (A 4 x 2 landscape preview was tried on 14 Nov and dropped: it wasn't the shape of the page.)
   const box = useRef<HTMLDivElement>(null);
-  const [fit, setFit] = useState<{ wide: boolean; zoom: number } | null>(null);
+  const [fit, setFit] = useState<{ zoom: number } | null>(null);
   useEffect(() => {
     const el = box.current;
     if (!el) return;
     const PX_PER_MM = 96 / 25.4;
     const ro = new ResizeObserver(([e]) => {
-      const w = e.contentRect.width;
-      const wide = w >= 700;
-      setFit({ wide, zoom: Math.min(1, w / ((wide ? 388 : 194) * PX_PER_MM)) });
+      setFit({ zoom: Math.min(1, e.contentRect.width / (194 * PX_PER_MM)) });
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -191,7 +194,7 @@ export function SlipSheets({
       {sheetCount > 1 && <SheetPager at={at} count={sheetCount} perSheet={perSheet} total={shown.length} onGo={setPage} />}
       <div ref={box} className="overflow-hidden print:hidden">
         {screenSheets.slice(at, at + 1).map((sheet) => (
-          <div key={at} className={`sheet ${fit?.wide ? "sheet-wide" : ""}`} style={fit ? { zoom: fit.zoom } : undefined}>
+          <div key={at} className="sheet" style={fit ? { zoom: fit.zoom } : undefined}>
             {sheet.map((it) => {
               const on = ticked.has(it.id);
               return (

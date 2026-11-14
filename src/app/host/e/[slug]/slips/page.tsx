@@ -45,8 +45,6 @@ const PRINT_CSS = `
   @media (min-width: 1280px) { .sheet { zoom: 0.7; margin-left: 0; } }
   @media (min-width: 1366px) { .sheet { zoom: 0.8; } }
   @media (min-width: 1440px) { .sheet { zoom: 0.88; } }
-  /* Wide boxes: the 8 slips 4 across, 2 down (owner, 14 Nov). Scaled to fit by SlipSheets. */
-  .sheet.sheet-wide { width: 388mm; height: 140mm; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); margin-left: 0; }
 }
 @media print {
   html, body { background: white !important; }
@@ -224,7 +222,7 @@ export default async function Slips({
             <SlipLanguages
               slug={slug}
               showSide={!host.side}
-              rows={all.map((g) => ({ id: g.id, nameEn: g.nameEn, nameMr: g.nameMr, side: g.side, location: g.location, lang: g.slipLang }))}
+              rows={all.map((g) => ({ id: g.id, nameEn: g.nameEn, nameMr: g.nameMr, side: g.side, location: g.location, lang: g.slipLang, onList: g.printRequested }))}
             />
           )}
         </section>
@@ -282,7 +280,10 @@ export default async function Slips({
       <style>{PRINT_CSS}</style>
       {header}
 
-      <SlipSelection ids={guests.map((g) => g.id)}>
+      <SlipSelection
+        ids={guests.map((g) => g.id)}
+        initial={(ids ? guests : guests.filter((g) => g.printRequested)).map((g) => g.id)}
+      >
         <div className="print:hidden">
           {ids && (
             <div className="mb-3">
@@ -319,71 +320,38 @@ export default async function Slips({
           )}
         </div>
 
-        {guests.length === 0 ? (
-          <div className="print:hidden">
-            <EmptyState icon={Printer} title="No slips to print">
-              {fromList ? "The print list is empty." : filtered || ids ? "No households match these filters." : "Add households on the Guest list first."}
-            </EmptyState>
-          </div>
-        ) : (
-          <>
-            <p className="mb-2 text-[0.9375rem] text-ink-soft print:hidden">
-              {guests.length.toLocaleString("en-IN")} slip{guests.length === 1 ? "" : "s"} · {sheets.length === 1 ? "one sheet" : `${sheets.length} sheets`} · A4 · 8 slips,
-              each about 97 × 70 mm
-            </p>
-            <SlipSheets
-              perSheet={PER_SHEET}
-              items={guests.map((g) => ({
-                id: g.id,
-                name: g.nameEn,
-                nameMr: g.nameMr,
-                location: g.location,
-                code: g.shortCode,
-                slip: <Slip g={g} base={siteBase} event={host.event.name} replyBy={replyBy} phone={displayPhone(host.event.contactPhone[g.side])} />,
-              }))}
-            />
-          </>
-        )}
-
-        {/* Below the sheet (owner, 14 Nov): notes on the left; on the right, Additional filters on top and Print at the bottom. */}
-        <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] print:hidden">
-          <div className="space-y-3">
-            {missingPhone.map((s) => (
-              <Alert key={s} tone="error">
-                No contact number for the <b>{s === "bride" ? "bride's side" : "groom's side"}</b>, so their slips have no &quot;call us&quot; line.
-                {host.canManage && (
-                  <>
-                    {" "}
-                    <Link href={`/host/e/${slug}/settings`} className="font-semibold underline">
-                      Add it in Event settings
-                    </Link>
-                    .
-                  </>
-                )}
-              </Alert>
-            ))}
-            {noMarathi > 0 && (
-              <Alert tone="warn">
-                {noMarathi} household{noMarathi === 1 ? " has" : "s have"} no Marathi name; their slips show the English name only.
-              </Alert>
+        {/* The A4 sheet on the left; filters, notes and the Print button on the right (owner, 14 Nov). */}
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] print:block">
+          <div className="min-w-0">
+            {guests.length === 0 ? (
+              <div className="print:hidden">
+                <EmptyState icon={Printer} title="No slips to print">
+                  {fromList ? "The print list is empty." : filtered || ids ? "No households match these filters." : "Add households on the Guest list first."}
+                </EmptyState>
+              </div>
+            ) : (
+              <>
+                <p className="mb-2 text-[0.9375rem] text-ink-soft print:hidden">
+                  {guests.length.toLocaleString("en-IN")} slip{guests.length === 1 ? "" : "s"} · {sheets.length === 1 ? "one sheet" : `${sheets.length} sheets`} · A4 · 8 slips,
+                  each about 97 × 70 mm
+                </p>
+                <SlipSheets
+                  perSheet={PER_SHEET}
+                  items={guests.map((g) => ({
+                    id: g.id,
+                    name: g.nameEn,
+                    nameMr: g.nameMr,
+                    location: g.location,
+                    code: g.shortCode,
+                    slip: <Slip g={g} base={siteBase} event={host.event.name} replyBy={replyBy} phone={displayPhone(host.event.contactPhone[g.side])} />,
+                  }))}
+                />
+              </>
             )}
-            <div className="rounded-[1.25rem] bg-sand px-5 py-4">
-              <h2 className="mb-1.5 text-base font-bold">Before you print</h2>
-              <ul className="list-disc space-y-1 pl-5">
-                <li>
-                  A4 paper, scale <b>100%</b> (not &quot;fit to page&quot;), portrait, headers and footers off.
-                </li>
-                <li>Print one sheet first and scan a QR code with your phone.</li>
-                <li>Only ticked slips print (tick box in each slip&apos;s corner), packed 8 to a sheet.</li>
-                <li>Thicker paper (100 gsm or more) holds up better in the card.</li>
-                <li>
-                  QR codes point to <span className="break-all">{siteBase}</span>.
-                </li>
-              </ul>
-            </div>
+
           </div>
 
-          <div className="flex flex-col justify-between gap-4">
+          <div className="space-y-4 print:hidden xl:sticky xl:top-4">
             <div>
               <PopupButton
                 title="Additional filters"
@@ -460,6 +428,42 @@ export default async function Slips({
               </PopupButton>
               {filtered && <p className="mt-1.5 text-sm text-ink-soft">{filterBits.join(" · ")}</p>}
             </div>
+            <div className="space-y-3">
+            {missingPhone.map((s) => (
+              <Alert key={s} tone="error">
+                No contact number for the <b>{s === "bride" ? "bride's side" : "groom's side"}</b>, so their slips have no &quot;call us&quot; line.
+                {host.canManage && (
+                  <>
+                    {" "}
+                    <Link href={`/host/e/${slug}/settings`} className="font-semibold underline">
+                      Add it in Event settings
+                    </Link>
+                    .
+                  </>
+                )}
+              </Alert>
+            ))}
+            {noMarathi > 0 && (
+              <Alert tone="warn">
+                {noMarathi} household{noMarathi === 1 ? " has" : "s have"} no Marathi name; their slips show the English name only.
+              </Alert>
+            )}
+            <div className="rounded-[1.25rem] bg-sand px-5 py-4">
+              <h2 className="mb-1.5 text-base font-bold">Before you print</h2>
+              <ul className="list-disc space-y-1 pl-5">
+                <li>
+                  A4 paper, scale <b>100%</b> (not &quot;fit to page&quot;), portrait, headers and footers off.
+                </li>
+                <li>Print one sheet first and scan a QR code with your phone.</li>
+                <li>Only ticked slips print, packed 8 to a sheet. Ticked to start: the slips on the print list (nothing, if it&apos;s empty). Tick or untick any slip in its corner.</li>
+                <li>Thicker paper (100 gsm or more) holds up better in the card.</li>
+                <li>
+                  QR codes point to <span className="break-all">{siteBase}</span>.
+                </li>
+              </ul>
+            </div>
+          </div>
+
             <PrintButton />
           </div>
         </div>
