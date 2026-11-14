@@ -164,6 +164,7 @@ export function DetailsForm(props: {
   softCap: number | null;
   location: string | null;
   notes: string | null;
+  lang: "both" | "en" | "mr";
   functions: { id: string; name: string; invited: boolean; replied: boolean }[];
 }) {
   const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id));
@@ -192,6 +193,23 @@ export function DetailsForm(props: {
         </span>
         <input name="location" maxLength={80} defaultValue={props.location ?? ""} className="input" placeholder="e.g. Borivali, Mumbai" />
       </label>
+      <fieldset>
+        <legend className="label">Language</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              ["mr", "मराठी", "mr"],
+              ["en", "English", undefined],
+              ["both", "Both", undefined],
+            ] as const
+          ).map(([value, label, l]) => (
+            <label key={value} className="choice relative">
+              <input type="radio" name="lang" value={value} defaultChecked={props.lang === value} /> <span lang={l}>{label}</span>
+            </label>
+          ))}
+        </div>
+        <span className="hint mt-1 block">Their slip, WhatsApp message and reply page use it. Both opens in Marathi; guests can switch.</span>
+      </fieldset>
       {!props.hostSide && (
         <fieldset>
           <legend className="label">Side</legend>

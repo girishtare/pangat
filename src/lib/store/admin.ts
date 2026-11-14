@@ -481,6 +481,7 @@ export interface HouseholdDetail {
   softCap: number | null;
   location: string | null;
   notes: string | null;
+  slipLang: "both" | "en" | "mr";
   functionIds: string[];
   responses: {
     functionId: string;
@@ -497,7 +498,7 @@ export interface HouseholdDetail {
 export async function loadHousehold(eventId: string, householdId: string): Promise<HouseholdDetail | null> {
   const { data, error } = await admin()
     .from("households")
-    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, invites(function_id), responses(*)")
+    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, slip_lang, invites(function_id), responses(*)")
     .eq("id", householdId)
     .eq("event_id", eventId)
     .maybeSingle();
@@ -517,6 +518,7 @@ export async function loadHousehold(eventId: string, householdId: string): Promi
     softCap: r.soft_cap,
     location: r.location ?? null,
     notes: r.notes ?? null,
+    slipLang: r.slip_lang === "en" || r.slip_lang === "mr" ? r.slip_lang : "both",
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     responses: (r.responses ?? []).map((x: any) => ({
       functionId: x.function_id,
@@ -546,7 +548,16 @@ export async function findHouseholdByCode(eventId: string, code: string): Promis
 export async function updateHousehold(
   eventId: string,
   householdId: string,
-  fields: { side: Side; nameEn: string; nameMr: string | null; mobile: string | null; softCap: number | null; location: string | null; notes: string | null },
+  fields: {
+    side: Side;
+    nameEn: string;
+    nameMr: string | null;
+    mobile: string | null;
+    softCap: number | null;
+    location: string | null;
+    notes: string | null;
+    slipLang?: "both" | "en" | "mr";
+  },
   functionIds: string[],
 ): Promise<void> {
   const db = admin();
@@ -559,6 +570,7 @@ export async function updateHousehold(
       mobile: fields.mobile,
       soft_cap: fields.softCap,
       location: fields.location,
+      ...(fields.slipLang ? { slip_lang: fields.slipLang } : {}),
       notes: fields.notes,
     })
     .eq("id", householdId)

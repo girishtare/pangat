@@ -59,6 +59,27 @@ export function fillMessage(template: string, v: MessageVars): string {
   return template.replace(/\{[a-z_]+\}/g, (m) => map[m] ?? m);
 }
 
+/**
+ * A household's message in its language (owner, 14 Nov): the texts are written
+ * Marathi paragraph(s), then English. Paragraphs (split at blank lines) with
+ * Devanagari are Marathi; those with other words (placeholders aside) are
+ * English; the rest (the {link} line) always stays. English households get the
+ * English paragraphs, Marathi ones the Marathi; Both, or a text that isn't
+ * split that way, gets everything.
+ */
+export function textForLanguage(template: string, lang: "both" | "en" | "mr"): string {
+  if (lang === "both") return template;
+  const paras = template.split(/\n[ \t]*\n/);
+  const kind = (p: string) => (/[\u0900-\u097F]/.test(p) ? "mr" : /[A-Za-z]/.test(p.replace(/\{[a-z_]+\}/g, "")) ? "en" : "any");
+  const kept = paras.filter((p) => {
+    const k = kind(p);
+    return k === "any" || k === lang;
+  });
+  // Nothing in that language (e.g. a custom text in one language only): send it as written.
+  if (!kept.some((p) => kind(p) === lang)) return template;
+  return kept.join("\n\n");
+}
+
 /** https://wa.me/<digits>?text=… for an E.164 mobile; null without a usable number. */
 export function whatsappLink(mobile: string | null, text: string): string | null {
   const digits = (mobile ?? "").replace(/\D/g, "");

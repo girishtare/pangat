@@ -86,6 +86,10 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   const notes = text(fd.get("notes")) || null;
   if (notes && notes.length > MAX_NOTES) return { ok: false, message: `Comments / Notes can be up to ${MAX_NOTES} characters.` };
 
+  const langRaw = text(fd.get("lang"));
+  const slipLang = langRaw === "en" || langRaw === "mr" || langRaw === "both" ? langRaw : null;
+  if (!slipLang) return { ok: false, message: "Choose Marathi, English or Both." };
+
   const capRaw = text(fd.get("cap"));
   const cap = capRaw === "" ? null : Number(capRaw);
   if (cap !== null && (!Number.isInteger(cap) || cap < 1 || cap > MAX_HEADS)) return { ok: false, message: `Cap must be from 1 to ${MAX_HEADS}, or blank.` };
@@ -103,7 +107,7 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   const sameMobile = mob.value ? others.find((o) => o.mobile === mob.value) : undefined;
   if (sameMobile && sameMobile.side === side) return { ok: false, message: "Another household on this side already has that mobile." };
 
-  await updateHousehold(host.event.id, hh.id, { side, nameEn, nameMr, mobile: mob.value, softCap: cap, location, notes }, functionIds);
+  await updateHousehold(host.event.id, hh.id, { side, nameEn, nameMr, mobile: mob.value, softCap: cap, location, notes, slipLang }, functionIds);
   return done(sameMobile ? `Saved. Note: this mobile is also on the ${SIDE_NAMES[sameMobile.side]}.` : "Saved.");
 }
 
