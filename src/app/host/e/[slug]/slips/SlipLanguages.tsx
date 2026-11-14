@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { Printer, Search } from "lucide-react";
 import type { SlipLang } from "@/lib/store/supabase";
 import type { Side } from "@/lib/types";
-import { saveSlipLang } from "./actions";
+import { savePrintRequest, saveSlipLang } from "./actions";
 
 export interface SlipLangRow {
   id: string;
@@ -48,7 +47,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
   const [local, setLocal] = useState<Record<string, SlipLang>>({});
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   // Slips to print, chosen in the last column (owner, 12 Nov), apart from the language ticks.
-  // "Print these slips" opens Print slips with just these (?ids=), in name order.
+  // "Add to print list" puts them on the print list (the Slips tab's first tab; owner, 14 Nov).
   const [toPrint, setToPrint] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [only, setOnly] = useState<SlipLang | null>(null);
@@ -225,7 +224,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
         <span className="font-semibold">
           {printIds.length
             ? `${printIds.length} slip${printIds.length === 1 ? "" : "s"} to print`
-            : "Tick households in the Print column to print just their slips"}
+            : "Tick households in the Print column to add them to the print list"}
         </span>
         <div className="flex flex-wrap gap-1.5">
           {printIds.length > 0 && (
@@ -233,17 +232,25 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
               Clear
             </button>
           )}
-          {printIds.length > 0 ? (
-            <Link href={`/host/e/${slug}/slips?ids=${printIds.join(",")}`} className="btn btn-primary btn-sm min-h-10">
-              <Printer className="h-4 w-4" aria-hidden="true" />
-              Print these slips
-            </Link>
-          ) : (
-            <span className="btn btn-primary btn-sm pointer-events-none min-h-10 opacity-50" aria-disabled="true">
-              <Printer className="h-4 w-4" aria-hidden="true" />
-              Print these slips
-            </span>
-          )}
+          <button
+            type="button"
+            disabled={pending || printIds.length === 0}
+            onClick={() =>
+              start(async () => {
+                const r = await savePrintRequest(slug, printIds, true);
+                if (!r.ok) {
+                  setError(r.message ?? "Couldn't save. Please try again.");
+                  return;
+                }
+                setToPrint(new Set());
+                router.push(`/host/e/${slug}/slips`);
+              })
+            }
+            className="btn btn-primary btn-sm min-h-10"
+          >
+            <Printer className="h-4 w-4" aria-hidden="true" />
+            Add to print list
+          </button>
         </div>
       </div>
 

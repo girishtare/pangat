@@ -928,6 +928,23 @@ export async function setSlipLang(eventId: string, ids: string[], lang: "both" |
   return changed;
 }
 
+/** Puts households on the print list (now) or takes them off. A one-side host only reaches their side. */
+export async function setPrintRequested(eventId: string, ids: string[], on: boolean, side: Side | null): Promise<number> {
+  let changed = 0;
+  for (let i = 0; i < ids.length; i += 150) {
+    let q = admin()
+      .from("households")
+      .update({ print_requested_at: on ? new Date().toISOString() : null }, { count: "exact" })
+      .eq("event_id", eventId)
+      .in("id", ids.slice(i, i + 150));
+    if (side) q = q.eq("side", side);
+    const { error, count } = await q;
+    if (error) throw new Error(`saving the print list failed: ${error.message}`);
+    changed += count ?? 0;
+  }
+  return changed;
+}
+
 /** Marks one household's invitation sent (card, WhatsApp or both) or not sent. A one-side host only reaches their side. */
 export async function setInviteSent(eventId: string, id: string, via: "card" | "whatsapp" | "both" | null, side: Side | null): Promise<number> {
   let q = admin()

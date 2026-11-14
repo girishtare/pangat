@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Languages, Printer } from "lucide-react";
+import { Languages, ListChecks, Printer, SlidersHorizontal } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { sortGuests } from "@/lib/guestSort";
 import { chunk, displayPhone, guestLink } from "@/lib/outreach";
@@ -11,6 +11,8 @@ import type { Side } from "@/lib/types";
 import { Alert, EmptyState, PageHeader, PageTabs } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { PrintButton, SlipSelection, SlipSheets } from "./SlipSelection";
+import PrintList from "./PrintList";
+import PopupButton from "../../../../ui/PopupButton";
 import SlipLanguages from "./SlipLanguages";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +45,8 @@ const PRINT_CSS = `
   @media (min-width: 1280px) { .sheet { zoom: 0.7; margin-left: 0; } }
   @media (min-width: 1366px) { .sheet { zoom: 0.8; } }
   @media (min-width: 1440px) { .sheet { zoom: 0.88; } }
+  /* Wide boxes: the 8 slips 4 across, 2 down (owner, 14 Nov). Scaled to fit by SlipSheets. */
+  .sheet.sheet-wide { width: 388mm; height: 140mm; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); margin-left: 0; }
 }
 @media print {
   html, body { background: white !important; }
@@ -139,7 +143,7 @@ export default async function Slips({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ side?: string; since?: string; ids?: string; lang?: string; tab?: string; place?: string }>;
+  searchParams: Promise<{ side?: string; since?: string; ids?: string; lang?: string; tab?: string; place?: string; list?: string }>;
 }) {
   const { slug } = await params;
   const sp = await searchParams;
@@ -147,9 +151,12 @@ export default async function Slips({
   if (!gate.ok) return <GateMessage gate={gate} title="Slips" />;
   const { host } = gate;
 
-  // By household name, A to Z, on both tabs and in print (owner, 12 Nov).
+  // By household name, A to Z, on every tab and in print (owner, 12 Nov).
   const all = sortGuests(await listGuests(host.client, host.event.id), "name", "asc");
-  const tab: "print" | "language" = sp.tab === "language" ? "language" : "print";
+  const onList = all.filter((g) => g.printRequested);
+  // Three tabs (owner, 14 Nov): the print list first, then Language, then Print slips.
+  const tab: "list" | "language" | "print" = sp.tab === "language" ? "language" : sp.tab === "print" || sp.ids ? "print" : "list";
+  const base = `/host/e/${slug}/slips`;
   const header = (
     <div className="print:hidden">
       <PageHeader
@@ -160,12 +167,42 @@ export default async function Slips({
         label="Slips"
         current={tab}
         tabs={[
-          { key: "print", label: "Print slips", href: `/host/e/${slug}/slips`, icon: Printer },
-          { key: "language", label: "Language of each slip", href: `/host/e/${slug}/slips?tab=language`, icon: Languages },
+          { key: "list", label: "Print list", href: base, icon: ListChecks, count: onList.length },
+          { key: "language", label: "Language", href: `${base}?tab=language`, icon: Languages },
+          { key: "print", label: "Print slips", href: `${base}?tab=print`, icon: Printer },
         ]}
       />
     </div>
   );
+
+  if (tab === "list") {
+    return (
+      <EventShell host={host} current="slips">
+        {header}
+        <section className="card p-[18px] sm:p-[22px]" aria-labelledby="print-list">
+          <h2 id="print-list" className="font-display text-[1.3125rem] text-kumkum">
+            Print list
+          </h2>
+          <p className="mb-4 mt-0.5 text-[0.9375rem] text-ink-soft">
+            Slips asked for with <b>Print</b> or <b>Print Again</b> on the Guest list. Print them together, then clear the list.
+          </p>
+          <PrintList
+            slug={slug}
+            showSide={!host.side}
+            rows={onList.map((g) => ({
+              id: g.id,
+              nameEn: g.nameEn,
+              nameMr: g.nameMr,
+              side: g.side,
+              location: g.location,
+              lang: g.slipLang,
+              sent: g.inviteVia !== null,
+            }))}
+          />
+        </section>
+      </EventShell>
+    );
+  }
 
   if (tab === "language") {
     return (
@@ -194,8 +231,10 @@ export default async function Slips({
       </EventShell>
     );
   }
+
   const side: Side | null = host.side ?? (sp.side === "bride" || sp.side === "groom" ? sp.side : null);
   const ids = sp.ids ? new Set(sp.ids.split(",")) : null;
+  const fromList = sp.list === "1";
   const since = sp.since && /^\d{4}-\d{2}-\d{2}$/.test(sp.since) ? sp.since : null;
   // Optional filter: only the slips printed in one language (e.g. to print the Marathi ones on their own).
   const lang: SlipLang | null = sp.lang === "en" || sp.lang === "mr" || sp.lang === "both" ? sp.lang : null;
@@ -213,23 +252,30 @@ export default async function Slips({
   const placeCount = (key: string) => all.filter((g) => (!side || g.side === side) && placeKey(g.location) === key).length;
   const noPlace = placeCount("");
   const place = sp.place === "-" ? "-" : (places.find((p) => placeKey(p) === placeKey(sp.place ?? null)) ?? null);
-  // Before the language filter: these are the households whose language can be set here.
   const inView = all.filter(
     (g) =>
       (!side || g.side === side) &&
       (!ids || ids.has(g.id)) &&
+      (!fromList || g.printRequested) &&
       (!since || g.createdAt.slice(0, 10) >= since) &&
       (!place || placeKey(g.location) === (place === "-" ? "" : placeKey(place))),
   );
   const guests = lang ? inView.filter((g) => g.slipLang === lang) : inView;
 
-  const base = await publicBaseUrl();
+  const siteBase = await publicBaseUrl();
   const replyBy = slipDate(host.event.cutoffAt);
 
   const missingPhone = (["bride", "groom"] as const).filter((s) => !host.event.contactPhone[s] && guests.some((g) => g.side === s));
   const noMarathi = guests.filter((g) => g.slipLang !== "en" && !g.nameMr).length;
   const sheets = chunk(guests, PER_SHEET);
-  const filtered = !!(ids || since || lang || place || (side && !host.side));
+  // The filters in "Additional filters" (not the one-off ?ids= or the print list).
+  const filterBits = [
+    side && !host.side ? (side === "bride" ? "Bride's side" : "Groom's side") : null,
+    place ? (place === "-" ? "No location given" : place) : null,
+    lang ? LANG_LABEL[lang] : null,
+    since ? `Added on or after ${since}` : null,
+  ].filter(Boolean) as string[];
+  const filtered = filterBits.length > 0;
 
   return (
     <EventShell host={host} current="slips">
@@ -237,154 +283,186 @@ export default async function Slips({
       {header}
 
       <SlipSelection ids={guests.map((g) => g.id)}>
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] print:block">
-        <div className="space-y-4 print:hidden">
-          <section className="card p-[18px] sm:p-[22px]" aria-labelledby="which-slips">
-            <h2 id="which-slips" className="mb-3 text-base font-bold">
-              Which slips
-            </h2>
-            {ids ? (
+        <div className="print:hidden">
+          {ids && (
+            <div className="mb-3">
               <Alert tone="info">
                 Showing {guests.length === 1 ? "one household's slip" : `${guests.length} selected slips`}.{" "}
-                <Link href={`/host/e/${slug}/slips`} className="font-semibold underline">
+                <Link href={`${base}?tab=print`} className="font-semibold underline">
                   Show all slips
                 </Link>
               </Alert>
-            ) : (
-              <form className="space-y-4" action={`/host/e/${slug}/slips`}>
-
-                {!host.side && (
-                  <label className="block">
-                    <span className="label">Side</span>
-                    <select name="side" defaultValue={side ?? ""} className="input">
-                      <option value="">Both sides</option>
-                      <option value="bride">Bride&apos;s side</option>
-                      <option value="groom">Groom&apos;s side</option>
-                    </select>
-                  </label>
-                )}
-                {(places.length > 0 || place) && (
-                  <label className="block">
-                    <span className="label">Location</span>
-                    <select name="place" defaultValue={place ?? ""} className="input">
-                      <option value="">Every location</option>
-                      {places.map((p) => (
-                        <option key={p} value={p}>
-                          {p} ({placeCount(placeKey(p))})
-                        </option>
-                      ))}
-                      {noPlace > 0 && <option value="-">No location given ({noPlace})</option>}
-                    </select>
-                  </label>
-                )}
-                <label className="block">
-                  <span className="label">Language</span>
-                  <select name="lang" defaultValue={lang ?? ""} className="input">
-                    <option value="">Every language</option>
-                    <option value="en">English slips only</option>
-                    <option value="mr">Marathi slips only</option>
-                    <option value="both">English-and-Marathi slips only</option>
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="label">
-                    Only households added on or after <span className="font-normal text-ink-soft">(optional)</span>
-                  </span>
-                  <input type="date" name="since" defaultValue={since ?? ""} className="input" />
-                </label>
-                <div className="flex flex-wrap items-center gap-3">
-                  <button type="submit" className="btn btn-secondary">
-                    Show
-                  </button>
-                  {filtered && (
-                    <Link href={`/host/e/${slug}/slips`} className="btn btn-quiet btn-sm">
-                      All slips
-                    </Link>
-                  )}
-                </div>
-              </form>
-            )}
-            <p className="mt-4 text-base">
-              <span className="font-display text-[1.75rem] leading-none text-kumkum">{guests.length.toLocaleString("en-IN")}</span> slip
-              {guests.length === 1 ? "" : "s"} · <b>{sheets.length}</b> A4 sheet{sheets.length === 1 ? "" : "s"}
-            </p>
-            <p className="mt-1 text-sm text-ink-soft">
-              {(["en", "mr", "both"] as const)
-                .map((l) => `${guests.filter((g) => g.slipLang === l).length} ${l === "en" ? "English" : l === "mr" ? "Marathi" : "both languages"}`)
-                .join(" · ")}
-              .{" "}
-              <Link href={`/host/e/${slug}/slips?tab=language`} className="font-semibold text-kumkum underline">
-                Change languages
+            </div>
+          )}
+          {fromList && (
+            <div className="mb-3">
+              <Alert tone="info">
+                Showing the {guests.length} slip{guests.length === 1 ? "" : "s"} on the print list.{" "}
+                <Link href={`${base}?tab=print`} className="font-semibold underline">
+                  Show all slips
+                </Link>{" "}
+                ·{" "}
+                <Link href={base} className="font-semibold underline">
+                  Back to the print list
+                </Link>
+              </Alert>
+            </div>
+          )}
+          {filtered && (
+            <p className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.9375rem]">
+              <span className="font-semibold">Filters:</span>
+              {filterBits.join(" · ")}
+              <Link href={`${base}?tab=print${fromList ? "&list=1" : ""}`} className="font-semibold text-kumkum underline">
+                Clear
               </Link>
             </p>
-          </section>
-
-          {missingPhone.map((s) => (
-            <Alert key={s} tone="error">
-              No contact number for the <b>{s === "bride" ? "bride's side" : "groom's side"}</b>, so their slips have no &quot;call us&quot; line.
-              {host.canManage && (
-                <>
-                  {" "}
-                  <Link href={`/host/e/${slug}/settings`} className="font-semibold underline">
-                    Add it in Event settings
-                  </Link>
-                  .
-                </>
-              )}
-            </Alert>
-          ))}
-          {noMarathi > 0 && (
-            <Alert tone="warn">
-              {noMarathi} household{noMarathi === 1 ? " has" : "s have"} no Marathi name; their slips show the English name only.
-            </Alert>
           )}
+        </div>
 
-          <div className="rounded-[1.25rem] bg-sand px-5 py-4">
-            <h2 className="mb-1.5 text-base font-bold">Before you print</h2>
-            <ul className="list-disc space-y-1 pl-5">
-              <li>
-                A4 paper, scale <b>100%</b> (not &quot;fit to page&quot;), headers and footers off.
-              </li>
-              <li>Print one sheet first and scan a QR code with your phone.</li>
-              <li>To reprint a few, untick the rest (tick box in each slip&apos;s corner): only ticked slips print, packed 8 to a sheet.</li>
-              <li>Thicker paper (100 gsm or more) holds up better in the card.</li>
-              <li>
-                QR codes point to <span className="break-all">{base}</span>.
-              </li>
-            </ul>
+        {guests.length === 0 ? (
+          <div className="print:hidden">
+            <EmptyState icon={Printer} title="No slips to print">
+              {fromList ? "The print list is empty." : filtered || ids ? "No households match these filters." : "Add households on the Guest list first."}
+            </EmptyState>
+          </div>
+        ) : (
+          <>
+            <p className="mb-2 text-[0.9375rem] text-ink-soft print:hidden">
+              {guests.length.toLocaleString("en-IN")} slip{guests.length === 1 ? "" : "s"} · {sheets.length === 1 ? "one sheet" : `${sheets.length} sheets`} · A4 · 8 slips,
+              each about 97 × 70 mm
+            </p>
+            <SlipSheets
+              perSheet={PER_SHEET}
+              items={guests.map((g) => ({
+                id: g.id,
+                name: g.nameEn,
+                nameMr: g.nameMr,
+                location: g.location,
+                code: g.shortCode,
+                slip: <Slip g={g} base={siteBase} event={host.event.name} replyBy={replyBy} phone={displayPhone(host.event.contactPhone[g.side])} />,
+              }))}
+            />
+          </>
+        )}
+
+        {/* Below the sheet (owner, 14 Nov): notes on the left; on the right, Additional filters on top and Print at the bottom. */}
+        <div className="mt-6 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] print:hidden">
+          <div className="space-y-3">
+            {missingPhone.map((s) => (
+              <Alert key={s} tone="error">
+                No contact number for the <b>{s === "bride" ? "bride's side" : "groom's side"}</b>, so their slips have no &quot;call us&quot; line.
+                {host.canManage && (
+                  <>
+                    {" "}
+                    <Link href={`/host/e/${slug}/settings`} className="font-semibold underline">
+                      Add it in Event settings
+                    </Link>
+                    .
+                  </>
+                )}
+              </Alert>
+            ))}
+            {noMarathi > 0 && (
+              <Alert tone="warn">
+                {noMarathi} household{noMarathi === 1 ? " has" : "s have"} no Marathi name; their slips show the English name only.
+              </Alert>
+            )}
+            <div className="rounded-[1.25rem] bg-sand px-5 py-4">
+              <h2 className="mb-1.5 text-base font-bold">Before you print</h2>
+              <ul className="list-disc space-y-1 pl-5">
+                <li>
+                  A4 paper, scale <b>100%</b> (not &quot;fit to page&quot;), portrait, headers and footers off.
+                </li>
+                <li>Print one sheet first and scan a QR code with your phone.</li>
+                <li>Only ticked slips print (tick box in each slip&apos;s corner), packed 8 to a sheet.</li>
+                <li>Thicker paper (100 gsm or more) holds up better in the card.</li>
+                <li>
+                  QR codes point to <span className="break-all">{siteBase}</span>.
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <PrintButton />
-        </div>
-
-        <div className="min-w-0">
-          {guests.length === 0 ? (
-            <div className="print:hidden">
-              <EmptyState icon={Printer} title="No slips to print">
-                {filtered ? "No households match these filters." : "Add households on the Guest list first."}
-              </EmptyState>
+          <div className="flex flex-col justify-between gap-4">
+            <div>
+              <PopupButton
+                title="Additional filters"
+                className="btn btn-secondary w-full"
+                label={
+                  <>
+                    <SlidersHorizontal className="h-5 w-5" aria-hidden="true" />
+                    Additional filters{filtered ? ` (${filterBits.length})` : ""}
+                  </>
+                }
+              >
+                <form className="space-y-4 p-5" action={base}>
+                  <input type="hidden" name="tab" value="print" />
+                  {fromList && <input type="hidden" name="list" value="1" />}
+                  {!host.side && (
+                    <label className="block">
+                      <span className="label">Side</span>
+                      <select name="side" defaultValue={side ?? ""} className="input">
+                        <option value="">Both sides</option>
+                        <option value="bride">Bride&apos;s side</option>
+                        <option value="groom">Groom&apos;s side</option>
+                      </select>
+                    </label>
+                  )}
+                  {(places.length > 0 || place) && (
+                    <label className="block">
+                      <span className="label">Location</span>
+                      <select name="place" defaultValue={place ?? ""} className="input">
+                        <option value="">Every location</option>
+                        {places.map((p) => (
+                          <option key={p} value={p}>
+                            {p} ({placeCount(placeKey(p))})
+                          </option>
+                        ))}
+                        {noPlace > 0 && <option value="-">No location given ({noPlace})</option>}
+                      </select>
+                    </label>
+                  )}
+                  <label className="block">
+                    <span className="label">Language</span>
+                    <select name="lang" defaultValue={lang ?? ""} className="input">
+                      <option value="">Every language</option>
+                      <option value="en">English slips only</option>
+                      <option value="mr">Marathi slips only</option>
+                      <option value="both">English-and-Marathi slips only</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="label">
+                      Only households added on or after <span className="font-normal text-ink-soft">(optional)</span>
+                    </span>
+                    <input type="date" name="since" defaultValue={since ?? ""} className="input" />
+                  </label>
+                  <p className="text-sm text-ink-soft">
+                    {(["en", "mr", "both"] as const)
+                      .map((l) => `${guests.filter((g) => g.slipLang === l).length} ${l === "en" ? "English" : l === "mr" ? "Marathi" : "both languages"}`)
+                      .join(" · ")}{" "}
+                    shown now.{" "}
+                    <Link href={`${base}?tab=language`} className="font-semibold text-kumkum underline">
+                      Change languages
+                    </Link>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="submit" className="btn btn-primary">
+                      Show
+                    </button>
+                    {filtered && (
+                      <Link href={`${base}?tab=print${fromList ? "&list=1" : ""}`} className="btn btn-quiet btn-sm">
+                        Clear filters
+                      </Link>
+                    )}
+                  </div>
+                </form>
+              </PopupButton>
+              {filtered && <p className="mt-1.5 text-sm text-ink-soft">{filterBits.join(" · ")}</p>}
             </div>
-          ) : (
-            <>
-              <p className="mb-2 text-[0.9375rem] text-ink-soft print:hidden">
-                {sheets.length === 1 ? "One sheet" : `${sheets.length} sheets`} · A4 · 8 slips, each about 97 × 70 mm
-                {lang ? ` · ${LANG_LABEL[lang]} slips only` : ""}
-              </p>
-              <SlipSheets
-                perSheet={PER_SHEET}
-                items={guests.map((g) => ({
-                  id: g.id,
-                  name: g.nameEn,
-                  nameMr: g.nameMr,
-                  location: g.location,
-                  code: g.shortCode,
-                  slip: <Slip g={g} base={base} event={host.event.name} replyBy={replyBy} phone={displayPhone(host.event.contactPhone[g.side])} />,
-                }))}
-              />
-            </>
-          )}
+            <PrintButton />
+          </div>
         </div>
-      </div>
       </SlipSelection>
     </EventShell>
   );
