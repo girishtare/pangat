@@ -47,7 +47,8 @@ export default async function WhatsApp({
 
   const pending = (g: (typeof guests)[number]) => g.replied.length < g.functionIds.length;
   const sentKey = (id: string) => (kind === "invite" ? nudges.get(id)?.invite : nudges.get(id)?.reminder) ?? null;
-  const todo = guests.filter((g) => (kind === "invite" ? !nudges.get(g.id)?.invite : pending(g)));
+  // Invitation: everyone whose WhatsApp invitation hasn't gone (card-only households with a mobile can be added). Reminder: no full reply yet.
+  const todo = guests.filter((g) => (kind === "invite" ? !g.invite.waSent && !nudges.get(g.id)?.invite : pending(g)));
   const rows = show === "all" ? guests : todo;
   const noMobile = rows.filter((g) => !g.mobile).length;
   const sample = guests[0];
@@ -198,6 +199,7 @@ export default async function WhatsApp({
                 reminders: n?.reminders ? `${n.reminders}, last ${shortStamp(n.reminder!)}` : "0",
                 href: whatsappLink(g.mobile, message(g)),
                 sentBefore: !!sentKey(g.id),
+                invite: g.invite,
               };
             })}
           />

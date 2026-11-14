@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { hostGate } from "@/lib/host";
 import { DEFAULT_TEXT, type MessageKind } from "@/lib/outreach";
 import { readCount } from "@/lib/pilot";
-import { addEffort, loadHousehold, recordNudge, saveMessageText } from "@/lib/store/admin";
+import { addEffort, loadHousehold, recordNudge, saveMessageText, setInviteModes, setInviteSent } from "@/lib/store/admin";
 
 export type FormState = { ok: boolean; message: string } | null;
 
@@ -16,6 +16,13 @@ export async function recordSend(slug: string, householdId: string, kind: Messag
   const hh = await loadHousehold(gate.host.event.id, householdId);
   if (!hh || (gate.host.side && gate.host.side !== hh.side)) return { ok: false };
   await recordNudge(hh.id, kind, gate.host.userId);
+  // An invitation sent here counts as the WhatsApp invitation going out (owner, 14 Nov): WhatsApp becomes one of
+  // their modes if it wasn't, and is ticked as sent on the Guest list.
+  if (kind === "invite") {
+    if (!hh.inviteBy.wa) await setInviteModes(gate.host.event.id, hh.id, { card: hh.inviteBy.card, wa: true }, gate.host.side);
+    await setInviteSent(gate.host.event.id, hh.id, "wa", true, gate.host.side);
+    revalidatePath(`/host/e/${slug}/guests`);
+  }
   revalidatePath(`/host/e/${slug}/whatsapp`);
   return { ok: true };
 }
