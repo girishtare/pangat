@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { Check, ChevronLeft, ChevronRight, Mail, Phone, Plus, Search, SkipForward, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronLeft, ChevronRight, Mail, Phone, Plus, Search, SkipForward, X } from "lucide-react";
 import type { InviteModes } from "@/lib/invites";
 import { saveInviteModes } from "../guests/inviteActions";
 import type { MessageKind } from "@/lib/outreach";
@@ -21,7 +21,10 @@ export interface ListRow {
   replied: number;
   invited: number;
   invitationSent: string | null; // formatted
+  /** When the WhatsApp invitation went (ISO), for sorting. */
+  invitationSentAt: string | null;
   reminders: string; // "0" or "2, last …"
+  reminderCount: number;
   href: string | null; // wa.me link with the message, or null without a mobile
   sentBefore: boolean;
   /** How they are to be invited, and what has gone out (owner, 14 Nov). */
@@ -55,6 +58,42 @@ function ModeIcons({ m, wa }: { m: InviteModes; wa: boolean }) {
  * takes one tap (Open WhatsApp); Pangat moves on to the next and records it.
  */
 const PER_PAGE = 50;
+
+/** The list's sortable columns (owner, 14 Nov): household name A to Z by default. */
+type SortKey = "name" | "mobile" | "mode" | "replied" | "sent" | "reminders";
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: "name", label: "Household" },
+  { key: "mobile", label: "Mobile" },
+  { key: "mode", label: "Invitation mode" },
+  { key: "replied", label: "Replied" },
+  { key: "sent", label: "Invitation sent" },
+  { key: "reminders", label: "Reminders" },
+];
+const byName = (a: ListRow, b: ListRow) => a.nameEn.localeCompare(b.nameEn, "en", { sensitivity: "base", numeric: true });
+/** Card only, then card and WhatsApp, then WhatsApp only; more sent first within each. */
+const modeRank = (r: ListRow) => (r.invite.wa ? (r.invite.card ? 2 : 3) : 1) * 10 - (r.invite.cardSent ? 1 : 0) - (r.invite.waSent ? 1 : 0);
+function sortRows(rows: ListRow[], key: SortKey, dir: "asc" | "desc"): ListRow[] {
+  const sign = dir === "desc" ? -1 : 1;
+  // Blanks (no mobile, never sent) last whichever way.
+  const blanksLast = (a: string | null, b: string | null) => (a === b ? 0 : a === null ? 1 : b === null ? -1 : sign * a.localeCompare(b));
+  const cmp = (a: ListRow, b: ListRow): number => {
+    switch (key) {
+      case "name":
+        return sign * byName(a, b);
+      case "mobile":
+        return blanksLast(a.mobile, b.mobile);
+      case "mode":
+        return sign * (modeRank(a) - modeRank(b));
+      case "replied":
+        return sign * ((a.invited ? a.replied / a.invited : 0) - (b.invited ? b.replied / b.invited : 0));
+      case "sent":
+        return blanksLast(a.invitationSentAt, b.invitationSentAt);
+      case "reminders":
+        return sign * (a.reminderCount - b.reminderCount);
+    }
+  };
+  return [...rows].sort((a, b) => cmp(a, b) || byName(a, b));
+}
 
 export default function DistributionList({ slug, kind, rows, showSide }: { slug: string; kind: MessageKind; rows: ListRow[]; showSide: boolean }) {
   const [ticked, setTicked] = useState<Set<string>>(new Set());
@@ -113,11 +152,35 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
           (qDigits.length >= 4 && (r.mobile ?? "").replace(/\D/g, "").includes(qDigits)),
       )
     : rows;
+  // Sorted by name unless a column header (or the phone menu) says otherwise.
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "name", dir: "asc" });
+  const sorted = sortRows(shown, sort.key, sort.dir);
+  const sortBy = (key: SortKey) => {
+    setSort((s) => ({ key, dir: s.key === key && s.dir === "asc" ? "desc" : "asc" }));
+    setPage(0);
+  };
+  const th = (key: SortKey, label: string, className = "") => {
+    const active = sort.key === key;
+    const Icon = !active ? ArrowUpDown : sort.dir === "asc" ? ArrowUp : ArrowDown;
+    return (
+      <th className={className} aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+        <button
+          type="button"
+          onClick={() => sortBy(key)}
+          className={`inline-flex items-center gap-1 rounded-md px-1 font-bold hover:text-kumkum ${active ? "text-kumkum" : ""}`}
+          title={`Sort by ${label.toLowerCase()}`}
+        >
+          {label}
+          <Icon className={`h-4 w-4 ${active ? "" : "opacity-40"}`} aria-hidden="true" />
+        </button>
+      </th>
+    );
+  };
   // 50 a page (owner, 12 Nov: speed). Ticks and "Tick all" cover every page.
   const [page, setPage] = useState(0);
-  const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
+  const pages = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
   const at = Math.min(page, pages - 1);
-  const pageRows = shown.slice(at * PER_PAGE, (at + 1) * PER_PAGE);
+  const pageRows = sorted.slice(at * PER_PAGE, (at + 1) * PER_PAGE);
   // "Tick all" acts on the households shown (all of them, or the ones found), on every page.
   const sendable = shown.filter(canSend);
   const allTicked = sendable.length > 0 && sendable.every((r) => ticked.has(r.id));
@@ -214,7 +277,10 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
               type="button"
               disabled={ticked.size === 0}
               onClick={() => {
-                const ids = rows.filter((r) => ticked.has(r.id) && r.href).map((r) => r.id);
+                // In the order shown (sorted), WhatsApp-mode households only for an invitation.
+                const ids = sortRows(rows, sort.key, sort.dir)
+                  .filter((r) => ticked.has(r.id) && canSend(r))
+                  .map((r) => r.id);
                 setDone(new Set());
                 setQueueTotal(ids.length);
                 setQueue(ids);
@@ -271,12 +337,12 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
               <th className="w-12">
                 <span className="sr-only">Tick</span>
               </th>
-              <th className="text-left!">Household</th>
-              <th>Mobile</th>
-              <th>Invitation mode</th>
-              <th>Replied</th>
-              <th>Invitation sent</th>
-              <th>Reminders</th>
+              {th("name", "Household", "text-left!")}
+              {th("mobile", "Mobile")}
+              {th("mode", "Invitation mode")}
+              {th("replied", "Replied")}
+              {th("sent", "Invitation sent")}
+              {th("reminders", "Reminders")}
               <th>
                 <span className="sr-only">Send</span>
               </th>
@@ -321,8 +387,34 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
         </table>
       </div>
 
-      {/* Phone: cards */}
-      <ul className="mt-4 space-y-3 lg:hidden">
+      {/* Phone: cards, with the same sorting as a menu */}
+      <div className="mt-4 flex items-end gap-2 lg:hidden">
+        <label className="block flex-1">
+          <span className="label">Sort by</span>
+          <select
+            value={sort.key}
+            onChange={(e) => {
+              setSort((s) => ({ ...s, key: e.target.value as SortKey }));
+              setPage(0);
+            }}
+            className="input"
+          >
+            {SORTS.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block w-32">
+          <span className="sr-only">Direction</span>
+          <select value={sort.dir} onChange={(e) => setSort((s) => ({ ...s, dir: e.target.value === "desc" ? "desc" : "asc" }))} className="input">
+            <option value="asc">A → Z, low → high</option>
+            <option value="desc">Z → A, high → low</option>
+          </select>
+        </label>
+      </div>
+      <ul className="mt-3 space-y-3 lg:hidden">
         {pageRows.map((r) => (
           <li key={r.id} className={`card p-4 ${done.has(r.id) ? "border-leaf" : ""}`}>
             <div className="flex items-start gap-3">

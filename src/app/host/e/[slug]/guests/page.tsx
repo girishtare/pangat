@@ -326,7 +326,7 @@ export default async function GuestList({
                 </thead>
                 <tbody>
                   {pageRows.map((g) => (
-                    <tr key={g.id} className={allSent(g.invite) ? "bg-leaf-soft" : undefined}>
+                    <tr key={g.id}>
                       <td className="max-w-[18rem]">
                         <Link href={link(g.id)} className="wrap-names font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
                           {g.nameEn}
@@ -362,7 +362,14 @@ export default async function GuestList({
                         <InviteSent slug={slug} id={g.id} name={g.nameEn} modes={g.invite} />
                       </td>
                       <td>
-                        <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} />
+                        {/* No slip for a WhatsApp-only invitation (owner, 14 Nov). */}
+                        {g.invite.card ? (
+                          <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} />
+                        ) : (
+                          <span className="text-ink-soft" title="WhatsApp only: no printed slip">
+                            —
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -400,7 +407,7 @@ export default async function GuestList({
             </form>
             <ul className="mt-3 space-y-3 lg:hidden">
               {pageRows.map((g) => (
-                <li key={g.id} className={`card overflow-hidden ${allSent(g.invite) ? "border-leaf bg-leaf-soft" : ""}`}>
+                <li key={g.id} className="card overflow-hidden">
                   <Link href={link(g.id)} className="block p-4 hover:bg-paper-deep/40">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -446,10 +453,12 @@ export default async function GuestList({
                   </Link>
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-1.5">
                     <InviteSent slug={slug} id={g.id} name={g.nameEn} modes={g.invite} />
-                    <span className="inline-flex items-center gap-1 text-sm text-ink-soft">
-                      Print slip
-                      <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} />
-                    </span>
+                    {g.invite.card && (
+                      <span className="inline-flex items-center gap-1 text-sm text-ink-soft">
+                        Print slip
+                        <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} />
+                      </span>
+                    )}
                   </div>
                 </li>
               ))}
