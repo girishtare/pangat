@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, CircleCheck, Search, Settings, TriangleAlert, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, CircleCheck, Download, Search, Settings, TriangleAlert, Users } from "lucide-react";
 import { LiveSearch } from "../../../../ui/LiveSearch";
 import { ListPager } from "../../../../ui/ListPager";
 import { hostGate } from "@/lib/host";
@@ -152,6 +152,13 @@ export default async function GuestList({
                   mobile here, correct it in your file too: otherwise it may be added a second time, with a new QR code that isn&apos;t on their slip.
                 </p>
               </PopupButton>
+              {guests.length > 0 && (
+                // The whole list (every page, no filter), with each function's reply (owner, 14 Nov).
+                <a href={`/host/e/${slug}/guests/export`} className="btn btn-secondary" download>
+                  <Download className="h-5 w-5" aria-hidden="true" />
+                  Export to Excel
+                </a>
+              )}
             </>
           ) : undefined
         }

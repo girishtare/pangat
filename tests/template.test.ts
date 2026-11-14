@@ -76,3 +76,21 @@ describe("Excel template", () => {
     expect(r.rows[1].draft).toMatchObject({ side: "groom", mobile: "+919123456789", functionIds: ["f-wedding", "f-reception"] });
   });
 });
+
+import { replyCell } from "@/lib/exportGuests";
+
+describe("replyCell (guest list export)", () => {
+  const fn = { id: "f", name: { en: "Wedding", mr: null }, catered: true, vegOnly: false };
+  it("is blank when not invited and Waiting with no reply", () => {
+    expect(replyCell(fn, false, undefined)).toBe("");
+    expect(replyCell(fn, true, undefined)).toBe("Waiting");
+  });
+  it("shows yes with people and veg, or no", () => {
+    expect(replyCell(fn, true, { functionId: "f", status: "yes", heads: 4, veg: 2 })).toBe("Yes · 4 (2 veg)");
+    expect(replyCell(fn, true, { functionId: "f", status: "no", heads: 0, veg: 0 })).toBe("No");
+  });
+  it("leaves veg out where no food or veg only", () => {
+    expect(replyCell({ ...fn, catered: false }, true, { functionId: "f", status: "yes", heads: 3, veg: 0 })).toBe("Yes · 3");
+    expect(replyCell({ ...fn, vegOnly: true }, true, { functionId: "f", status: "yes", heads: 3, veg: 3 })).toBe("Yes · 3");
+  });
+});
