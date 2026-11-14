@@ -119,7 +119,9 @@ export function EventShell({ host, current, children }: { host: HostContext; cur
       <MobileNav eventName={host.event.name.en} eventDate={date} items={items} who={who} signOut={<SignOutButton variant="rail" />} />
 
       <main id="main" className="min-w-0 px-4 py-6 sm:px-6 lg:px-10 lg:pb-14 lg:pt-8 print:p-0">
-        <div className="mx-auto max-w-[72rem] print:max-w-none">
+        {/* Up to 96rem (owner, 14 Nov: use big screens): laptops are unchanged (their content area is narrower than 72rem anyway);
+            wide monitors get wider tables and a fourth dashboard card in the first row. */}
+        <div className="mx-auto max-w-[96rem] print:max-w-none">
           {/* Which event this is, on one line above every page (laptops; phones have it in the top bar). */}
           <div className="mb-5 hidden min-w-0 items-baseline gap-x-2.5 overflow-hidden whitespace-nowrap rounded-[14px] bg-sand px-4 py-2.5 lg:flex print:hidden">
             <span className="truncate font-display text-lg leading-tight text-kumkum">{host.event.name.en}</span>
