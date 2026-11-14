@@ -89,6 +89,9 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   const langRaw = text(fd.get("lang"));
   const slipLang = langRaw === "en" || langRaw === "mr" || langRaw === "both" ? langRaw : null;
   if (!slipLang) return { ok: false, message: "Choose Marathi, English or Both." };
+  const by = fd.getAll("inviteBy").map(String);
+  const inviteBy = { card: by.includes("card"), wa: by.includes("whatsapp") };
+  if (!inviteBy.card && !inviteBy.wa) return { ok: false, message: "Choose how to send the invitation: card, WhatsApp or both." };
 
   const capRaw = text(fd.get("cap"));
   const cap = capRaw === "" ? null : Number(capRaw);
@@ -107,7 +110,7 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   const sameMobile = mob.value ? others.find((o) => o.mobile === mob.value) : undefined;
   if (sameMobile && sameMobile.side === side) return { ok: false, message: "Another household on this side already has that mobile." };
 
-  await updateHousehold(host.event.id, hh.id, { side, nameEn, nameMr, mobile: mob.value, softCap: cap, location, notes, slipLang }, functionIds);
+  await updateHousehold(host.event.id, hh.id, { side, nameEn, nameMr, mobile: mob.value, softCap: cap, location, notes, slipLang, inviteBy }, functionIds);
   return done(sameMobile ? `Saved. Note: this mobile is also on the ${SIDE_NAMES[sameMobile.side]}.` : "Saved.");
 }
 

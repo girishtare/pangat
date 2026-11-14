@@ -12,6 +12,7 @@ import { Alert, EmptyState, PageHeader, PageTabs } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { PrintButton, SlipSelection, SlipSheets } from "./SlipSelection";
 import PrintList from "./PrintList";
+import { allSent } from "@/lib/invites";
 import PopupButton from "../../../../ui/PopupButton";
 import SlipLanguages from "./SlipLanguages";
 
@@ -194,7 +195,7 @@ export default async function Slips({
               side: g.side,
               location: g.location,
               lang: g.slipLang,
-              sent: g.inviteVia !== null,
+              sent: allSent(g.invite),
             }))}
           />
         </section>

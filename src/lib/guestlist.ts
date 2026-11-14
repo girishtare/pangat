@@ -1,4 +1,5 @@
 import type { Bilingual, Side } from "./types";
+import { parseInviteBy } from "./invites";
 
 /**
  * Guest list import: turn rows pasted from a sheet into households.
@@ -40,6 +41,8 @@ export interface HouseholdDraft {
   functionIds: string[];
   /** The household's language (slip, WhatsApp text, guest page); left out = Both. */
   slipLang?: "both" | "en" | "mr";
+  /** How they are to be invited; left out = card only. */
+  inviteBy?: { card: boolean; wa: boolean };
 }
 
 /** "English", "Marathi", "Both" (or en / mr / मराठी …) → the stored value; blank → null; unreadable → undefined. */
@@ -78,7 +81,7 @@ export interface SheetCheck {
   counts: { new: number; exists: number; error: number };
 }
 
-type Field = "nameEn" | "nameMr" | "side" | "mobile" | "location" | "functions" | "cap" | "notes" | "lang";
+type Field = "nameEn" | "nameMr" | "side" | "mobile" | "location" | "functions" | "cap" | "notes" | "lang" | "inviteBy";
 
 const HEADER_ALIASES: Record<Field, string[]> = {
   nameEn: ["name", "household", "householdname", "nameenglish", "englishname", "family", "familyname", "guest", "guestname"],
@@ -90,6 +93,7 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   location: ["location", "place", "city", "town", "village", "area", "stays", "staysat", "from", "गाव", "ठिकाण"],
   notes: ["commentsnotes", "comments", "comment", "notes", "note", "remarks", "remark", "टीप", "शेरा"],
   lang: ["language", "lang", "sliplanguage", "भाषा"],
+  inviteBy: ["inviteby", "invitationmode", "invitemode", "invitevia", "sendby", "invitation"],
 };
 
 const headerKey = (s: string) => s.trim().toLowerCase().replace(/[\s_().'’:/-]/g, "");
@@ -331,6 +335,9 @@ export function checkSheet(input: {
     const langRaw = cell("lang");
     const slipLang = parseLanguage(langRaw);
     if (slipLang === undefined) errors.push(`Language "${langRaw}" should be English, Marathi or Both.`);
+    const inviteRaw = cell("inviteBy");
+    const inviteBy = parseInviteBy(inviteRaw);
+    if (inviteBy === undefined) errors.push(`Invite by "${inviteRaw}" should be Card, WhatsApp, or both.`);
 
     let softCap: number | null = null;
     const capRaw = cell("cap");
@@ -373,7 +380,7 @@ export function checkSheet(input: {
       draft:
         status === "error" || !side
           ? null
-          : { side, nameEn, nameMr, mobile, softCap, location, notes, functionIds, ...(slipLang ? { slipLang } : {}) },
+          : { side, nameEn, nameMr, mobile, softCap, location, notes, functionIds, ...(slipLang ? { slipLang } : {}), ...(inviteBy ? { inviteBy } : {}) },
       errors,
       warnings,
     });

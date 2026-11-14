@@ -165,6 +165,7 @@ export function DetailsForm(props: {
   location: string | null;
   notes: string | null;
   lang: "both" | "en" | "mr";
+  inviteBy: { card: boolean; wa: boolean };
   functions: { id: string; name: string; invited: boolean; replied: boolean }[];
 }) {
   const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id));
@@ -209,6 +210,18 @@ export function DetailsForm(props: {
           ))}
         </div>
         <span className="hint mt-1 block">Their slip, WhatsApp message and reply page use it. Both opens in Marathi; guests can switch.</span>
+      </fieldset>
+      <fieldset>
+        <legend className="label">Send the invitation by</legend>
+        <div className="flex flex-wrap gap-2">
+          <label className="choice choice-check">
+            <input type="checkbox" name="inviteBy" value="card" defaultChecked={props.inviteBy.card} /> Card
+          </label>
+          <label className="choice choice-check">
+            <input type="checkbox" name="inviteBy" value="whatsapp" defaultChecked={props.inviteBy.wa} /> WhatsApp
+          </label>
+        </div>
+        <span className="hint mt-1 block">Tick one or both. The Guest list shows an icon for each, with a tick box for &quot;sent&quot;.</span>
       </fieldset>
       {!props.hostSide && (
         <fieldset>

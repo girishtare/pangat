@@ -2,16 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Check, Printer } from "lucide-react";
 import { savePrintRequest } from "../slips/actions";
 
 /**
- * The Guest list's Slips column (owner, 14 Nov): "Print" puts the household's
- * slip on the print list (Slips → Print list); "Print Again" when its
- * invitation has gone out. Once on the list it says so, and a second tap
- * takes it off.
+ * The Guest list's "Print slips" column (owner, 14 Nov): a tick box, like the
+ * Print column on Slips → Language. Ticked = on the print list; saved as you tick.
  */
-export default function PrintRequest({ slug, id, name, onList, sent }: { slug: string; id: string; name: string; onList: boolean; sent: boolean }) {
+export default function PrintRequest({ slug, id, name, onList }: { slug: string; id: string; name: string; onList: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [shown, setShown] = useState(onList);
@@ -21,8 +18,7 @@ export default function PrintRequest({ slug, id, name, onList, sent }: { slug: s
     setSeen(onList);
     setShown(onList);
   }
-  const flip = () => {
-    const next = !shown;
+  const flip = (next: boolean) => {
     setShown(next);
     start(async () => {
       const r = await savePrintRequest(slug, [id], next);
@@ -35,17 +31,10 @@ export default function PrintRequest({ slug, id, name, onList, sent }: { slug: s
   };
   return (
     <div className={pending ? "opacity-70" : undefined} aria-busy={pending}>
-      <button
-        type="button"
-        onClick={flip}
-        aria-pressed={shown}
-        title={shown ? "On the print list (Slips tab). Tap to take it off." : "Add this household's slip to the print list"}
-        className={`btn btn-sm min-h-10 whitespace-nowrap ${shown ? "btn-quiet text-leaf" : "btn-secondary"}`}
-      >
-        {shown ? <Check className="h-4 w-4" aria-hidden="true" /> : <Printer className="h-4 w-4" aria-hidden="true" />}
-        {shown ? "On print list" : sent ? "Print Again" : "Print"}
-        <span className="sr-only"> slip for {name}</span>
-      </button>
+      <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2" title={shown ? "On the print list" : "Add to the print list"}>
+        <input type="checkbox" checked={shown} onChange={(e) => flip(e.target.checked)} className="h-5 w-5 accent-kumkum" />
+        <span className="sr-only">Print the slip for {name}</span>
+      </label>
       {error && (
         <p role="alert" className="mt-1 text-sm text-kumkum">
           {error}

@@ -76,6 +76,18 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
         <span className="hint mt-1 block">Their slip, WhatsApp message and reply page use it. Both opens in Marathi; guests can switch.</span>
       </fieldset>
       <fieldset>
+        <legend className="label">Send the invitation by</legend>
+        <div className="flex flex-wrap gap-2">
+          <label className="choice choice-check">
+            <input type="checkbox" name="inviteBy" value="card" defaultChecked={true} /> Card
+          </label>
+          <label className="choice choice-check">
+            <input type="checkbox" name="inviteBy" value="whatsapp" defaultChecked={false} /> WhatsApp
+          </label>
+        </div>
+        <span className="hint mt-1 block">Tick one or both. The Guest list shows an icon for each, with a tick box for &quot;sent&quot;.</span>
+      </fieldset>
+      <fieldset>
         <legend className="label">Invited to</legend>
         <div className="flex flex-wrap gap-2">
           {functions.map((f) => (
