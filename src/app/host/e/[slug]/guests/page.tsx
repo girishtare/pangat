@@ -75,7 +75,8 @@ export default async function GuestList({
   const notSent = guests.filter((g) => !allSent(g.invite)).length;
   const byCard = guests.filter((g) => g.invite.card);
   const byWa = guests.filter((g) => g.invite.wa);
-  const sentSummary = `Card ${n(byCard.filter((g) => g.invite.cardSent).length)} of ${n(byCard.length)} sent · WhatsApp ${n(byWa.filter((g) => g.invite.waSent).length)} of ${n(byWa.length)}`;
+  const fmt = (x: number) => x.toLocaleString("en-IN");
+  const sentSummary = `Card ${fmt(byCard.filter((g) => g.invite.cardSent).length)} of ${fmt(byCard.length)} sent · WhatsApp ${fmt(byWa.filter((g) => g.invite.waSent).length)} of ${fmt(byWa.length)}`;
   const onlyNotSent = sp.invite === "not";
   const qLower = q.toLowerCase();
   const qDigits = q.replace(/\D/g, "");
