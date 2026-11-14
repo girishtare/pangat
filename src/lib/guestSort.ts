@@ -1,3 +1,5 @@
+import { sentShare, type InviteModes } from "./invites";
+
 /**
  * Sorting the guest list by any column. Ties fall back to the English name, so
  * the order is always stable and predictable.
@@ -15,12 +17,9 @@ export interface SortableGuest {
   functionIds: string[];
   replied: string[];
   softCap: number | null;
-  /** How the invitation went out; null = not sent yet. */
-  inviteVia?: "card" | "whatsapp" | "both" | null;
+  /** How they are to be invited and what has gone out. */
+  invite?: InviteModes;
 }
-
-/** Invitation sent: card, then WhatsApp, then both; not sent goes last. */
-const VIA_ORDER = { card: 1, whatsapp: 2, both: 3 } as const;
 
 export function parseSort(sort: string | undefined, dir: string | undefined): { sort: GuestSort | null; dir: SortDir } {
   const s = GUEST_SORTS.find((k) => k === sort) ?? null;
@@ -59,7 +58,8 @@ export function sortGuests<T extends SortableGuest>(rows: T[], sort: GuestSort |
       case "replied":
         return sign * (replyShare(a) - replyShare(b));
       case "sent":
-        return blanksLast(a.inviteVia ? VIA_ORDER[a.inviteVia] : null, b.inviteVia ? VIA_ORDER[b.inviteVia] : null, () => VIA_ORDER[a.inviteVia!] - VIA_ORDER[b.inviteVia!]);
+        // Share of the chosen modes sent: none first going up.
+        return sign * ((a.invite ? sentShare(a.invite) : 0) - (b.invite ? sentShare(b.invite) : 0));
       case "cap":
         return blanksLast(a.softCap, b.softCap, () => a.softCap! - b.softCap!);
     }

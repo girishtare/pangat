@@ -26,14 +26,16 @@ export interface ExportHousehold {
   notes: string | null;
   shortCode: string;
   slipLang: "both" | "en" | "mr";
-  inviteVia: "card" | "whatsapp" | "both" | null;
+  invite: { card: boolean; wa: boolean; cardSent: boolean; waSent: boolean };
   functionIds: string[];
   replies: ExportReply[];
 }
 
 const SIDE: Record<Side, string> = { bride: "Bride's side", groom: "Groom's side" };
 const SLIP: Record<ExportHousehold["slipLang"], string> = { both: "English and Marathi", en: "English", mr: "Marathi" };
-const INVITE: Record<NonNullable<ExportHousehold["inviteVia"]>, string> = { card: "Card", whatsapp: "WhatsApp", both: "Card & WA" };
+/** "Card (sent) · WhatsApp (not sent)". */
+const inviteCell = (m: ExportHousehold["invite"]) =>
+  [m.card ? `Card (${m.cardSent ? "sent" : "not sent"})` : null, m.wa ? `WhatsApp (${m.waSent ? "sent" : "not sent"})` : null].filter(Boolean).join(" · ");
 
 /** One function's reply as a short cell: "Yes · 4 (2 veg)", "No", "Waiting", or blank when not invited. */
 export function replyCell(fn: ExportFunction, invited: boolean, r: ExportReply | undefined): string {
@@ -67,7 +69,7 @@ export async function buildGuestExport(opts: { eventName: Bilingual; functions: 
     { header: "Code", key: "code", width: 10 },
     ...fns.map((f, i) => ({ header: `Invited: ${f.name.en}`, key: `inv${i}`, width: Math.min(28, Math.max(12, f.name.en.length + 10)) })),
     { header: "Cap", key: "cap", width: 7 },
-    { header: "Invitation", key: "invite", width: 13 },
+    { header: "Invitation mode", key: "invite", width: 30 },
     { header: "Slip language", key: "slip", width: 20 },
     ...fns.map((f, i) => ({ header: `Reply: ${f.name.en}`, key: `rep${i}`, width: Math.min(30, Math.max(16, f.name.en.length + 8)) })),
     { header: "Comments / Notes", key: "notes", width: 40 },
@@ -83,7 +85,7 @@ export async function buildGuestExport(opts: { eventName: Bilingual; functions: 
       location: h.location ?? "",
       code: h.shortCode,
       cap: h.softCap,
-      invite: h.inviteVia ? INVITE[h.inviteVia] : "Not Sent",
+      invite: inviteCell(h.invite),
       slip: SLIP[h.slipLang],
       notes: h.notes ?? "",
     };

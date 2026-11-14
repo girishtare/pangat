@@ -1,4 +1,5 @@
 import "server-only";
+import type { InviteModes } from "../invites";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { supabaseConfig } from "../supabase/config";
 import type {
@@ -208,6 +209,7 @@ export interface NewHousehold {
   token: string;
   shortCode: string;
   slipLang?: "both" | "en" | "mr";
+  inviteBy?: { card: boolean; wa: boolean };
 }
 
 /** Inserts households and their invites in one transaction (see migration 0004). */
@@ -223,6 +225,8 @@ export async function insertHouseholds(eventId: string, rows: NewHousehold[]): P
     location: r.location,
     notes: r.notes,
     slip_lang: r.slipLang ?? "both",
+    invite_by_card: r.inviteBy ? r.inviteBy.card : null,
+    invite_by_wa: r.inviteBy ? r.inviteBy.wa : null,
     function_ids: r.functionIds,
   }));
   const { data, error } = await db().rpc("import_households", { p_event: eventId, p_households: payload });
@@ -248,20 +252,20 @@ export interface GuestRow {
   maxHeads: number;
   /** The language its slip is printed in. */
   slipLang: SlipLang;
-  /** How the invitation went out; null = not marked sent yet (migration 0021). */
-  inviteVia: InviteVia | null;
+  /** How they are to be invited, and what has gone out (migration 0025). */
+  invite: InviteModes;
   /** On the print list (Slips → Print list; migration 0023). */
   printRequested: boolean;
 }
 
 export type SlipLang = "both" | "en" | "mr";
-export type InviteVia = "card" | "whatsapp" | "both";
+export type { InviteModes } from "../invites";
 
 /** Households as the signed-in host may see them (RLS: their side only). */
 export async function listGuests(client: SupabaseClient, eventId: string): Promise<GuestRow[]> {
   const { data, error } = await client
     .from("households")
-    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, created_at, slip_lang, invite_via, print_requested_at, invites(function_id), responses(function_id, heads)")
+    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, created_at, slip_lang, invite_by_card, invite_by_wa, card_sent_at, wa_sent_at, print_requested_at, invites(function_id), responses(function_id, heads)")
     .eq("event_id", eventId)
     .order("side")
     .order("created_at")
@@ -283,7 +287,7 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     replied: (r.responses ?? []).map((x: any) => x.function_id),
     maxHeads: Math.max(0, ...(r.responses ?? []).map((x: any) => Number(x.heads) || 0)),
     slipLang: r.slip_lang === "en" || r.slip_lang === "mr" ? r.slip_lang : "both",
-    inviteVia: r.invite_via === "card" || r.invite_via === "whatsapp" || r.invite_via === "both" ? r.invite_via : null,
+    invite: { card: r.invite_by_card !== false, wa: !!r.invite_by_wa, cardSent: !!r.card_sent_at, waSent: !!r.wa_sent_at },
     printRequested: !!r.print_requested_at,
   }));
 }

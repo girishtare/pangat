@@ -126,6 +126,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
               location={hh.location}
               notes={hh.notes}
               lang={hh.slipLang}
+              inviteBy={hh.inviteBy}
               functions={host.functions.map((f) => ({
                 id: f.id,
                 name: f.name.en,

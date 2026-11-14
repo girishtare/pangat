@@ -482,6 +482,7 @@ export interface HouseholdDetail {
   location: string | null;
   notes: string | null;
   slipLang: "both" | "en" | "mr";
+  inviteBy: { card: boolean; wa: boolean };
   functionIds: string[];
   responses: {
     functionId: string;
@@ -498,7 +499,7 @@ export interface HouseholdDetail {
 export async function loadHousehold(eventId: string, householdId: string): Promise<HouseholdDetail | null> {
   const { data, error } = await admin()
     .from("households")
-    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, slip_lang, invites(function_id), responses(*)")
+    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, slip_lang, invite_by_card, invite_by_wa, invites(function_id), responses(*)")
     .eq("id", householdId)
     .eq("event_id", eventId)
     .maybeSingle();
@@ -519,6 +520,7 @@ export async function loadHousehold(eventId: string, householdId: string): Promi
     location: r.location ?? null,
     notes: r.notes ?? null,
     slipLang: r.slip_lang === "en" || r.slip_lang === "mr" ? r.slip_lang : "both",
+    inviteBy: { card: r.invite_by_card !== false, wa: !!r.invite_by_wa },
     functionIds: (r.invites ?? []).map((i: any) => i.function_id),
     responses: (r.responses ?? []).map((x: any) => ({
       functionId: x.function_id,
@@ -557,6 +559,7 @@ export async function updateHousehold(
     location: string | null;
     notes: string | null;
     slipLang?: "both" | "en" | "mr";
+    inviteBy?: { card: boolean; wa: boolean };
   },
   functionIds: string[],
 ): Promise<void> {
@@ -571,6 +574,7 @@ export async function updateHousehold(
       soft_cap: fields.softCap,
       location: fields.location,
       ...(fields.slipLang ? { slip_lang: fields.slipLang } : {}),
+      ...(fields.inviteBy ? { invite_by_card: fields.inviteBy.card, invite_by_wa: fields.inviteBy.wa } : {}),
       notes: fields.notes,
     })
     .eq("id", householdId)
@@ -957,16 +961,30 @@ export async function setPrintRequested(eventId: string, ids: string[], on: bool
   return changed;
 }
 
-/** Marks one household's invitation sent (card, WhatsApp or both) or not sent. A one-side host only reaches their side. */
-export async function setInviteSent(eventId: string, id: string, via: "card" | "whatsapp" | "both" | null, side: Side | null): Promise<number> {
+/** Ticks a household's card or WhatsApp invitation as sent (now) or not. A one-side host only reaches their side. */
+export async function setInviteSent(eventId: string, id: string, mode: "card" | "wa", sent: boolean, side: Side | null): Promise<number> {
+  const at = sent ? new Date().toISOString() : null;
   let q = admin()
     .from("households")
-    .update({ invite_via: via, invite_sent_at: via ? new Date().toISOString() : null }, { count: "exact" })
+    .update(mode === "card" ? { card_sent_at: at } : { wa_sent_at: at }, { count: "exact" })
     .eq("event_id", eventId)
     .eq("id", id);
   if (side) q = q.eq("side", side);
   const { error, count } = await q;
   if (error) throw new Error(`saving invitation sent failed: ${error.message}`);
+  return count ?? 0;
+}
+
+/** Sets how a household is to be invited (card, WhatsApp; at least one). */
+export async function setInviteModes(eventId: string, id: string, modes: { card: boolean; wa: boolean }, side: Side | null): Promise<number> {
+  let q = admin()
+    .from("households")
+    .update({ invite_by_card: modes.card, invite_by_wa: modes.wa }, { count: "exact" })
+    .eq("event_id", eventId)
+    .eq("id", id);
+  if (side) q = q.eq("side", side);
+  const { error, count } = await q;
+  if (error) throw new Error(`saving invitation modes failed: ${error.message}`);
   return count ?? 0;
 }
 

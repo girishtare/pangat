@@ -19,7 +19,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   const { data, error } = await host.client
     .from("households")
     .select(
-      "side, name_en, name_mr, mobile, location, soft_cap, notes, short_code, slip_lang, invite_via, invites(function_id), responses(function_id, status, heads, veg)",
+      "side, name_en, name_mr, mobile, location, soft_cap, notes, short_code, slip_lang, invite_by_card, invite_by_wa, card_sent_at, wa_sent_at, invites(function_id), responses(function_id, status, heads, veg)",
     )
     .eq("event_id", host.event.id)
     .range(0, 9999);
@@ -36,7 +36,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
     notes: r.notes ?? null,
     shortCode: r.short_code,
     slipLang: r.slip_lang === "en" || r.slip_lang === "mr" ? r.slip_lang : "both",
-    inviteVia: r.invite_via === "card" || r.invite_via === "whatsapp" || r.invite_via === "both" ? r.invite_via : null,
+    invite: { card: r.invite_by_card !== false, wa: !!r.invite_by_wa, cardSent: !!r.card_sent_at, waSent: !!r.wa_sent_at },
     functionIds: (r.invites ?? []).map((i: { function_id: string }) => i.function_id),
     replies: (r.responses ?? []).map((x: { function_id: string; status: string; heads: number; veg: number }) => ({
       functionId: x.function_id,

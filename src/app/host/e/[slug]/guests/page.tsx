@@ -16,6 +16,7 @@ import { EventShell, GateMessage } from "../../../HostChrome";
 import AddHouseholdForm from "./AddHouseholdForm";
 import ImportForm from "./ImportForm";
 import InviteSent from "./InviteSent";
+import { allSent } from "@/lib/invites";
 import PrintRequest from "./PrintRequest";
 import { FunctionIcon } from "../../../../ui/FunctionIcon";
 import PopupButton from "../../../../ui/PopupButton";
@@ -70,8 +71,12 @@ export default async function GuestList({
   const noMobile = guests.filter((g) => !g.mobile).length;
   const noMarathi = guests.filter((g) => !g.nameMr).length;
   // Invitation sent, ticked by hand (owner, 12 Nov). ?invite=not shows the ones still to send.
-  const notSent = guests.filter((g) => !g.inviteVia).length;
-  const sentBy = (v: "card" | "whatsapp" | "both") => guests.filter((g) => g.inviteVia === v).length;
+  // Invitation mode (owner, 14 Nov): sent = every chosen mode ticked.
+  const notSent = guests.filter((g) => !allSent(g.invite)).length;
+  const byCard = guests.filter((g) => g.invite.card);
+  const byWa = guests.filter((g) => g.invite.wa);
+  const fmt = (x: number) => x.toLocaleString("en-IN");
+  const sentSummary = `Card ${fmt(byCard.filter((g) => g.invite.cardSent).length)} of ${fmt(byCard.length)} sent · WhatsApp ${fmt(byWa.filter((g) => g.invite.waSent).length)} of ${fmt(byWa.length)}`;
   const onlyNotSent = sp.invite === "not";
   const qLower = q.toLowerCase();
   const qDigits = q.replace(/\D/g, "");
@@ -86,7 +91,7 @@ export default async function GuestList({
           (qDigits.length >= 4 && (g.mobile ?? "").includes(qDigits)),
       )
     : guests;
-  const shown = sortGuests(onlyNotSent ? found.filter((g) => !g.inviteVia) : found, sort, dir);
+  const shown = sortGuests(onlyNotSent ? found.filter((g) => !allSent(g.invite)) : found, sort, dir);
   // 50 households a page (owner, 12 Nov: speed; the list grows to about 400).
   const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
   const pageNo = Math.min(pages, Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1));
@@ -219,14 +224,14 @@ export default async function GuestList({
           <CountCard
             ok
             label={guests.length === 1 ? "Invitation sent" : `All ${n(guests.length)} invitations sent`}
-            sub={`${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} card & WA`}
+            sub={sentSummary}
           />
         ) : (
           <Link href={`/host/e/${slug}/guests?invite=not`} className="block rounded-[1.25rem] hover:opacity-90">
             <CountCard
               value={n(notSent)}
               label={notSent === 1 ? "invitation not sent" : "invitations not sent"}
-              sub={`Sent: ${n(sentBy("card"))} card · ${n(sentBy("whatsapp"))} WhatsApp · ${n(sentBy("both"))} card & WA`}
+              sub={sentSummary}
             />
           </Link>
         )}
@@ -315,13 +320,13 @@ export default async function GuestList({
                     {th("code", "Code")}
                     {th("invited", "Invited to")}
                     {th("replied", "Replied")}
-                    {th("sent", "Invitation")}
-                    <th>Slips</th>
+                    {th("sent", "Invitation mode")}
+                    <th>Print slips</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageRows.map((g) => (
-                    <tr key={g.id}>
+                    <tr key={g.id} className={allSent(g.invite) ? "bg-leaf-soft" : undefined}>
                       <td className="max-w-[18rem]">
                         <Link href={link(g.id)} className="wrap-names font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
                           {g.nameEn}
@@ -354,10 +359,10 @@ export default async function GuestList({
                         <ReplyBadge replied={g.replied.length} invited={g.functionIds.length} />
                       </td>
                       <td className="text-left!">
-                        <InviteSent slug={slug} id={g.id} name={g.nameEn} via={g.inviteVia} />
+                        <InviteSent slug={slug} id={g.id} name={g.nameEn} modes={g.invite} />
                       </td>
                       <td>
-                        <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} sent={g.inviteVia !== null} />
+                        <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} />
                       </td>
                     </tr>
                   ))}
@@ -379,7 +384,7 @@ export default async function GuestList({
                   <option value="code">Code</option>
                   <option value="invited">Functions invited to</option>
                   <option value="replied">Replied</option>
-                  <option value="sent">Invitation sent</option>
+                  <option value="sent">Invitation mode (sent)</option>
                 </select>
               </label>
               <label className="block w-32">
@@ -395,7 +400,7 @@ export default async function GuestList({
             </form>
             <ul className="mt-3 space-y-3 lg:hidden">
               {pageRows.map((g) => (
-                <li key={g.id} className="card overflow-hidden">
+                <li key={g.id} className={`card overflow-hidden ${allSent(g.invite) ? "border-leaf bg-leaf-soft" : ""}`}>
                   <Link href={link(g.id)} className="block p-4 hover:bg-paper-deep/40">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -440,8 +445,11 @@ export default async function GuestList({
                     </dl>
                   </Link>
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-1.5">
-                    <InviteSent slug={slug} id={g.id} name={g.nameEn} via={g.inviteVia} />
-                    <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} sent={g.inviteVia !== null} />
+                    <InviteSent slug={slug} id={g.id} name={g.nameEn} modes={g.invite} />
+                    <span className="inline-flex items-center gap-1 text-sm text-ink-soft">
+                      Print slip
+                      <PrintRequest slug={slug} id={g.id} name={g.nameEn} onList={g.printRequested} />
+                    </span>
                   </div>
                 </li>
               ))}
