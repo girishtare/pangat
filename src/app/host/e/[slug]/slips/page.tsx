@@ -266,6 +266,8 @@ export default async function Slips({
   const missingPhone = (["bride", "groom"] as const).filter((s) => !host.event.contactPhone[s] && guests.some((g) => g.side === s));
   const noMarathi = guests.filter((g) => g.slipLang !== "en" && !g.nameMr).length;
   const sheets = chunk(guests, PER_SHEET);
+  // Slips on the print list first (they start ticked), then the rest, each part in name order (owner, 14 Nov).
+  const ordered = ids ? guests : [...guests.filter((g) => g.printRequested), ...guests.filter((g) => !g.printRequested)];
   // The filters in "Additional filters" (not the one-off ?ids= or the print list).
   const filterBits = [
     side && !host.side ? (side === "bride" ? "Bride's side" : "Groom's side") : null,
@@ -281,7 +283,7 @@ export default async function Slips({
       {header}
 
       <SlipSelection
-        ids={guests.map((g) => g.id)}
+        ids={ordered.map((g) => g.id)}
         initial={(ids ? guests : guests.filter((g) => g.printRequested)).map((g) => g.id)}
       >
         <div className="print:hidden">
@@ -337,7 +339,7 @@ export default async function Slips({
                 </p>
                 <SlipSheets
                   perSheet={PER_SHEET}
-                  items={guests.map((g) => ({
+                  items={ordered.map((g) => ({
                     id: g.id,
                     name: g.nameEn,
                     nameMr: g.nameMr,

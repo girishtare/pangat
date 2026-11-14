@@ -203,7 +203,7 @@ export function SlipSheets({
                     <input type="checkbox" checked={on} onChange={() => toggle(it.id)} className="h-6 w-6 accent-kumkum" />
                     <span className="sr-only">Print the slip for {it.name}</span>
                   </label>
-                  <div className={`slip-fill ${on ? "" : "opacity-35"}`}>{it.slip}</div>
+                  <div className={`slip-fill ${on ? "" : "opacity-30 grayscale"}`}>{it.slip}</div>
                 </div>
               );
             })}
