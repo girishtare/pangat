@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { FUNCTION_ICONS } from "@/lib/functionIcons";
+import { FunctionIcon } from "../../../../ui/FunctionIcon";
 import { Plus, Save, Send, Trash, UserPlus, X } from "lucide-react";
 import { Alert, WhatsAppIcon } from "../../../../ui/kit";
 import { MarathiInput } from "../../../../ui/MarathiInput";
@@ -136,6 +138,9 @@ export function EventForm(props: {
 const foodOf = (p: { catered?: boolean; vegOnly?: boolean }) => (p.catered === false ? "none" : p.vegOnly ? "veg" : "both");
 
 function FunctionFields(props: {
+  icon?: string | null;
+  /** Icons other functions of this event already use: shown but not choosable. */
+  usedIcons?: { icon: string; by: string }[];
   nameEn?: string;
   nameMr?: string | null;
   startsAt?: string;
@@ -184,6 +189,31 @@ function FunctionFields(props: {
         </div>
         <p className="hint mt-1.5">Changing this later doesn&apos;t change replies already in; veg-only counts everyone as veg.</p>
       </fieldset>
+      <fieldset className="sm:col-span-2 xl:col-span-3">
+        <legend className="label">Icon</legend>
+        <p className="hint mb-2">
+          Shown on the Guest list for the households invited to it. Each function has its own.
+          {props.icon ? "" : " Leave it and one is picked from the name."}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {FUNCTION_ICONS.map((ic) => {
+            const by = props.usedIcons?.find((u) => u.icon === ic.key)?.by;
+            return (
+              <label
+                key={ic.key}
+                title={by ? `${ic.label}: used by ${by}` : ic.label}
+                className={`relative grid h-11 w-11 place-items-center rounded-xl border-2 ${
+                  by ? "cursor-not-allowed border-transparent bg-paper-deep opacity-35" : "cursor-pointer border-line bg-card hover:border-kumkum"
+                } has-[:checked]:border-kumkum has-[:checked]:bg-kumkum has-[:checked]:text-white has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-[#4f6b80]`}
+              >
+                <input type="radio" name="icon" value={ic.key} defaultChecked={props.icon === ic.key} disabled={!!by} className="sr-only" />
+                <FunctionIcon icon={ic.key} />
+                <span className="sr-only">{by ? `${ic.label} (used by ${by})` : ic.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
     </div>
   );
 }
@@ -191,6 +221,8 @@ function FunctionFields(props: {
 export function FunctionEditor(props: {
   slug: string;
   id: string;
+  icon: string | null;
+  usedIcons: { icon: string; by: string }[];
   nameEn: string;
   nameMr: string | null;
   startsAt: string;
@@ -207,6 +239,9 @@ export function FunctionEditor(props: {
   return (
     <details className="group rounded-[14px] border border-line bg-card">
       <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-paper-deep text-kumkum">
+          <FunctionIcon icon={props.icon} />
+        </span>
         <span className="min-w-0 flex-1">
           <b>{props.nameEn}</b>
           {props.nameMr && (
@@ -276,7 +311,7 @@ export function AddFunctionButton() {
   );
 }
 
-export function NewFunctionForm({ slug, households }: { slug: string; households: number }) {
+export function NewFunctionForm({ slug, households, usedIcons }: { slug: string; households: number; usedIcons: { icon: string; by: string }[] }) {
   const [state, action, pending] = useFormAction(createFunction.bind(null, slug));
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -289,7 +324,7 @@ export function NewFunctionForm({ slug, households }: { slug: string; households
         Add a function <span className="font-normal text-ink-soft">(for example Sangeet or Mehendi)</span>
       </summary>
       <form ref={form} onSubmit={action} className="space-y-4 border-t border-dashed border-line p-4">
-        <FunctionFields />
+        <FunctionFields usedIcons={usedIcons} />
         <label className="flex min-h-11 items-center gap-3">
           <input type="checkbox" name="inviteAll" defaultChecked={households > 0} disabled={households === 0} className="h-6 w-6 accent-kumkum" />
           <span>{households > 0 ? `Invite all ${households} households already on the list` : "No households on the list yet"}</span>

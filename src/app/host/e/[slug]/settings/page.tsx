@@ -183,6 +183,8 @@ export default async function EventSettings({
                 key={f.id}
                 slug={slug}
                 id={f.id}
+                icon={f.icon}
+                usedIcons={host.functions.filter((o) => o.id !== f.id && o.icon).map((o) => ({ icon: o.icon!, by: o.name.en }))}
                 nameEn={f.name.en}
                 nameMr={f.name.mr}
                 startsAt={isoToIstInput(f.startsAt)}
@@ -195,7 +197,11 @@ export default async function EventSettings({
                 replies={usage[i].replies}
               />
             ))}
-            <NewFunctionForm slug={slug} households={households.length} />
+            <NewFunctionForm
+              slug={slug}
+              households={households.length}
+              usedIcons={host.functions.filter((o) => o.icon).map((o) => ({ icon: o.icon!, by: o.name.en }))}
+            />
           </div>
         </Section>
       )}

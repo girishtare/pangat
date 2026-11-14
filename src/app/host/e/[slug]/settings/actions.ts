@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isFunctionIcon } from "@/lib/functionIcons";
 import { z } from "zod";
 import { istInputToIso, isValidDate } from "@/lib/events";
 import { normaliseMobile } from "@/lib/guestlist";
@@ -62,7 +63,17 @@ function readFunction(fd: FormData): FunctionInput | string {
   // Food: "none", "veg" (vegetarian only) or "both" (veg and non-veg).
   const food = String(fd.get("food") ?? "both");
   if (!["none", "veg", "both"].includes(food)) return "Choose what food is served.";
-  return { nameEn, nameMr, startsAt, venue, mapUrl, catered: food !== "none", vegOnly: food === "veg" };
+  // Icon: one of the fixed list, or none picked (a new function then gets one from its name).
+  const iconRaw = String(fd.get("icon") ?? "");
+  if (iconRaw && !isFunctionIcon(iconRaw)) return "Choose an icon from the list.";
+  return { nameEn, nameMr, startsAt, venue, mapUrl, catered: food !== "none", vegOnly: food === "veg", icon: iconRaw || null };
+}
+
+/** No two functions of one event share an icon (owner, 14 Nov). */
+function iconTaken(host: HostContext, icon: string | null | undefined, self: string | null): string | null {
+  if (!icon) return null;
+  const other = host.functions.find((f) => f.icon === icon && f.id !== self);
+  return other ? `${other.name.en} already uses that icon. Pick another.` : null;
 }
 
 /* ---------- Event details ---------- */
@@ -107,6 +118,8 @@ export async function saveFunction(slug: string, functionId: string, _prev: Form
   if ("error" in who) return { ok: false, message: who.error };
   const fn = readFunction(fd);
   if (typeof fn === "string") return { ok: false, message: fn };
+  const taken = iconTaken(who.host, fn.icon, functionId);
+  if (taken) return { ok: false, message: taken };
   await updateFunction(who.host.event.id, functionId, fn);
   return done("Saved.");
 }
@@ -131,6 +144,8 @@ export async function createFunction(slug: string, _prev: FormState, fd: FormDat
   const fn = readFunction(fd);
   if (typeof fn === "string") return { ok: false, message: fn };
   if (who.host.functions.length >= 15) return { ok: false, message: "An event can have at most 15 functions." };
+  const taken = iconTaken(who.host, fn.icon, null);
+  if (taken) return { ok: false, message: taken };
   const invited = await addFunction(who.host.event.id, fn, fd.get("inviteAll") === "on");
   return done(`Added ${fn.nameEn}${invited ? ` and invited ${invited} household${invited === 1 ? "" : "s"}` : ""}.`);
 }
