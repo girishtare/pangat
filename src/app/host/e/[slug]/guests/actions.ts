@@ -120,6 +120,7 @@ export async function addHousehold(slug: string, _prev: AddState, formData: Form
   if (!row[0]) return { ok: false, error: "Enter the household's name." };
   if (!functions.length) return { ok: false, error: "Tick at least one function." };
   if (!row[9]) return { ok: false, error: "Choose how to send the invitation: card, WhatsApp or both." };
+  if (row[9].includes("whatsapp") && !row[3]) return { ok: false, error: "Enter a phone number to invite them on WhatsApp." };
   const result = await saveImport(slug, `${header.join("\t")}\n${row.join("\t")}`);
   if (!result.ok && result.check?.counts.exists) {
     return {

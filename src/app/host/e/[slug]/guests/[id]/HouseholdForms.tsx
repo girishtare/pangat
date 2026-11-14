@@ -1,5 +1,6 @@
 "use client";
 
+import InviteByField from "../InviteByField";
 import PhoneInput from "../../../../../ui/PhoneInput";
 import { useActionState, useState } from "react";
 import { Check, Copy, Save, Trash } from "lucide-react";
@@ -212,18 +213,7 @@ export function DetailsForm(props: {
         </div>
         <span className="hint mt-1 block">Their slip, WhatsApp message and reply page use it. Both opens in Marathi; guests can switch.</span>
       </fieldset>
-      <fieldset>
-        <legend className="label">Send the invitation by</legend>
-        <div className="flex flex-wrap gap-2">
-          <label className="choice choice-check">
-            <input type="checkbox" name="inviteBy" value="card" defaultChecked={props.inviteBy.card} /> Card
-          </label>
-          <label className="choice choice-check">
-            <input type="checkbox" name="inviteBy" value="whatsapp" defaultChecked={props.inviteBy.wa} /> WhatsApp
-          </label>
-        </div>
-        <span className="hint mt-1 block">Tick one or both. The Guest list shows an icon for each, with a tick box for &quot;sent&quot;.</span>
-      </fieldset>
+      <InviteByField card={props.inviteBy.card} wa={props.inviteBy.wa} />
       {!props.hostSide && (
         <fieldset>
           <legend className="label">Side</legend>
