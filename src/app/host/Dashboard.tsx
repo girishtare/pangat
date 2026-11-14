@@ -35,8 +35,9 @@ export default function Dashboard({
 
   return (
     <div>
-      {/* Three cards a row on laptops; a fourth function or more wraps to the next row. */}
-      <div className="grid gap-3.5 md:grid-cols-2 lg:gap-[18px] xl:grid-cols-3">
+      {/* As many cards a row as fit at about today's width (at least 22rem each): one on phones, three on
+          laptops, four on wide screens (owner, 14 Nov: "place the 4th box at top right"). */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,22rem),1fr))] gap-3.5 lg:gap-[18px]">
         {per.map(({ fn, f }) => (
           <FunctionCard key={fn.id} fn={fn} f={f} />
         ))}
