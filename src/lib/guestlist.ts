@@ -38,6 +38,18 @@ export interface HouseholdDraft {
   location: string | null;
   notes: string | null;
   functionIds: string[];
+  /** The household's language (slip, WhatsApp text, guest page); left out = Both. */
+  slipLang?: "both" | "en" | "mr";
+}
+
+/** "English", "Marathi", "Both" (or en / mr / मराठी …) → the stored value; blank → null; unreadable → undefined. */
+export function parseLanguage(raw: string): "both" | "en" | "mr" | null | undefined {
+  const v = raw.trim().toLowerCase();
+  if (!v) return null;
+  if (["english", "en", "eng", "इंग्रजी"].includes(v)) return "en";
+  if (["marathi", "mr", "मराठी"].includes(v)) return "mr";
+  if (["both", "english and marathi", "marathi and english", "english & marathi", "marathi & english", "दोन्ही"].includes(v)) return "both";
+  return undefined;
 }
 
 export interface ExistingHousehold {
@@ -66,7 +78,7 @@ export interface SheetCheck {
   counts: { new: number; exists: number; error: number };
 }
 
-type Field = "nameEn" | "nameMr" | "side" | "mobile" | "location" | "functions" | "cap" | "notes";
+type Field = "nameEn" | "nameMr" | "side" | "mobile" | "location" | "functions" | "cap" | "notes" | "lang";
 
 const HEADER_ALIASES: Record<Field, string[]> = {
   nameEn: ["name", "household", "householdname", "nameenglish", "englishname", "family", "familyname", "guest", "guestname"],
@@ -77,6 +89,7 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   cap: ["cap", "softcap", "max", "maxpeople", "maxheads", "limit", "people"],
   location: ["location", "place", "city", "town", "village", "area", "stays", "staysat", "from", "गाव", "ठिकाण"],
   notes: ["commentsnotes", "comments", "comment", "notes", "note", "remarks", "remark", "टीप", "शेरा"],
+  lang: ["language", "lang", "sliplanguage", "भाषा"],
 };
 
 const headerKey = (s: string) => s.trim().toLowerCase().replace(/[\s_().'’:/-]/g, "");
@@ -315,6 +328,10 @@ export function checkSheet(input: {
     const notes = cell("notes").replace(/\s+/g, " ") || null;
     if (notes && notes.length > MAX_NOTES) errors.push(`Comments / Notes is longer than ${MAX_NOTES} characters.`);
 
+    const langRaw = cell("lang");
+    const slipLang = parseLanguage(langRaw);
+    if (slipLang === undefined) errors.push(`Language "${langRaw}" should be English, Marathi or Both.`);
+
     let softCap: number | null = null;
     const capRaw = cell("cap");
     if (capRaw) {
@@ -353,7 +370,10 @@ export function checkSheet(input: {
       line,
       label: nameEn || `(row ${line})`,
       status,
-      draft: status === "error" || !side ? null : { side, nameEn, nameMr, mobile, softCap, location, notes, functionIds },
+      draft:
+        status === "error" || !side
+          ? null
+          : { side, nameEn, nameMr, mobile, softCap, location, notes, functionIds, ...(slipLang ? { slipLang } : {}) },
       errors,
       warnings,
     });

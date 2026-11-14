@@ -1,7 +1,7 @@
 import "server-only";
 import type { HostContext } from "./host";
 import { formatDay } from "./i18n";
-import { DEFAULT_TEXT, displayPhone, fillMessage, guestLink, whatsappLink, type MessageKind } from "./outreach";
+import { DEFAULT_TEXT, displayPhone, fillMessage, guestLink, textForLanguage, whatsappLink, type MessageKind } from "./outreach";
 import type { Bilingual, Side } from "./types";
 
 interface Recipient {
@@ -14,10 +14,15 @@ interface Recipient {
   slipLang?: "both" | "en" | "mr";
 }
 
-/** The event's invitation or reminder text, filled in for one household. */
+/**
+ * The event's invitation or reminder text, filled in for one household, in its
+ * language (owner, 14 Nov): English or Marathi only, or both. Its link opens
+ * the reply page in that language (Both: Marathi, the guest can switch).
+ */
 export function householdMessage(host: HostContext, base: string, g: Recipient, kind: MessageKind): string {
   const name: Bilingual = host.event.name;
-  return withCardLinks(host, base, g, fillMessage(host.event.messageText[kind] ?? DEFAULT_TEXT[kind], {
+  const lang = g.slipLang ?? "both";
+  return withCardLinks(host, base, g, fillMessage(textForLanguage(host.event.messageText[kind] ?? DEFAULT_TEXT[kind], lang), {
     name: g.nameEn,
     nameMr: g.nameMr,
     event: name.en,
@@ -25,7 +30,7 @@ export function householdMessage(host: HostContext, base: string, g: Recipient, 
     date: formatDay(host.event.cutoffAt, "en"),
     dateMr: formatDay(host.event.cutoffAt, "mr"),
     phone: displayPhone(host.event.contactPhone[g.side]),
-    link: guestLink(base, g.token, "link"),
+    link: guestLink(base, g.token, "link", lang === "both" ? undefined : lang),
   }));
 }
 

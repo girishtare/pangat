@@ -28,7 +28,8 @@ describe("Excel template", () => {
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     expect(wb.worksheets.map((w) => w.name)).toEqual([TEMPLATE_SHEET, "How to fill", "Lists"]);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Location", "Haldi", "Wedding", "Reception", "Cap", "Comments / Notes"]);
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Location", "Haldi", "Wedding", "Reception", "Cap", "Comments / Notes", "Language"]);
+    expect(ws.getCell("K2").dataValidation?.type).toBe("list");
     expect(ws.getCell("C2").dataValidation?.type).toBe("list");
     expect(ws.getCell("E2").dataValidation?.type).toBeUndefined();
     for (const c of ["F2", "G500", "H2"]) expect(ws.getCell(c).dataValidation?.type).toBe("list");
@@ -74,6 +75,20 @@ describe("Excel template", () => {
       functionIds: ["f-haldi", "f-wedding", "f-reception"],
     });
     expect(r.rows[1].draft).toMatchObject({ side: "groom", mobile: "+919123456789", functionIds: ["f-wedding", "f-reception"] });
+  });
+
+  it("reads the Language column", async () => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
+    const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
+    ws.getRow(2).values = ["Kale", null, "bride", null, null, "Yes", null, null, null, null, "Marathi"];
+    ws.getRow(3).values = ["Bhide", null, "bride", null, null, "Yes", null, null, null, null, "English"];
+    ws.getRow(4).values = ["Apte", null, "bride", null, null, "Yes", null, null, null, null, "Hindi"];
+    const { text } = await readBack(Buffer.from(await wb.xlsx.writeBuffer()));
+    const r = checkSheet({ text, functions, hostSide: null, existing: [] });
+    expect(r.rows[0].draft?.slipLang).toBe("mr");
+    expect(r.rows[1].draft?.slipLang).toBe("en");
+    expect(r.rows[2].status).toBe("error");
   });
 });
 

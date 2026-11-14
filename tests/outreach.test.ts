@@ -1,6 +1,6 @@
 import { encode } from "uqr";
 import { describe, expect, it } from "vitest";
-import { chunk, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, whatsappLink } from "@/lib/outreach";
+import { chunk, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, textForLanguage, whatsappLink } from "@/lib/outreach";
 import { qrPath } from "@/lib/qr";
 
 const vars = {
@@ -68,5 +68,27 @@ describe("QR codes", () => {
     const painted = [...d.matchAll(/h(\d+)v1/g)].reduce((sum, m) => sum + Number(m[1]), 0);
     expect(painted).toBe(dark);
     expect(size).toBeLessThanOrEqual(41); // version 6 or smaller: prints sharply at 30 mm
+  });
+});
+
+describe("textForLanguage", () => {
+  const t = DEFAULT_TEXT.invite;
+  it("keeps everything for Both", () => {
+    expect(textForLanguage(t, "both")).toBe(t);
+  });
+  it("keeps the English paragraph and the link for English", () => {
+    const en = textForLanguage(t, "en");
+    expect(en).not.toMatch(/[ऀ-ॿ]/);
+    expect(en).toContain("{name_en}");
+    expect(en.trim().endsWith("{link}")).toBe(true);
+  });
+  it("keeps the Marathi paragraph and the link for Marathi", () => {
+    const mr = textForLanguage(t, "mr");
+    expect(mr).toContain("{name_mr}");
+    expect(mr).not.toContain("Namaskar");
+    expect(mr.trim().endsWith("{link}")).toBe(true);
+  });
+  it("sends a one-language custom text as written", () => {
+    expect(textForLanguage("Hello {name_en}, reply here: {link}", "mr")).toBe("Hello {name_en}, reply here: {link}");
   });
 });

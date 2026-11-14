@@ -83,7 +83,13 @@ export const supabaseStore = {
       .map(toFunction);
     return {
       event: toEvent(row.events),
-      household: { id: row.id, side: row.side, name: { en: row.name_en, mr: row.name_mr }, softCap: row.soft_cap },
+      household: {
+        id: row.id,
+        side: row.side,
+        name: { en: row.name_en, mr: row.name_mr },
+        softCap: row.soft_cap,
+        lang: row.slip_lang === "en" || row.slip_lang === "mr" ? row.slip_lang : "both",
+      },
       functions,
       responses: (row.responses ?? []).map(toResponse),
       contactPhone: (row.side === "groom" ? row.events?.contact_phone_groom : row.events?.contact_phone_bride) ?? null,
@@ -201,6 +207,7 @@ export interface NewHousehold {
   functionIds: string[];
   token: string;
   shortCode: string;
+  slipLang?: "both" | "en" | "mr";
 }
 
 /** Inserts households and their invites in one transaction (see migration 0004). */
@@ -215,6 +222,7 @@ export async function insertHouseholds(eventId: string, rows: NewHousehold[]): P
     soft_cap: r.softCap,
     location: r.location,
     notes: r.notes,
+    slip_lang: r.slipLang ?? "both",
     function_ids: r.functionIds,
   }));
   const { data, error } = await db().rpc("import_households", { p_event: eventId, p_households: payload });

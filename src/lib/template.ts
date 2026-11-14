@@ -31,13 +31,16 @@ export async function buildGuestTemplate(opts: {
   sides.forEach((s, i) => (lists.getCell(i + 1, 1).value = s));
   const yesNo = ["Yes", "No"];
   yesNo.forEach((v, i) => (lists.getCell(i + 1, 2).value = v));
+  const languages = ["Marathi", "English", "Both"];
+  languages.forEach((v, i) => (lists.getCell(i + 1, 3).value = v));
 
   // Name, Marathi name, Side, Mobile, Location, then one column per function, then Cap and Comments / Notes.
   const fnNames = opts.functions.map((f) => f.en);
   const firstFn = FIXED.length + 1;
   const capCol = firstFn + fnNames.length;
   const notesCol = capCol + 1;
-  const headers = [...FIXED, ...fnNames, "Cap", NOTES];
+  const langCol = notesCol + 1;
+  const headers = [...FIXED, ...fnNames, "Cap", NOTES, "Language"];
   ws.columns = [
     { header: FIXED[0], key: "name", width: 34 },
     { header: FIXED[1], key: "nameMr", width: 34 },
@@ -47,6 +50,7 @@ export async function buildGuestTemplate(opts: {
     ...fnNames.map((n, i) => ({ header: n, key: `fn${i}`, width: Math.min(28, Math.max(12, n.length + 4)) })),
     { header: "Cap", key: "cap", width: 8 },
     { header: NOTES, key: "notes", width: 44 },
+    { header: "Language", key: "lang", width: 12 },
   ];
   const header = ws.getRow(1);
   header.font = { bold: true };
@@ -66,6 +70,7 @@ export async function buildGuestTemplate(opts: {
   fnNames.forEach((n, i) => (ws.getCell(1, firstFn + i).note = `Yes = invited to ${n}. Blank = not invited.`));
   ws.getCell(1, capCol).note = `Optional. The most people this card covers (1 to ${MAX_CAP}).`;
   ws.getCell(1, notesCol).note = "Optional. Anything to remember about this household.";
+  ws.getCell(1, langCol).note = "Optional. Marathi, English or Both (blank = Both): their slip, WhatsApp message and reply page use it. Both opens in Marathi.";
 
   const lastRow = MAX_IMPORT_ROWS + 1;
   for (let r = 2; r <= lastRow; r++) {
@@ -78,6 +83,14 @@ export async function buildGuestTemplate(opts: {
       error: opts.hostSide ? `Leave blank, or choose ${opts.hostSide}.` : "Choose bride or groom.",
     };
     ws.getCell(r, 4).numFmt = "@";
+    ws.getCell(r, langCol).dataValidation = {
+      type: "list",
+      allowBlank: true,
+      formulae: [`Lists!$C$1:$C$${languages.length}`],
+      showErrorMessage: true,
+      errorTitle: "Language",
+      error: "Choose Marathi, English or Both.",
+    };
     for (let c = firstFn; c < capCol; c++) {
       ws.getCell(r, c).dataValidation = {
         type: "list",
@@ -120,6 +133,7 @@ export async function buildGuestTemplate(opts: {
     ["   Blank means not invited. Every household needs at least one Yes. Tip: fill one row, then drag the Yes cells down."],
     [`• Cap: optional. The most people this card covers (1 to ${MAX_CAP}).`],
     ["• Comments / Notes: optional, anything to remember about the household."],
+    ["• Language: optional. Marathi, English or Both (blank = Both). Their slip, WhatsApp message and reply page use it; Both opens in Marathi."],
     [""],
     ["When it's ready: Pangat → Guest list → Import from a sheet → Choose file.", true],
     ["Pangat checks every row before adding anything and shows any problem with its row number."],
@@ -135,8 +149,8 @@ export async function buildGuestTemplate(opts: {
   help.getCell(1, 1).font = { bold: true, size: 14 };
   const example = [
     headers,
-    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "98765 43210", "Borivali, Mumbai", ...fnNames.map(() => "Yes"), 6, ""],
-    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+91 91234 56789", "Edvan, Palghar", ...fnNames.map((_, i) => (i === fnNames.length - 1 ? "Yes" : "")), "", "Coming from Pune on the day"],
+    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "98765 43210", "Borivali, Mumbai", ...fnNames.map(() => "Yes"), 6, "", "Both"],
+    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+91 91234 56789", "Edvan, Palghar", ...fnNames.map((_, i) => (i === fnNames.length - 1 ? "Yes" : "")), "", "Coming from Pune on the day", "Marathi"],
   ];
   example.forEach((row) => help.addRow([row.map(String).join("   |   ")]));
 

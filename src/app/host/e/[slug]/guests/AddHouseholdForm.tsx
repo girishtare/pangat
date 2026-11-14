@@ -59,6 +59,23 @@ export default function AddHouseholdForm({ slug, hostSide, functions }: { slug: 
         <input name="location" maxLength={80} className="input" placeholder="e.g. Borivali, Mumbai" />
       </label>
       <fieldset>
+        <legend className="label">Language</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              ["mr", "मराठी", "mr"],
+              ["en", "English", undefined],
+              ["both", "Both", undefined],
+            ] as const
+          ).map(([value, label, l]) => (
+            <label key={value} className="choice relative">
+              <input type="radio" name="lang" value={value} defaultChecked={"both" === value} /> <span lang={l}>{label}</span>
+            </label>
+          ))}
+        </div>
+        <span className="hint mt-1 block">Their slip, WhatsApp message and reply page use it. Both opens in Marathi; guests can switch.</span>
+      </fieldset>
+      <fieldset>
         <legend className="label">Invited to</legend>
         <div className="flex flex-wrap gap-2">
           {functions.map((f) => (

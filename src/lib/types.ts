@@ -44,6 +44,8 @@ export interface HouseholdInfo {
   side: Side;
   name: Bilingual;
   softCap: number | null;
+  /** The language chosen for them (owner, 14 Nov); Both opens in Marathi. Left out in demo mode. */
+  lang?: "both" | "en" | "mr";
 }
 
 /** Everything the guest page needs for one household. */
