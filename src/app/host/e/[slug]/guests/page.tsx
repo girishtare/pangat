@@ -184,7 +184,7 @@ export default async function GuestList({
               <PopupButton label="Import from Excel" title="Import from Excel" className="btn btn-secondary">
                 <ImportForm slug={slug} />
                 <p className="hint mt-4">
-                  Columns: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Mobile, Location, a Yes column for each function, Guest Count, Comments / Notes. Households already on
+                  Columns, in the order of Add one household: <b>Name</b>, Marathi name,{host.side ? "" : " Side,"} Country code, Mobile, Location, Language, Send the invitation by, a Yes column for each function, Guest Count, Comments / Notes. Households already on
                   the list are skipped, so the same file can be uploaded again after adding rows. If you corrected a household&apos;s name or
                   mobile here, correct it in your file too: otherwise it may be added a second time, with a new QR code that isn&apos;t on their slip.
                 </p>

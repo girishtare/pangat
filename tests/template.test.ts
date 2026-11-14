@@ -28,13 +28,25 @@ describe("Excel template", () => {
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     expect(wb.worksheets.map((w) => w.name)).toEqual([TEMPLATE_SHEET, "How to fill", "Lists"]);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual(["Name", "Marathi name", "Side", "Mobile", "Location", "Haldi", "Wedding", "Reception", "Guest Count", "Comments / Notes", "Language"]);
-    expect(ws.getCell("K2").dataValidation?.type).toBe("list");
-    expect(ws.getCell("C2").dataValidation?.type).toBe("list");
-    expect(ws.getCell("E2").dataValidation?.type).toBeUndefined();
-    for (const c of ["F2", "G500", "H2"]) expect(ws.getCell(c).dataValidation?.type).toBe("list");
-    expect(ws.getCell("I2").dataValidation?.type).toBe("whole");
-    expect(ws.getCell("D2").numFmt).toBe("@");
+    expect((ws.getRow(1).values as unknown[]).slice(1)).toEqual([
+      "Name",
+      "Marathi name",
+      "Side",
+      "Country code",
+      "Mobile",
+      "Location",
+      "Language",
+      "Send the invitation by",
+      "Haldi",
+      "Wedding",
+      "Reception",
+      "Guest Count",
+      "Comments / Notes",
+    ]);
+    for (const c of ["C2", "D2", "G2", "H2", "I2", "J500", "K2"]) expect(ws.getCell(c).dataValidation?.type).toBe("list");
+    expect(ws.getCell("F2").dataValidation?.type).toBeUndefined();
+    expect(ws.getCell("L2").dataValidation?.type).toBe("whole");
+    expect(ws.getCell("E2").numFmt).toBe("@");
     const lists = wb.getWorksheet("Lists")!;
     expect(lists.state).toBe("veryHidden");
     expect(lists.getColumn(2).values.slice(1)).toEqual(["Yes", "No"]);
@@ -56,8 +68,8 @@ describe("Excel template", () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    ws.getRow(2).values = ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", "bride", "98765 43210", "Borivali, Mumbai", "Yes", "Yes", "Yes", 6, "Uncle"];
-    ws.getRow(3).values = ["Dr. G. Sathe", null, "groom", 9123456789, null, null, "Yes", "Yes", null, null];
+    ws.getRow(2).values = ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", "bride", null, "98765 43210", "Borivali, Mumbai", null, null, "Yes", "Yes", "Yes", 6, "Uncle"];
+    ws.getRow(3).values = ["Dr. G. Sathe", null, "groom", null, 9123456789, null, null, null, null, "Yes", "Yes", null, null];
     const filled = Buffer.from(await wb.xlsx.writeBuffer());
 
     const { text } = await readBack(filled);
@@ -81,14 +93,30 @@ describe("Excel template", () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
     const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
-    ws.getRow(2).values = ["Kale", null, "bride", null, null, "Yes", null, null, null, null, "Marathi"];
-    ws.getRow(3).values = ["Bhide", null, "bride", null, null, "Yes", null, null, null, null, "English"];
-    ws.getRow(4).values = ["Apte", null, "bride", null, null, "Yes", null, null, null, null, "Hindi"];
+    ws.getRow(2).values = ["Kale", null, "bride", null, null, null, "Marathi", null, "Yes"];
+    ws.getRow(3).values = ["Bhide", null, "bride", null, null, null, "English", null, "Yes"];
+    ws.getRow(4).values = ["Apte", null, "bride", null, null, null, "Hindi", null, "Yes"];
     const { text } = await readBack(Buffer.from(await wb.xlsx.writeBuffer()));
     const r = checkSheet({ text, functions, hostSide: null, existing: [] });
     expect(r.rows[0].draft?.slipLang).toBe("mr");
     expect(r.rows[1].draft?.slipLang).toBe("en");
     expect(r.rows[2].status).toBe("error");
+  });
+
+  it("reads the country code and how to send the invitation", async () => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load((await template()) as unknown as ArrayBuffer);
+    const ws = wb.getWorksheet(TEMPLATE_SHEET)!;
+    ws.getRow(2).values = ["Sathe", null, "bride", "+971 United Arab Emirates", "50 123 4567", "Dubai", null, "Card & WhatsApp", "Yes"];
+    ws.getRow(3).values = ["Joshi", null, "bride", null, "98765 43210", null, null, "WhatsApp", "Yes"];
+    ws.getRow(4).values = ["Kale", null, "bride", null, null, null, null, "WhatsApp", "Yes"];
+    ws.getRow(5).values = ["Apte", null, "bride", "+999 Nowhere", "12345678", null, null, null, "Yes"];
+    const { text } = await readBack(Buffer.from(await wb.xlsx.writeBuffer()));
+    const r = checkSheet({ text, functions, hostSide: null, existing: [] });
+    expect(r.rows[0].draft).toMatchObject({ mobile: "+971501234567", inviteBy: { card: true, wa: true } });
+    expect(r.rows[1].draft).toMatchObject({ mobile: "+919876543210", inviteBy: { card: false, wa: true } });
+    expect(r.rows[2].status).toBe("error"); // WhatsApp without a mobile
+    expect(r.rows[3].status).toBe("error"); // unknown country code
   });
 });
 
