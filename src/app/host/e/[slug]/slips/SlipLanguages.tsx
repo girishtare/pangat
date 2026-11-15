@@ -18,6 +18,8 @@ export interface SlipLangRow {
   lang: SlipLang;
   /** On the print list (owner, 14 Nov: the Print column shows it). */
   onList: boolean;
+  /** False for households invited by WhatsApp only: no printed slip. */
+  printable?: boolean;
 }
 
 const CHOICES: { value: SlipLang; label: string; short: string; title: string; lang?: "mr" }[] = [
@@ -100,8 +102,9 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
     });
   };
 
-  const shownPrint = shown.filter((r) => toPrint.has(r.id));
-  const allShownPrint = shown.length > 0 && shownPrint.length === shown.length;
+  const shownPrintable = shown.filter((r) => r.printable !== false);
+  const shownPrint = shownPrintable.filter((r) => toPrint.has(r.id));
+  const allShownPrint = shownPrintable.length > 0 && shownPrint.length === shownPrintable.length;
   const setPrint = (ids: string[], on: boolean) => {
     if (ids.length === 0) return;
     const flip = (set: Set<string>, add: boolean) => {
@@ -123,7 +126,7 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
     });
   };
   const togglePrint = (id: string) => setPrint([id], !toPrint.has(id));
-  const togglePrintShown = () => setPrint(shown.map((r) => r.id), !allShownPrint);
+  const togglePrintShown = () => setPrint(shown.filter((r) => r.printable !== false).map((r) => r.id), !allShownPrint);
   // In the list's order (household name), so the sheets come out the same way.
   const printIds = rows.filter((r) => toPrint.has(r.id)).map((r) => r.id);
 
@@ -373,13 +376,19 @@ export default function SlipLanguages({ slug, rows, showSide }: { slug: string; 
                       </span>
                     </td>
                     <td className="max-sm:px-1!">
-                      <input
-                        type="checkbox"
-                        checked={toPrint.has(r.id)}
-                        onChange={() => togglePrint(r.id)}
-                        aria-label={`Print the slip for ${r.nameEn}`}
-                        className="h-5 w-5 align-middle accent-kumkum"
-                      />
+                      {r.printable === false ? (
+                        <span className="text-ink-soft" title="WhatsApp only: no printed slip">
+                          —
+                        </span>
+                      ) : (
+                        <input
+                          type="checkbox"
+                          checked={toPrint.has(r.id)}
+                          onChange={() => togglePrint(r.id)}
+                          aria-label={`Print the slip for ${r.nameEn}`}
+                          className="h-5 w-5 align-middle accent-kumkum"
+                        />
+                      )}
                     </td>
                   </tr>
                 );

@@ -200,7 +200,7 @@ export default async function WhatsApp({
                 reminders: n?.reminders ? `${n.reminders}, last ${shortStamp(n.reminder!)}` : "0",
                 reminderCount: n?.reminders ?? 0,
                 href: whatsappLink(g.mobile, message(g)),
-                sentBefore: !!sentKey(g.id),
+                sentBefore: !!sentKey(g.id) || (kind === "invite" && g.invite.waSent),
                 invite: g.invite,
               };
             })}

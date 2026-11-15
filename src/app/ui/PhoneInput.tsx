@@ -42,7 +42,7 @@ export default function PhoneInput({
   }, [name]);
   return (
     <div ref={box} className="flex gap-2">
-      <select name={`${name}__country`} defaultValue={start.iso} className={`${className} w-[8.5rem] shrink-0 px-2`} aria-label={`${label}: country code`}>
+      <select name={`${name}__country`} defaultValue={start.iso} className={`${className} w-[6.5rem] shrink-0 px-2 sm:w-[8.5rem]`} aria-label={`${label}: country code`}>
         {COUNTRIES.map((c) => (
           <option key={c.iso} value={c.iso}>
             +{c.code} {c.name}

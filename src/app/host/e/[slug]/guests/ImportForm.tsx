@@ -142,7 +142,7 @@ export default function ImportForm({ slug }: { slug: string }) {
                 }}
                 rows={7}
                 aria-label="Pasted guest list"
-                placeholder={"Name\tMarathi name\tSide\tMobile\tHaldi\tWedding\tCap\nShri. A. Joshi & family\tश्री. अ. जोशी सहपरिवार\tbride\t98765 43210\tYes\tYes\t6"}
+                placeholder={"Name\tMarathi name\tSide\tCountry code\tMobile\tLocation\tLanguage\tSend the invitation by\tHaldi\tWedding\tGuest Count\nShri. A. Joshi & family\tश्री. अ. जोशी सहपरिवार\tbride\t+91 India\t98765 43210\tBorivali\tBoth\tCard\tYes\tYes\t4"}
                 className="input mt-1 font-mono text-sm"
               />
               <button type="button" onClick={onCheck} disabled={pending || !text.trim()} className="btn btn-secondary btn-sm mt-2">
@@ -193,7 +193,11 @@ export default function ImportForm({ slug }: { slug: string }) {
 
       <button type="button" onClick={onSave} disabled={pending || !canSave} className="btn btn-primary min-h-[52px] w-full text-base sm:w-auto">
         <Check className="h-5 w-5" aria-hidden="true" />
-        {current && current.counts.new > 0 ? `Add ${current.counts.new} household${current.counts.new === 1 ? "" : "s"}` : "Add households"}
+        {current && current.counts.error > 0
+          ? `Fix ${current.counts.error} row${current.counts.error === 1 ? "" : "s"} to add households`
+          : current && current.counts.new > 0
+            ? `Add ${current.counts.new} household${current.counts.new === 1 ? "" : "s"}`
+            : "Add households"}
       </button>
     </div>
   );
