@@ -152,7 +152,9 @@ export default async function Slips({
 
   // By household name, A to Z, on every tab and in print (owner, 12 Nov).
   const all = sortGuests(await listGuests(host.client, host.event.id), "name", "asc");
-  const onList = all.filter((g) => g.printRequested);
+  // Households invited by WhatsApp only have no printed slip (owner, 14 Nov), so they're left off printing.
+  const printable = all.filter((g) => g.invite.card);
+  const onList = printable.filter((g) => g.printRequested);
   // Three tabs (owner, 14 Nov): the print list first, then Language, then Print slips.
   const tab: "list" | "language" | "print" = sp.tab === "language" ? "language" : sp.tab === "print" || sp.ids ? "print" : "list";
   const base = `/host/e/${slug}/slips`;
@@ -223,7 +225,7 @@ export default async function Slips({
             <SlipLanguages
               slug={slug}
               showSide={!host.side}
-              rows={all.map((g) => ({ id: g.id, nameEn: g.nameEn, nameMr: g.nameMr, side: g.side, location: g.location, lang: g.slipLang, onList: g.printRequested }))}
+              rows={all.map((g) => ({ id: g.id, nameEn: g.nameEn, nameMr: g.nameMr, side: g.side, location: g.location, lang: g.slipLang, onList: g.printRequested, printable: g.invite.card }))}
             />
           )}
         </section>
@@ -242,16 +244,16 @@ export default async function Slips({
   const placeKey = (s: string | null) => (s ?? "").trim().toLowerCase();
   const places = [
     ...new Map(
-      all
+      printable
         .filter((g) => (!side || g.side === side) && placeKey(g.location))
         .map((g) => [placeKey(g.location), g.location!.trim()] as const)
         .reverse(),
     ).values(),
   ].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
-  const placeCount = (key: string) => all.filter((g) => (!side || g.side === side) && placeKey(g.location) === key).length;
+  const placeCount = (key: string) => printable.filter((g) => (!side || g.side === side) && placeKey(g.location) === key).length;
   const noPlace = placeCount("");
   const place = sp.place === "-" ? "-" : (places.find((p) => placeKey(p) === placeKey(sp.place ?? null)) ?? null);
-  const inView = all.filter(
+  const inView = (ids ? all : printable).filter(
     (g) =>
       (!side || g.side === side) &&
       (!ids || ids.has(g.id)) &&

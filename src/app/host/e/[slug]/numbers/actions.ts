@@ -29,7 +29,7 @@ export async function saveBaselines(slug: string, _prev: FormState, fd: FormData
   const rows = [];
   for (const f of who.host.functions) {
     const v = readCount(fd.get(`baseline_${f.id}`));
-    if (!v.ok) return { ok: false, message: `${f.name.en}: enter a whole number, or leave it blank.` };
+    if (!v.ok) return { ok: false, message: `${f.name.en}: enter a number from 0 to 100,000 (no decimals), or leave it blank.` };
     rows.push({ functionId: f.id, baseline: v.value, baseline_set_at: v.value === null ? null : now });
   }
   await saveNumbers(rows, who.host.userId);
