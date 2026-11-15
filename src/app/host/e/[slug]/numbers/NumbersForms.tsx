@@ -22,7 +22,7 @@ interface Fn {
 }
 
 export function BaselineForm({ slug, functions, values }: { slug: string; functions: Fn[]; values: Record<string, number | null> }) {
-  const [state, action, pending] = useFormAction(saveBaselines.bind(null, slug));
+  const [state, action, pending] = useFormAction(saveBaselines.bind(null, slug), { keep: true });
   return (
     <form onSubmit={action} className="space-y-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3.5">
@@ -82,7 +82,7 @@ export function ActualForm({
   functions: Fn[];
   values: Record<string, { actual: number | null; veg: number | null; nonveg: number | null }>;
 }) {
-  const [state, action, pending] = useFormAction(saveActuals.bind(null, slug));
+  const [state, action, pending] = useFormAction(saveActuals.bind(null, slug), { keep: true });
   const box = "input mt-1 min-h-12 px-2 text-[1.0625rem] tabular-nums";
   return (
     <form onSubmit={action} className="space-y-4">

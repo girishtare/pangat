@@ -135,7 +135,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
 }
 
 export function ReplyForm({ slug, id, functions }: { slug: string; id: string; functions: ReplyFn[] }) {
-  const [state, action, pending] = useFormAction(recordReply.bind(null, slug, id));
+  const [state, action, pending] = useFormAction(recordReply.bind(null, slug, id), { keep: true });
   // React resets a form after its action runs, which would put the radios back to
   // the first-loaded reply. Keying the rows on the saved reply remounts them with
   // what the server now holds.
@@ -170,7 +170,7 @@ export function DetailsForm(props: {
   inviteBy: { card: boolean; wa: boolean };
   functions: { id: string; name: string; invited: boolean; replied: boolean }[];
 }) {
-  const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id));
+  const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id), { keep: true });
   return (
     <form onSubmit={action} className="space-y-4">
       <label className="block">
