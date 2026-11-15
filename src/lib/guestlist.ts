@@ -1,5 +1,6 @@
 import type { Bilingual, Side } from "./types";
 import { parseInviteBy } from "./invites";
+import { COUNTRIES, joinPhone } from "./phone";
 
 /**
  * Guest list import: turn rows pasted from a sheet into households.
@@ -81,7 +82,7 @@ export interface SheetCheck {
   counts: { new: number; exists: number; error: number };
 }
 
-type Field = "nameEn" | "nameMr" | "side" | "mobile" | "location" | "functions" | "cap" | "notes" | "lang" | "inviteBy";
+type Field = "nameEn" | "nameMr" | "side" | "mobile" | "location" | "functions" | "cap" | "notes" | "lang" | "inviteBy" | "country";
 
 const HEADER_ALIASES: Record<Field, string[]> = {
   nameEn: ["name", "household", "householdname", "nameenglish", "englishname", "family", "familyname", "guest", "guestname"],
@@ -93,7 +94,8 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   location: ["location", "place", "city", "town", "village", "area", "stays", "staysat", "from", "गाव", "ठिकाण"],
   notes: ["commentsnotes", "comments", "comment", "notes", "note", "remarks", "remark", "टीप", "शेरा"],
   lang: ["language", "lang", "sliplanguage", "भाषा"],
-  inviteBy: ["inviteby", "invitationmode", "invitemode", "invitevia", "sendby", "invitation"],
+  inviteBy: ["sendtheinvitationby", "sendinvitationby", "inviteby", "invitationmode", "invitemode", "invitevia", "sendby", "invitation"],
+  country: ["countrycode", "country", "isd", "isdcode", "dialcode"],
 };
 
 const headerKey = (s: string) => s.trim().toLowerCase().replace(/[\s_().'’:/-]/g, "");
@@ -167,6 +169,23 @@ export function normaliseMobile(raw: string): { ok: true; value: string | null }
   if (/^0[6-9]\d{9}$/.test(s)) return { ok: true, value: "+91" + s.slice(1) };
   if (/^91[6-9]\d{9}$/.test(s)) return { ok: true, value: "+" + s };
   return { ok: false };
+}
+
+/** A Country code cell → the country (ISO), null if blank, undefined if unreadable. "+1" means the United States. */
+export function parseCountry(raw: string): string | null | undefined {
+  const v = raw.trim().toLowerCase();
+  if (!v) return null;
+  const code = /^\+?\s*(\d{1,4})\b/.exec(v)?.[1];
+  if (code) {
+    const c = COUNTRIES.find((x) => x.code === code && (code !== "1" || x.iso === "US"));
+    return c ? c.iso : undefined;
+  }
+  const byName = COUNTRIES.find((x) => x.name.toLowerCase() === v || x.iso.toLowerCase() === v);
+  if (byName) return byName.iso;
+  if (["uae", "emirates", "dubai"].includes(v)) return "AE";
+  if (["uk", "england", "britain"].includes(v)) return "GB";
+  if (["usa", "america"].includes(v)) return "US";
+  return undefined;
 }
 
 export function parseSide(raw: string): Side | null {
@@ -296,7 +315,12 @@ export function checkSheet(input: {
       errors.push(`You can only add households to the ${SIDE_NAMES[input.hostSide]}.`);
     }
 
-    const mobileRaw = cell("mobile");
+    // Country code column (owner, 14 Nov): "+971 United Arab Emirates", "+971", "UAE"…; blank = India.
+    const countryRaw = cell("country");
+    const iso = parseCountry(countryRaw);
+    if (iso === undefined) errors.push(`Country code "${countryRaw}" isn't one on the list.`);
+    const typedMobile = cell("mobile");
+    const mobileRaw = iso && typedMobile ? joinPhone(iso, typedMobile) : typedMobile;
     const mob = normaliseMobile(mobileRaw);
     let mobile: string | null = null;
     if (!mob.ok) errors.push(`Mobile "${mobileRaw}" doesn't look like a phone number.`);
@@ -337,7 +361,8 @@ export function checkSheet(input: {
     if (slipLang === undefined) errors.push(`Language "${langRaw}" should be English, Marathi or Both.`);
     const inviteRaw = cell("inviteBy");
     const inviteBy = parseInviteBy(inviteRaw);
-    if (inviteBy === undefined) errors.push(`Invite by "${inviteRaw}" should be Card, WhatsApp, or both.`);
+    if (inviteBy === undefined) errors.push(`Send the invitation by "${inviteRaw}" should be Card, WhatsApp, or Card & WhatsApp.`);
+    if (inviteBy?.wa && !mobile) errors.push("WhatsApp invitation needs a mobile number.");
 
     let softCap: number | null = null;
     const capRaw = cell("cap");

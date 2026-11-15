@@ -1,9 +1,12 @@
 import "server-only";
 import ExcelJS from "exceljs";
 import { MAX_CAP, MAX_IMPORT_ROWS, TEMPLATE_SHEET } from "./guestlist";
+import { COUNTRIES } from "./phone";
 import type { Bilingual, Side } from "./types";
 
-const FIXED = ["Name", "Marathi name", "Side", "Mobile", "Location"] as const;
+// In the order of Add one household (owner, 14 Nov): name, Marathi name, side, country code, mobile, location,
+// language, how to send the invitation; then the functions, Guest Count and notes.
+const FIXED = ["Name", "Marathi name", "Side", "Country code", "Mobile", "Location", "Language", "Send the invitation by"] as const;
 const NOTES = "Comments / Notes";
 const SIDE_LABEL: Record<Side, string> = { bride: "bride's side", groom: "groom's side" };
 
@@ -33,73 +36,70 @@ export async function buildGuestTemplate(opts: {
   yesNo.forEach((v, i) => (lists.getCell(i + 1, 2).value = v));
   const languages = ["Marathi", "English", "Both"];
   languages.forEach((v, i) => (lists.getCell(i + 1, 3).value = v));
+  const sendBy = ["Card", "WhatsApp", "Card & WhatsApp"];
+  sendBy.forEach((v, i) => (lists.getCell(i + 1, 4).value = v));
+  const countries = COUNTRIES.map((c) => `+${c.code} ${c.name}`);
+  countries.forEach((v, i) => (lists.getCell(i + 1, 5).value = v));
 
-  // Name, Marathi name, Side, Mobile, Location, then one column per function, then Guest Count and Comments / Notes.
+  // Columns: A Name, B Marathi name, C Side, D Country code, E Mobile, F Location, G Language, H Send the invitation by,
+  // then one per function, then Guest Count and Comments / Notes.
   const fnNames = opts.functions.map((f) => f.en);
   const firstFn = FIXED.length + 1;
   const capCol = firstFn + fnNames.length;
   const notesCol = capCol + 1;
-  const langCol = notesCol + 1;
-  const headers = [...FIXED, ...fnNames, "Guest Count", NOTES, "Language"];
+  const headers = [...FIXED, ...fnNames, "Guest Count", NOTES];
   ws.columns = [
     { header: FIXED[0], key: "name", width: 34 },
     { header: FIXED[1], key: "nameMr", width: 34 },
     { header: FIXED[2], key: "side", width: 12 },
-    { header: FIXED[3], key: "mobile", width: 18, style: { numFmt: "@" } },
-    { header: FIXED[4], key: "location", width: 24 },
+    { header: FIXED[3], key: "country", width: 22 },
+    { header: FIXED[4], key: "mobile", width: 18, style: { numFmt: "@" } },
+    { header: FIXED[5], key: "location", width: 24 },
+    { header: FIXED[6], key: "lang", width: 12 },
+    { header: FIXED[7], key: "sendBy", width: 22 },
     ...fnNames.map((n, i) => ({ header: n, key: `fn${i}`, width: Math.min(28, Math.max(12, n.length + 4)) })),
     { header: "Guest Count", key: "cap", width: 12 },
     { header: NOTES, key: "notes", width: 44 },
-    { header: "Language", key: "lang", width: 12 },
   ];
   const header = ws.getRow(1);
   header.font = { bold: true };
   header.alignment = { vertical: "middle" };
   header.height = 22;
   header.eachCell((c) => {
-    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF6D68A" } };
-    c.border = { bottom: { style: "thin", color: { argb: "FF8C1C13" } } };
+    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEADFC8" } };
+    c.border = { bottom: { style: "thin", color: { argb: "FF7A1420" } } };
   });
   ws.getCell("A1").note = "Required. One row per household (one printed card), in English.";
   ws.getCell("B1").note = "Optional. The name as it should appear in Marathi on the slip.";
   ws.getCell("C1").note = opts.hostSide
     ? `Leave blank: everything you add goes to the ${SIDE_LABEL[opts.hostSide]}.`
     : "Pick bride or groom.";
-  ws.getCell("D1").note = "One mobile per household: the one that gets the WhatsApp link. 10 digits is fine.";
-  ws.getCell("E1").note = 'Optional. Where they stay: just the place, e.g. "Borivali, Mumbai" or "Edvan, Palghar".';
+  ws.getCell("D1").note = "Optional. The mobile's country; blank = +91 India.";
+  ws.getCell("E1").note = "One mobile per household: the one that gets the WhatsApp link. 10 digits is fine.";
+  ws.getCell("F1").note = 'Optional. Where they stay: just the place, e.g. "Borivali, Mumbai" or "Edvan, Palghar".';
+  ws.getCell("G1").note = "Optional. Marathi, English or Both (blank = Both): their slip, WhatsApp message and reply page use it. Both opens in Marathi.";
+  ws.getCell("H1").note = "Optional. Card, WhatsApp, or Card & WhatsApp (blank = Card). WhatsApp needs a mobile.";
   fnNames.forEach((n, i) => (ws.getCell(1, firstFn + i).note = `Yes = invited to ${n}. Blank = not invited.`));
   ws.getCell(1, capCol).note = `Optional. The most people this card covers (1 to ${MAX_CAP}).`;
   ws.getCell(1, notesCol).note = "Optional. Anything to remember about this household.";
-  ws.getCell(1, langCol).note = "Optional. Marathi, English or Both (blank = Both): their slip, WhatsApp message and reply page use it. Both opens in Marathi.";
 
+  const list = (title: string, col: string, n: number, error: string) => ({
+    type: "list" as const,
+    allowBlank: true,
+    formulae: [`Lists!$${col}$1:$${col}$${n}`],
+    showErrorMessage: true,
+    errorTitle: title,
+    error,
+  });
   const lastRow = MAX_IMPORT_ROWS + 1;
   for (let r = 2; r <= lastRow; r++) {
-    ws.getCell(r, 3).dataValidation = {
-      type: "list",
-      allowBlank: true,
-      formulae: [`Lists!$A$1:$A$${sides.length}`],
-      showErrorMessage: true,
-      errorTitle: "Side",
-      error: opts.hostSide ? `Leave blank, or choose ${opts.hostSide}.` : "Choose bride or groom.",
-    };
-    ws.getCell(r, 4).numFmt = "@";
-    ws.getCell(r, langCol).dataValidation = {
-      type: "list",
-      allowBlank: true,
-      formulae: [`Lists!$C$1:$C$${languages.length}`],
-      showErrorMessage: true,
-      errorTitle: "Language",
-      error: "Choose Marathi, English or Both.",
-    };
+    ws.getCell(r, 3).dataValidation = list("Side", "A", sides.length, opts.hostSide ? `Leave blank, or choose ${opts.hostSide}.` : "Choose bride or groom.");
+    ws.getCell(r, 4).dataValidation = list("Country code", "E", countries.length, "Pick a country from the list, or leave it blank for India.");
+    ws.getCell(r, 5).numFmt = "@";
+    ws.getCell(r, 7).dataValidation = list("Language", "C", languages.length, "Choose Marathi, English or Both.");
+    ws.getCell(r, 8).dataValidation = list("Send the invitation by", "D", sendBy.length, "Choose Card, WhatsApp, or Card & WhatsApp.");
     for (let c = firstFn; c < capCol; c++) {
-      ws.getCell(r, c).dataValidation = {
-        type: "list",
-        allowBlank: true,
-        formulae: [`Lists!$B$1:$B$${yesNo.length}`],
-        showErrorMessage: true,
-        errorTitle: "Invited?",
-        error: "Choose Yes, or leave it blank.",
-      };
+      ws.getCell(r, c).dataValidation = list("Invited?", "B", yesNo.length, "Choose Yes, or leave it blank.");
     }
     ws.getCell(r, capCol).dataValidation = {
       type: "whole",
@@ -126,14 +126,16 @@ export async function buildGuestTemplate(opts: {
         ? `• Side: leave blank. Everything you add goes to the ${SIDE_LABEL[opts.hostSide]}.`
         : "• Side: pick bride or groom from the list.",
     ],
-    ["• Mobile: one number per household, the one that should get the WhatsApp link. 98765 43210 is fine; +91 is added."],
-    ["   For a number outside India, start with + and the country code, e.g. +44 7700 900123."],
+    ["• Country code: optional, pick the mobile's country from the list. Blank = +91 India."],
+    ["• Mobile: one number per household, the one that should get the WhatsApp link. 98765 43210 is fine."],
+    ["   (A number typed with its own + and country code, e.g. +44 7700 900123, is kept as typed.)"],
     ['• Location: optional. Where they stay, just the place: "Borivali, Mumbai", "Edvan, Palghar".'],
+    ["• Language: optional. Marathi, English or Both (blank = Both). Their slip, WhatsApp message and reply page use it; Both opens in Marathi."],
+    ["• Send the invitation by: optional. Card, WhatsApp, or Card & WhatsApp (blank = Card). WhatsApp needs a mobile."],
     [`• One column per function (${fnNames.join(", ") || "none yet"}): pick Yes under each function this household is invited to.`],
     ["   Blank means not invited. Every household needs at least one Yes. Tip: fill one row, then drag the Yes cells down."],
     [`• Guest Count: optional. The most people this card covers (1 to ${MAX_CAP}).`],
     ["• Comments / Notes: optional, anything to remember about the household."],
-    ["• Language: optional. Marathi, English or Both (blank = Both). Their slip, WhatsApp message and reply page use it; Both opens in Marathi."],
     [""],
     ["When it's ready: Pangat → Guest list → Import from a sheet → Choose file.", true],
     ["Pangat checks every row before adding anything and shows any problem with its row number."],
@@ -149,8 +151,8 @@ export async function buildGuestTemplate(opts: {
   help.getCell(1, 1).font = { bold: true, size: 14 };
   const example = [
     headers,
-    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "98765 43210", "Borivali, Mumbai", ...fnNames.map(() => "Yes"), 6, "", "Both"],
-    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+91 91234 56789", "Edvan, Palghar", ...fnNames.map((_, i) => (i === fnNames.length - 1 ? "Yes" : "")), "", "Coming from Pune on the day", "Marathi"],
+    ["Shri. A. Joshi & family", "श्री. अ. जोशी सहपरिवार", opts.hostSide ?? "bride", "+91 India", "98765 43210", "Borivali, Mumbai", "Both", "Card & WhatsApp", ...fnNames.map(() => "Yes"), 6, ""],
+    ["Dr. G. Sathe", "डॉ. ग. साठे", opts.hostSide ?? "groom", "+971 United Arab Emirates", "50 123 4567", "Dubai", "Marathi", "WhatsApp", ...fnNames.map((_, i) => (i === fnNames.length - 1 ? "Yes" : "")), "", "Coming from Dubai"],
   ];
   example.forEach((row) => help.addRow([row.map(String).join("   |   ")]));
 
