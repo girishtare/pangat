@@ -50,7 +50,7 @@ export function SendButton({
 }
 
 export function TextEditor({ slug, kind, text, canEdit, isDefault }: { slug: string; kind: MessageKind; text: string; canEdit: boolean; isDefault: boolean }) {
-  const [state, action, pending] = useFormAction(saveText.bind(null, slug, kind));
+  const [state, action, pending] = useFormAction(saveText.bind(null, slug, kind), { keep: true });
   if (!canEdit) {
     return <pre className="wrap-names whitespace-pre-wrap rounded-xl border border-line bg-paper-deep/50 p-3 font-sans text-sm">{text}</pre>;
   }
@@ -58,7 +58,8 @@ export function TextEditor({ slug, kind, text, canEdit, isDefault }: { slug: str
     <form onSubmit={action} className="space-y-3">
       <label className="block">
         <span className="sr-only">Message</span>
-        <textarea name="text" defaultValue={text} rows={12} maxLength={1500} className="input text-[0.9375rem]" />
+        {/* Keyed on the saved text, so "Back to the standard message" shows the standard text once saved. */}
+        <textarea key={text} name="text" defaultValue={text} rows={12} maxLength={1500} className="input text-[0.9375rem]" />
       </label>
       <Message state={state} />
       <div className="flex flex-wrap items-center gap-2">

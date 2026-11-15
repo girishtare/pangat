@@ -29,7 +29,7 @@ export function EventForm(props: {
   catererDueOn: string | null;
   catererFinalOn: string | null;
 }) {
-  const [state, action, pending] = useFormAction(saveEvent.bind(null, props.slug));
+  const [state, action, pending] = useFormAction(saveEvent.bind(null, props.slug), { keep: true });
   const missing = "border-kumkum";
   return (
     <form
@@ -261,7 +261,7 @@ export function FunctionEditor(props: {
   invites: number;
   replies: number;
 }) {
-  const [state, action, pending] = useFormAction(saveFunction.bind(null, props.slug, props.id));
+  const [state, action, pending] = useFormAction(saveFunction.bind(null, props.slug, props.id), { keep: true });
   const [delState, delAction, deleting] = useActionState(removeFunction.bind(null, props.slug, props.id), null);
   return (
     <details className="group rounded-[14px] border border-line bg-card">
@@ -543,7 +543,7 @@ export function EditHostForm({
   full: Full;
   host: { userId: string; fullName: string | null; email: string; phone: string | null; side: "bride" | "groom" | null; role: "owner" | "co_owner" };
 }) {
-  const [state, action, pending] = useFormAction(editHost.bind(null, slug, host.userId));
+  const [state, action, pending] = useFormAction(editHost.bind(null, slug, host.userId), { keep: true });
   return (
     <form onSubmit={action} className="mt-4 space-y-4">
       <HostFields full={full} values={host} isOwner={host.role === "owner"} />

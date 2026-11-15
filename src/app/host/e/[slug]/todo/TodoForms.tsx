@@ -47,7 +47,7 @@ export function TaskForm({
   functions: FunctionOption[];
   task?: TaskValues;
 }) {
-  const [state, action, pending] = useFormAction(task ? editTodo.bind(null, slug, task.id) : addTodo.bind(null, slug));
+  const [state, action, pending] = useFormAction(task ? editTodo.bind(null, slug, task.id) : addTodo.bind(null, slug), { keep: !!task });
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok && !task) form.current?.reset();
@@ -128,7 +128,7 @@ export function PersonForm({
   hostSide: Side | null;
   person?: { id: string; fullName: string; phone: string | null; side: Side | null; hostUserId?: string | null };
 }) {
-  const [state, action, pending] = useFormAction(person ? editPerson.bind(null, slug, person.id) : addPerson.bind(null, slug));
+  const [state, action, pending] = useFormAction(person ? editPerson.bind(null, slug, person.id) : addPerson.bind(null, slug), { keep: !!person });
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state?.ok && !person) form.current?.reset();
