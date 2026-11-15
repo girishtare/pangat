@@ -1034,15 +1034,22 @@ export async function deleteEvent(eventId: string): Promise<void> {
   }
 }
 
-/* ---------- Invitation card (PDF) ---------- */
+/* ---------- Invitation card (PDF or image) ---------- */
 
 export type CardLang = "en" | "mr";
-const CARDS = "cards"; // private Storage bucket (migration 0015)
+const CARDS = "cards"; // private Storage bucket (migrations 0015, 0027)
 export const CARD_MAX_BYTES = 20 * 1024 * 1024;
+/** What a card can be (owner, 15 Nov: images too), and the file ending it is stored with. */
+export const CARD_TYPES: Record<string, string> = {
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 
-/** A one-time link the owner's browser uploads the PDF to, straight to Storage (no size limit from our server). */
-export async function cardUploadTarget(eventId: string, side: Side, lang: CardLang): Promise<{ path: string; url: string }> {
-  const path = `${eventId}/${side}-${lang}-${Date.now()}.pdf`;
+/** A one-time link the owner's browser uploads the card to, straight to Storage (no size limit from our server). */
+export async function cardUploadTarget(eventId: string, side: Side, lang: CardLang, ext: string): Promise<{ path: string; url: string }> {
+  const path = `${eventId}/${side}-${lang}-${Date.now()}.${ext}`;
   const { data, error } = await admin().storage.from(CARDS).createSignedUploadUrl(path);
   if (error || !data) throw new Error(`card upload link failed: ${error?.message}`);
   return { path, url: data.signedUrl };
@@ -1067,7 +1074,7 @@ export async function cardExists(path: string): Promise<boolean> {
   return (data ?? []).some((f) => f.name === path.slice(slash + 1));
 }
 
-/** A link to the PDF that works for an hour. */
+/** A link to the card (PDF or image) that works for an hour. */
 export async function cardSignedUrl(path: string): Promise<string> {
   const { data, error } = await admin().storage.from(CARDS).createSignedUrl(path, 3600);
   if (error || !data) throw new Error(`card link failed: ${error?.message}`);

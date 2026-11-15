@@ -6,7 +6,7 @@ import { FileText, Trash2, Upload } from "lucide-react";
 import { cardRemove, cardUploadDone, cardUploadStart } from "./actions";
 
 /**
- * One invitation card slot (English or Marathi): upload a PDF, see it, replace
+ * One invitation card slot (English or Marathi): upload a PDF or an image (JPG, PNG, WebP; owner, 15 Nov), see it, replace
  * or remove it. The file goes straight from the browser to Pangat's private
  * Storage through a one-time link, then the server records it.
  */
@@ -23,7 +23,7 @@ export default function CardUpload({ slug, side, lang, has }: { slug: string; si
       setStatus({ ok: true, text: "Uploading…" });
       const s = await cardUploadStart(slug, side, lang, file.size, file.type);
       if (!s.ok) return setStatus({ ok: false, text: s.message });
-      const put = await fetch(s.url, { method: "PUT", body: file, headers: { "content-type": "application/pdf", "x-upsert": "false" } });
+      const put = await fetch(s.url, { method: "PUT", body: file, headers: { "content-type": file.type, "x-upsert": "false" } });
       if (!put.ok) return setStatus({ ok: false, text: "The upload didn't go through. Check your connection and try again." });
       const d = await cardUploadDone(slug, side, lang, s.path);
       setStatus(d ? { ok: d.ok, text: d.message } : null);
@@ -49,9 +49,9 @@ export default function CardUpload({ slug, side, lang, has }: { slug: string; si
       <input
         ref={input}
         type="file"
-        accept="application/pdf"
+        accept="application/pdf,image/jpeg,image/png,image/webp"
         className="sr-only"
-        aria-label={`Choose the ${fullLabel} PDF`}
+        aria-label={`Choose the ${fullLabel}: a PDF or an image`}
         onChange={(e) => {
           const f = e.target.files?.[0];
           e.target.value = "";
@@ -61,7 +61,7 @@ export default function CardUpload({ slug, side, lang, has }: { slug: string; si
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" disabled={busy} onClick={() => input.current?.click()} className="btn btn-secondary btn-sm">
           <Upload className="h-4 w-4" aria-hidden="true" />
-          {busy ? "Uploading…" : has ? "Replace PDF" : "Upload PDF"}
+          {busy ? "Uploading…" : has ? "Replace card" : "Upload card"}
         </button>
         {has && (
           <>
