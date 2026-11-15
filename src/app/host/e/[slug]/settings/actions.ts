@@ -13,7 +13,7 @@ import type { Side } from "@/lib/types";
 import {
   addFunction,
   addCoOwner,
-  CARD_MAX_BYTES,
+  CARD_MAX_BYTES, CARD_TYPES,
   cardExists,
   cardUploadTarget,
   type CardLang,
@@ -343,7 +343,7 @@ export async function removeEvent(slug: string): Promise<FormState> {
 const cardLang = (v: string): CardLang | null => (v === "en" || v === "mr" ? v : null);
 const cardSide = (v: string): Side | null => (v === "bride" || v === "groom" ? v : null);
 
-/** Step 1 of an upload: a one-time link the browser sends the PDF to (owner only). */
+/** Step 1 of an upload: a one-time link the browser sends the card (PDF or image) to (owner only). */
 export async function cardUploadStart(
   slug: string,
   side: string,
@@ -356,9 +356,10 @@ export async function cardUploadStart(
   const l = cardLang(lang);
   const sd = cardSide(side);
   if (!l || !sd) return { ok: false, message: "Choose a side, and English or Marathi." };
-  if (type !== "application/pdf") return { ok: false, message: "Please choose a PDF file." };
-  if (!(size > 0 && size <= CARD_MAX_BYTES)) return { ok: false, message: "The PDF must be under 20 MB." };
-  const t = await cardUploadTarget(who.host.event.id, sd, l);
+  const ext = CARD_TYPES[type];
+  if (!ext) return { ok: false, message: "Please choose a PDF, or a JPG, PNG or WebP image." };
+  if (!(size > 0 && size <= CARD_MAX_BYTES)) return { ok: false, message: "The card must be under 20 MB." };
+  const t = await cardUploadTarget(who.host.event.id, sd, l, ext);
   return { ok: true, url: t.url, path: t.path };
 }
 
@@ -368,7 +369,7 @@ export async function cardUploadDone(slug: string, side: string, lang: string, p
   if ("error" in who) return { ok: false, message: who.error };
   const l = cardLang(lang);
   const sd = cardSide(side);
-  if (!l || !sd || !path.startsWith(`${who.host.event.id}/${sd}-${l}-`) || !path.endsWith(".pdf")) {
+  if (!l || !sd || !path.startsWith(`${who.host.event.id}/${sd}-${l}-`) || !Object.values(CARD_TYPES).some((e) => path.endsWith(`.${e}`))) {
     return { ok: false, message: "That upload doesn't belong to this event." };
   }
   if (!(await cardExists(path))) return { ok: false, message: "The upload didn't arrive. Please try again." };
