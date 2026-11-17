@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Your events</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Rozha+One&amp;family=Mukta:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5efe1}
+a{color:#790d16}a:hover{color:#5c0a11}
+</style>
+</helmet>
+<div style="background: #f5efe1; color: #2e1a1c; font-family: Mukta, 'Noto Sans Devanagari', system-ui, sans-serif; font-size: 17px; line-height: 1.55; min-height: 900px">
+  <header style="border-bottom: 1px solid #e5d3af; background: #fffcf5">
+    <div style="max-width: 1100px; margin: 0 auto; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+      <span style="display: flex; align-items: center; gap: 8px; color: #790d16; font-family: 'Rozha One', serif; font-size: 26px; line-height: 1"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><g fill="#790d16"><ellipse cx="12" cy="6.2" rx="2.4" ry="4"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(60 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(120 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(180 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(240 12 12)"></ellipse><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(300 12 12)"></ellipse></g><circle cx="12" cy="12" r="2.6" fill="#aec4d4"></circle></svg>Pangat</span>
+      <span style="display: flex; gap: 16px; align-items: center; font-size: 15px; color: #5e4446">girish@example.com <a href="A1-SignIn.dc.html" style="font-weight: 700">Sign out</a></span>
+    </div>
+  </header>
+
+  <main style="max-width: 1100px; margin: 0 auto; padding: 36px 24px 56px">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+      <h1 style="margin: 0; font-family: 'Rozha One', serif; font-weight: 400; font-size: 40px; line-height: 1.2; color: #790d16">Your events</h1>
+      <a href="E2-NewEvent.dc.html" style="display: inline-flex; align-items: center; min-height: 52px; padding: 0 22px; border-radius: 14px; background: #790d16; color: #ffffff; font-size: 18px; font-weight: 700; text-decoration: none">+ Create an event</a>
+    </div>
+
+    <ul style="margin: 24px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px">
+      <li>
+        <a href="H1-Dashboard.dc.html" style="display: block; text-decoration: none; color: #2e1a1c; background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 22px">
+          <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+            <div><div style="font-family: 'Rozha One', serif; font-size: 26px; line-height: 1.25; color: #790d16">Priya &amp; Rohan's wedding</div><div lang="mr" style="color: #5e4446">प्रिया &amp; रोहन यांचा विवाह</div></div>
+            <span style="flex: 0 0 auto; padding: 2px 12px; border-radius: 999px; background: #790d16; color: #ffffff; font-size: 14px; font-weight: 700">Owner</span>
+          </div>
+          <div style="margin-top: 12px; font-size: 16px">Sun 28 Dec 2026 · 412 households</div>
+          <div style="margin-top: 10px; height: 10px; border-radius: 99px; background: #ebe1cb; overflow: hidden" aria-hidden="true"><div style="width: 71%; height: 100%; background: #790d16"></div></div>
+          <div style="margin-top: 6px; font-size: 15px; color: #5e4446">71% replied · replies close 13 Dec</div>
+        </a>
+      </li>
+      <li>
+        <a href="H1-Dashboard.dc.html" style="display: block; text-decoration: none; color: #2e1a1c; background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 22px">
+          <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+            <div><div style="font-family: 'Rozha One', serif; font-size: 26px; line-height: 1.25; color: #790d16">Sameer &amp; Neha's wedding</div><div lang="mr" style="color: #5e4446">समीर &amp; नेहा यांचा विवाह</div></div>
+            <span style="flex: 0 0 auto; padding: 2px 12px; border-radius: 999px; background: #dfe8ef; color: #4f6b80; font-size: 14px; font-weight: 700">Co-owner · Groom's side</span>
+          </div>
+          <div style="margin-top: 12px; font-size: 16px">Sun 14 Feb 2027 · 96 households on your side</div>
+          <div style="margin-top: 10px; height: 10px; border-radius: 99px; background: #ebe1cb; overflow: hidden" aria-hidden="true"><div style="width: 0%; height: 100%; background: #790d16"></div></div>
+          <div style="margin-top: 6px; font-size: 15px; color: #5e4446">No replies yet · invitations not sent</div>
+        </a>
+      </li>
+    </ul>
+    <p style="margin: 18px 0 0; font-size: 15px; color: #5e4446">Someone with only one event goes straight into it.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
