@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pangat Design Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Serif:wght@600;700;800&family=Noto+Serif+Devanagari:wght@600;700;800&family=Rozha+One&family=Mukta:wght@400;600;700&family=Tiro+Devanagari+Marathi&family=Hind:wght@400;600;700&family=Yatra+One&family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#f3ede3; --page-ink:#2b1d16; --page-soft:#6a5446;
+  --sans:"Noto Sans","Noto Sans Devanagari","Nirmala UI",system-ui,sans-serif;
+  --serif:"Noto Serif","Noto Serif Devanagari","Nirmala UI",Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font-family:var(--sans);line-height:1.55}
+.wrap{max-width:1320px;margin:0 auto;padding:32px 16px 80px}
+.intro h1{font-family:var(--serif);font-size:clamp(28px,4vw,44px);margin:0 0 6px;color:#8c1c13}
+.intro p{max-width:760px;margin:0 0 6px;color:var(--page-soft)}
+.toc{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 8px}
+.toc a{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #e3d4bb;color:var(--page-ink);text-decoration:none;font-weight:600;font-size:14px}
+
+/* ---------- direction frame ---------- */
+.dir{margin-top:56px;padding:28px;border-radius:28px;background:var(--bg);color:var(--ink)}
+.dir-head{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between;margin-bottom:26px}
+.dir-head .tag{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--ink-soft)}
+.dir-head h2{font-family:var(--display);font-size:clamp(26px,3vw,36px);margin:2px 0 4px;color:var(--title)}
+.dir-head p{margin:0;max-width:620px;color:var(--ink-soft)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:64px;font-size:11px;color:var(--ink-soft);text-align:center}
+.sw i{display:block;height:44px;border-radius:12px;border:1px solid rgba(0,0,0,.08);margin-bottom:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:start;justify-items:center}
+.cap{font-size:13px;font-weight:600;color:var(--ink-soft);margin:10px 0 0;text-align:center}
+.verdict{margin-top:26px;padding:16px 18px;border-radius:16px;background:var(--surface);border:1px solid var(--line);font-size:15px}
+.verdict b{color:var(--title)}
+
+/* ---------- phone ---------- */
+.phone{width:300px;height:620px;border-radius:40px;border:10px solid #1b1310;background:var(--bg);overflow:hidden;position:relative;box-shadow:0 30px 60px -30px rgba(43,29,22,.45)}
+.phone .scr{height:100%;overflow:hidden;display:flex;flex-direction:column}
+.lang{display:flex;justify-content:flex-end;padding:12px 14px 0;gap:0}
+.lang span{font-size:12px;font-weight:700;padding:5px 11px;border:1.5px solid var(--line);color:var(--ink-soft);background:var(--surface)}
+.lang span:first-child{border-radius:999px 0 0 999px}
+.lang span:last-child{border-radius:0 999px 999px 0;border-left:0}
+.lang span.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:var(--r-btn);font-weight:700;font-size:16px;border:2px solid transparent;width:100%}
+.btn.pri{background:var(--primary);color:var(--on-primary)}
+.btn.sec{background:var(--surface);color:var(--primary);border-color:var(--primary)}
+.mr{font-family:var(--display);}
+.small{font-size:12.5px;color:var(--ink-soft)}
+
+/* function card */
+.fn{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:14px;box-shadow:var(--shadow)}
+.fn h4{margin:0;font-family:var(--display);font-size:20px;color:var(--title);line-height:1.25}
+.fn .meta{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.ch{min-height:48px;border-radius:14px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;background:var(--choice-bg)}
+.ch.on{background:var(--choice-on);border-color:var(--choice-on);color:var(--on-choice,#fff)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px dashed var(--line)}
+.row .rq{font-weight:600;font-size:14.5px}
+.row .rq small{display:block;font-weight:400;color:var(--ink-soft);font-size:12px}
+.step{display:flex;align-items:center;gap:8px}
+.step b{width:40px;height:40px;border-radius:50%;border:2px solid var(--primary);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--surface)}
+.step output{font-family:var(--display);font-size:26px;font-weight:800;min-width:2ch;text-align:center}
+.arr{display:flex;gap:6px;margin-top:8px}
+.arr span{flex:1;text-align:center;font-size:12.5px;font-weight:700;padding:8px 2px;border-radius:10px;border:1.5px solid var(--line);background:var(--choice-bg)}
+.arr span.on{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+
+/* dashboard */
+.dash{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;box-shadow:var(--shadow)}
+.dash h3{margin:0;font-family:var(--display);color:var(--title);font-size:22px}
+.dash .sub{font-size:13px;color:var(--ink-soft);margin-bottom:14px}
+.tile{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;padding:14px 0;border-top:1px solid var(--line)}
+.tile .nm{font-weight:700;font-size:16px}
+.tile .nm small{display:block;font-weight:400;font-size:12.5px;color:var(--ink-soft)}
+.tile .ex{font-family:var(--display);font-size:40px;font-weight:800;line-height:1;color:var(--expected);text-align:right}
+.tile .ex small{display:block;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.bar{grid-column:1/-1;height:10px;border-radius:99px;background:var(--track);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+
+/* slip */
+.slip{width:100%;max-width:380px;aspect-ratio:97/70;background:#fffdf8;color:#2b1d16;border:1.5px dashed #b9a88e;padding:14px 16px;display:grid;grid-template-columns:1fr 112px;gap:12px;align-items:center;position:relative}
+.slip .ev{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--slip-accent);font-weight:700}
+.slip .hh{font-family:"Noto Serif Devanagari",var(--serif);font-size:21px;font-weight:800;line-height:1.25;margin:4px 0 0}
+.slip .en{font-size:12.5px;color:#5c4637}
+.slip .scan{font-size:12px;margin-top:8px;line-height:1.4}
+.slip .code{font-family:var(--serif);font-weight:800;letter-spacing:.18em;font-size:18px;text-align:center;margin-top:4px}
+.slip .ph{grid-column:1/-1;font-size:10.5px;color:#5c4637;border-top:1px solid #eadbc0;padding-top:6px;margin-top:-4px}
+.qr{width:112px;height:112px;display:block}
+
+/* ================= A: Kumkum & Paper ================= */
+.A{--bg:#fdf8ef;--surface:#fffdf8;--ink:#2b1d16;--ink-soft:#5c4637;--title:#8c1c13;--line:#e8d6b5;
+  --primary:#8c1c13;--on-primary:#fff;--primary-soft:#f8e6e1;--choice-bg:#fff;--choice-on:#8c1c13;
+  --expected:#8c1c13;--track:#f6ecda;--display:var(--serif);--r-btn:14px;--r-card:18px;
+  --shadow:0 1px 2px rgb(43 29 22/.05),0 8px 24px -12px rgb(140 28 19/.18);--slip-accent:#8c1c13}
+.A .hero{position:relative;padding:34px 18px 18px;text-align:center}
+.A .toran{position:absolute;top:0;left:0;right:0;height:30px;display:flex;justify-content:space-around;align-items:flex-start}
+.A .toran::before{content:"";position:absolute;top:6px;left:0;right:0;height:2px;background:#1d6b3f}
+.A .toran svg{width:18px;height:18px;margin-top:-2px;position:relative}
+.A .toran svg:nth-child(odd){margin-top:6px;width:14px;height:14px}
+.A .hero .inv{font-size:13px;color:var(--ink-soft);font-weight:600}
+.A .hero .names{font-family:var(--display);font-size:34px;font-weight:800;color:var(--title);line-height:1.15;margin:4px 0}
+.A .hero .date{font-size:13.5px;color:var(--ink-soft)}
+.A .div{display:flex;align-items:center;gap:10px;margin:12px auto 0;max-width:200px}
+.A .div::before,.A .div::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#e3a008)}
+.A .div::after{background:linear-gradient(270deg,transparent,#e3a008)}
+.A .who{margin:6px 16px 0;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;text-align:center;box-shadow:var(--shadow)}
+.A .who .lbl{font-size:12.5px;color:var(--ink-soft)}
+.A .who .nm{font-family:var(--display);font-size:22px;font-weight:800;line-height:1.3;margin-top:2px}
+.A .q{padding:16px 16px 10px;text-align:center;font-weight:700;font-size:17px}
+.A .acts{padding:0 16px;display:grid;gap:10px}
+.A .slip{border-color:#c9a96a}
+
+/* ================= B: Patrika ================= */
+.B{--bg:#fbf3e4;--surface:#fffaf0;--ink:#2a1712;--ink-soft:#634638;--title:#7a1410;--line:#e6cf9f;
+  --primary:#7a1410;--on-primary:#fff6dc;--primary-soft:#f7e3d6;--choice-bg:#fffaf0;--choice-on:#7a1410;
+  --expected:#7a1410;--track:#f1e2c2;--display:"Noto Serif Devanagari","Noto Serif",Georgia,serif;--r-btn:999px;--r-card:6px;
+  --shadow:0 0 0 1px #e6cf9f inset,0 0 0 4px #fffaf0 inset,0 0 0 5px #d6ae55 inset;--slip-accent:#7a1410;
+  background-image:radial-gradient(#e9d4a8 1px,transparent 1.2px);background-size:18px 18px}
+.B .phone{background:#fbf3e4}
+.B .hero{margin:10px 12px 0;background:#7a1410;color:#fff6dc;text-align:center;padding:26px 16px 22px;border-radius:6px;position:relative;
+  box-shadow:inset 0 0 0 5px #7a1410,inset 0 0 0 6px #e8b84a,inset 0 0 0 9px #7a1410,inset 0 0 0 10px #e8b84a}
+.B .hero .inv{font-size:13px;color:#f3c64a;font-weight:700;letter-spacing:.04em}
+.B .hero .names{font-family:var(--display);font-size:33px;font-weight:800;line-height:1.2;margin:6px 0 2px;color:#fff6dc}
+.B .hero .date{font-size:13px;color:#f6dfa6}
+.B .hero .orn{display:flex;justify-content:center;gap:6px;margin-bottom:6px}
+.B .hero .orn svg{width:16px;height:16px}
+.B .corner{position:absolute;width:22px;height:22px}
+.B .corner.tl{top:14px;left:14px}.B .corner.tr{top:14px;right:14px}.B .corner.bl{bottom:14px;left:14px}.B .corner.br{bottom:14px;right:14px}
+.B .who{margin:14px 16px 0;text-align:center;padding:12px;border-top:1px solid #d6ae55;border-bottom:1px solid #d6ae55}
+.B .who .lbl{font-size:12.5px;color:var(--ink-soft)}
+.B .who .nm{font-family:var(--display);font-size:22px;font-weight:800;line-height:1.3}
+.B .q{padding:14px 16px 10px;text-align:center;font-weight:700;font-size:17px}
+.B .acts{padding:0 16px;display:grid;gap:10px}
+.B .btn.pri{box-shadow:inset 0 0 0 2px #7a1410,inset 0 0 0 3px #e8b84a}
+.B .fn{border-radius:6px}
+.B .ch{border-radius:999px}
+.B .dash{border-radius:6px}
+.B .slip{border:none;outline:1.5px dashed #b9a88e;outline-offset:4px;box-shadow:inset 0 0 0 1px #d6ae55,inset 0 0 0 4px #fffdf8,inset 0 0 0 5px #d6ae55}
+.B .slip .hh{color:#7a1410}
+
+/* ================= C: Keli (banana leaf) ================= */
+.C{--bg:#f7f6ee;--surface:#ffffff;--ink:#1d2a20;--ink-soft:#4d5a4f;--title:#174d2f;--line:#d9e2d3;
+  --primary:#174d2f;--on-primary:#fff;--primary-soft:#e3efe5;--choice-bg:#fff;--choice-on:#174d2f;
+  --expected:#174d2f;--track:#e8ede2;--display:var(--serif);--r-btn:16px;--r-card:22px;
+  --shadow:0 10px 30px -18px rgb(23 77 47/.35);--slip-accent:#174d2f}
+.C .hero{background:#174d2f;color:#f2f6ec;padding:30px 18px 54px;text-align:left;position:relative;overflow:hidden;border-radius:0 0 30px 30px}
+.C .hero::before{content:"";position:absolute;right:-60px;top:-40px;width:200px;height:300px;border-radius:50%;background:#1f6a40;transform:rotate(35deg)}
+.C .hero::after{content:"";position:absolute;right:30px;top:-40px;width:2px;height:300px;background:#2b8150;transform:rotate(35deg)}
+.C .hero>*{position:relative;z-index:1}
+.C .hero .inv{font-size:13px;color:#c9e3cf;font-weight:600}
+.C .hero .names{font-family:var(--display);font-size:34px;font-weight:800;line-height:1.15;margin:6px 0}
+.C .hero .date{font-size:13.5px;color:#d9ead9}
+.C .hero .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e3a008;margin:0 6px;vertical-align:1px}
+.C .who{margin:-34px 16px 0;position:relative;z-index:2;background:#fff;border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.C .who .lbl{font-size:12.5px;color:var(--ink-soft)}
+.C .who .nm{font-family:var(--display);font-size:22px;font-weight:800;line-height:1.3}
+.C .q{padding:18px 16px 10px;font-weight:700;font-size:17px}
+.C .acts{padding:0 16px;display:grid;gap:10px}
+.C .btn.pri{background:#8c1c13}
+.C .slip .hh{color:#174d2f}
+.C .slip{border-color:#a9b9a3}
+
+/* ================= D: Zari (all golden shades, no dark fills) ================= */
+.D{--bg:#fdf8ea;--surface:#fffcf3;--ink:#4a3300;--ink-soft:#7a5c1c;--title:#6b4a00;--line:#efdcaa;
+  --primary:#e3aa1c;--on-primary:#3d2a00;--primary-soft:#fbefc9;--choice-bg:#fffcf3;--choice-on:#e3aa1c;--on-choice:#3d2a00;
+  --expected:#6b4a00;--nonveg:#e9c55e;--track:#f6edd3;--display:"Noto Serif","Noto Serif Devanagari",Georgia,serif;--r-btn:14px;--r-card:16px;
+  --shadow:0 1px 2px rgb(107 74 0/.06),0 10px 28px -16px rgb(176 128 10/.4);--slip-accent:#8a6300}
+.D .phone{border-color:#c9a24a}
+.D .btn.pri{background:linear-gradient(180deg,#f0c040,#dca215);box-shadow:inset 0 1px 0 rgb(255 255 255/.45)}
+.D .btn.sec{color:#6b4a00;border-color:#d4a72c;background:#fffcf3}
+.D .step b{border-color:#d4a72c;color:#6b4a00}
+.D .arr span.on{border-color:#d4a72c;color:#6b4a00;background:#fbefc9}
+.D .lang span.on{background:#f3d27a;color:#4a3300;border-color:#e0b648}
+.D .hero{margin:10px 12px 0;background:linear-gradient(160deg,#fbecc0,#f3d47e 55%,#ebc35a);color:#4a3300;text-align:center;padding:24px 16px 22px;border-radius:14px;position:relative;
+  box-shadow:inset 0 0 0 6px #fbecc0,inset 0 0 0 7px #b8860b,inset 0 0 0 10px transparent,inset 0 0 0 11px #b8860b}
+.D .hero .zari{height:8px;margin:0 auto 10px;max-width:150px;background:repeating-linear-gradient(90deg,#b8860b 0 6px,transparent 6px 10px);-webkit-mask:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent);mask:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent)}
+.D .hero .inv{font-size:13px;color:#6b4a00;font-weight:700;letter-spacing:.04em}
+.D .hero .names{font-family:"Noto Serif Devanagari",var(--serif);line-height:1.2;margin:6px 0 2px;color:#5a3d00}
+.D .hero .date{font-size:13px;color:#6b4a00}
+.D .hero .orn{display:flex;justify-content:center;gap:8px;margin-top:10px}
+.D .hero .orn svg{width:14px;height:14px}
+.D .who{margin:14px 16px 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center;box-shadow:var(--shadow)}
+.D .who .lbl{font-size:12.5px;color:var(--ink-soft)}
+.D .who .nm{font-family:var(--display);line-height:1.3}
+.D .q{padding:14px 16px 10px;text-align:center;font-weight:700}
+.D .acts{padding:0 16px;display:grid;gap:10px}
+.D .slip{border-color:#d4b061;box-shadow:inset 0 0 0 1px #ecc96a}
+.D .slip .hh{color:#5a3d00}
+
+
+/* ================= E: Colorhunt palette 790d16 · e5d3af · f5efe1 · aec4d4 ================= */
+.E{--bg:#f5efe1;--surface:#fffcf5;--ink:#2e1a1c;--ink-soft:#5e4446;--title:#790d16;--line:#e5d3af;
+  --primary:#790d16;--on-primary:#fff;--primary-soft:#f2e4d8;--choice-bg:#fffcf5;--choice-on:#790d16;--on-choice:#fff;
+  --expected:#790d16;--nonveg:#aec4d4;--track:#ebe1cb;--display:"Noto Serif","Noto Serif Devanagari",Georgia,serif;--r-btn:14px;--r-card:16px;
+  --shadow:0 1px 2px rgb(46 26 28/.05),0 10px 26px -16px rgb(121 13 22/.22);--slip-accent:#790d16}
+.E .phone{border-color:#2e1a1c}
+.E .lang span.on{background:#790d16;color:#fff;border-color:#790d16}
+.E .arr span.on{background:#aec4d4;border-color:#8fa9bc;color:#2e1a1c}
+.E .hero{margin:10px 12px 0;background:#e5d3af;color:#2e1a1c;text-align:center;padding:24px 16px 26px;border-radius:14px;position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 6px #e5d3af,inset 0 0 0 7px #790d16,inset 0 0 0 10px #e5d3af,inset 0 0 0 11px #790d16}
+.E .hero::after{content:"";position:absolute;left:11px;right:11px;bottom:11px;height:8px;background:repeating-linear-gradient(90deg,#aec4d4 0 10px,transparent 10px 16px)}
+.E .hero .inv{font-size:13px;color:#790d16;font-weight:700;letter-spacing:.04em}
+.E .hero .names{font-family:"Noto Serif Devanagari",var(--serif);line-height:1.2;margin:6px 0 2px;color:#790d16}
+.E .hero .date{font-size:13px;color:#5e4446}
+.E .hero .orn{display:flex;justify-content:center;gap:8px;margin-bottom:8px}
+.E .hero .orn svg{width:18px;height:18px}
+.E .who{margin:14px 16px 0;background:var(--surface);border:1px solid var(--line);border-left:0;border-radius:16px;padding:14px;text-align:center;box-shadow:var(--shadow)}
+.E .who .lbl{font-size:12.5px;color:var(--ink-soft)}
+.E .who .nm{font-family:var(--display);line-height:1.3}
+.E .q{padding:14px 16px 10px;text-align:center;font-weight:700}
+.E .acts{padding:0 16px;display:grid;gap:10px}
+.E .slip{border-color:#c8b48a;box-shadow:inset 0 0 0 1px #e5d3af}
+.E .slip .hh{color:#790d16}
+/* ===== Standard type scale (all directions): body 16, never below 13 ===== */
+.dir .hero .names{font-size:26px!important;font-weight:700!important}
+.dir .who .nm{font-size:18px;font-weight:700}
+.dir .q{font-size:16px}
+.dir .fn h4{font-size:17px;font-weight:700}
+.dir .rq{font-size:15px!important}
+.dir .step output{font-size:22px;font-weight:700}
+.dir .step b{width:44px;height:44px;font-size:18px}
+.dash h3{font-size:19px!important;font-weight:700}
+.tile .nm{font-size:15px}
+.tile .ex{font-size:30px!important;font-weight:700}
+.slip .hh{font-size:17px;font-weight:700}
+.slip .code{font-size:15px}
+.btn{font-size:16px;font-weight:600}
+.ch{font-size:15px;font-weight:600}
+.D .hero .orn svg{width:18px;height:18px}
+
+/* ===== font pairings ===== */
+.dir,.fp{font-family:var(--sans)}
+.fp .hero .names,.fp .slip .hh{font-family:var(--display)!important}
+.fp[data-w="400"] .hero .names,.fp[data-w="400"] .who .nm,.fp[data-w="400"] h4,.fp[data-w="400"] .ex,.fp[data-w="400"] h2,.fp[data-w="400"] h3{font-weight:400!important}
+.fpgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;justify-items:center}
+.fpcard{width:300px}
+.fpcard h3{font-family:var(--display);color:var(--title);font-size:21px;margin:12px 0 2px}
+.fpcard .pair{font-size:13px;font-weight:700;color:var(--ink-soft)}
+.fpcard .body{font-size:16px;margin:8px 0 4px}
+.fpcard .num{font-family:var(--display);font-size:30px;color:var(--title);line-height:1}
+.fpcard .note{font-size:13.5px;color:var(--ink-soft);margin-top:6px}
+.fpcard.rec{outline:3px solid #aec4d4;outline-offset:10px;border-radius:8px}
+.switch{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;align-items:center;font-size:14px;font-weight:600}
+.switch button{font:inherit;padding:8px 14px;border-radius:999px;border:1.5px solid #e5d3af;background:#fffcf5;color:#2e1a1c;cursor:pointer}
+.switch button.on{background:#790d16;color:#fff;border-color:#790d16}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mg" viewBox="0 0 24 24">
+    <g fill="#e3a008"><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(45 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(90 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(135 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(180 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(225 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(270 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(315 12 12)"/></g>
+    <circle cx="12" cy="12" r="3.4" fill="#c2410c"/><circle cx="12" cy="12" r="1.5" fill="#8c1c13"/>
+  </symbol>
+  <symbol id="paisley" viewBox="0 0 24 24"><path d="M3 3h10M3 3v10M3 3l6 6" stroke="#e8b84a" stroke-width="1.6" fill="none"/><circle cx="9" cy="9" r="1.6" fill="#e8b84a"/></symbol>
+  <symbol id="mgg" viewBox="0 0 24 24">
+    <g fill="#f3c84e"><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(45 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(90 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(135 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(180 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(225 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(270 12 12)"/><ellipse cx="12" cy="6.2" rx="2.6" ry="4.2" transform="rotate(315 12 12)"/></g>
+    <circle cx="12" cy="12" r="3.4" fill="#d99a0b"/><circle cx="12" cy="12" r="1.5" fill="#b8860b"/>
+  </symbol>
+  <symbol id="mge" viewBox="0 0 24 24">
+    <g fill="#790d16"><ellipse cx="12" cy="6.2" rx="2.4" ry="4" /><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(120 12 12)"/><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(180 12 12)"/><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(240 12 12)"/><ellipse cx="12" cy="6.2" rx="2.4" ry="4" transform="rotate(300 12 12)"/></g>
+    <circle cx="12" cy="12" r="2.6" fill="#aec4d4"/>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>Pangat — design directions</h1>
+    <p>Same screens, same words, same rules from the UI brief; only the look changes. Direction E (your Colorhunt palette) sits first, then D (shades of gold). Each direction shows the guest's first screen, the reply form, the parents' dashboard and the printed slip.</p>
+    <p>Names and numbers are made up. Pick one (or mix: e.g. B's guest screens with A's host screens) and I'll write it into the design system.</p>
+    <nav class="toc"><a href="#fonts">Fonts (new)</a><a href="#E">E · Kumkum &amp; Sky (your palette)</a><a href="#D">D · Zari (gold)</a><a href="#A">A · Kumkum &amp; Paper</a><a href="#B">B · Patrika</a><a href="#C">C · Keli (banana leaf)</a></nav>
+  </div>
+
+  <!-- template for each direction is filled by the script below -->
+  <section class="dir E" id="fonts" style="--sans:var(--sans)">
+    <div class="dir-head"><div><div class="tag">Fonts · shown on Direction E</div><h2>Font pairings</h2>
+    <p>Every pair below covers both Marathi (Devanagari) and English, is free on Google Fonts, and is shown at the same sizes. Headings font on the left of the “·”, text font on the right.</p></div></div>
+    <div class="fpgrid" id="fpgrid"></div>
+    <div class="switch">Try a pairing on the whole page: <span id="sw"></span></div>
+  </section>
+
+  <section class="dir E" id="E" data-name="Kumkum &amp; Sky" data-tag="Direction E · your Colorhunt palette · new"
+    data-pitch="Built only from the four colours you picked: cream #f5efe1 as the page, sand #e5d3af for the card panel and lines, deep maroon #790d16 for names, headings and the one main button, dusty blue #aec4d4 as the quiet second colour (non-veg, selected options, the border strip)."
+    data-sw="#f5efe1:cream|#e5d3af:sand|#790d16:maroon|#aec4d4:dusty blue|#2e1a1c:text (added)|#fffcf5:card (added)"
+    data-verdict="<b>The most balanced of the five.</b> Maroon and dusty blue differ strongly in lightness, so veg / non-veg read apart even for colour-blind guests. Two tones are added, not from the palette: a near-black maroon for body text and a lighter card white — the palette has no dark neutral, and maroon body text would tire the eye. Blue is never used for text: it's ≈1.5:1 on cream."></section>
+
+  <section class="dir D" id="D" data-name="Zari" data-tag="Direction D · shades of gold only · updated"
+    data-pitch="Everything is a shade of gold: ivory-gold ground, a pale-to-rich gold gradient panel for the couple's names framed by antique-gold double rules, gold buttons, and veg / non-veg told apart by deep gold vs light gold. No red, no black, no dark fills."
+    data-sw="#fdf8ea:cream gold|#fbecc0:pale gold|#ebc35a:soft gold|#e3aa1c:zari gold|#b8860b:antique gold|#6b4a00:deep gold"
+    data-verdict="<b>Warm, festive and light.</b> Two things stay deliberately darker, both still gold-brown: body text (#4a3300) — anything lighter drops below readable contrast for older eyes — and the QR code, which phone cameras need dark to scan. Risk: with no strong colour anywhere, the one button that matters stands out less; it relies on size and a gradient, not contrast."></section>
+
+  <section class="dir A" id="A" data-name="Kumkum &amp; Paper" data-tag="Direction A · evolve what you have"
+    data-pitch="Today's palette, finished properly: a marigold toran across the top, serif headings, warmer cards. Lowest rework — it's mostly your current globals.css plus a few motifs."
+    data-sw="#fdf8ef:paper|#8c1c13:kumkum|#e3a008:haldi|#1d6b3f:leaf|#2b1d16:ink|#e8d6b5:line"
+    data-verdict="<b>Safest bet.</b> Ships in a day because the tokens already exist. Risk: it looks like a tidy app, not a celebration — guests won't remember it."></section>
+
+  <section class="dir B" id="B" data-name="Patrika" data-tag="Direction B · it looks like the card"
+    data-pitch="Borrowed from a printed Marathi lagna-patrika: deep kumkum panel with double gold rules, corner ornaments, Devanagari serif display, pill buttons. The reply link feels like an extension of the card in their hand."
+    data-sw="#fbf3e4:ivory|#7a1410:kumkum|#e8b84a:gold|#d6ae55:gold rule|#2a1712:ink|#e6cf9f:line"
+    data-verdict="<b>Most 'stunning' for guests over 60</b> — instantly reads as a wedding. Risk: ornament is fragile on cheap phones and fights dense host tables; use it on guest screens and slips only, keep host screens closer to A."></section>
+
+  <section class="dir C" id="C" data-name="Keli" data-tag="Direction C · the pangat itself"
+    data-pitch="A pangat is served on banana leaves: deep leaf green structure, ivory ground, haldi dots, kumkum kept for the one action that matters. Calmer, more modern, and it's the only one that says 'meal' rather than 'wedding'."
+    data-sw="#f7f6ee:ivory|#174d2f:keli|#1f6a40:leaf|#e3a008:haldi|#8c1c13:kumkum|#1d2a20:ink"
+    data-verdict="<b>Most distinctive, and it generalises</b> to parties and reunions (your 'not weddings only' goal). Risk: green collides with the WhatsApp button and with 'Yes / coming' — those would need re-colouring."></section>
+</div>
+
+<script>
+const mg = n => Array.from({length:n},()=>'<svg><use href="#mg"/></svg>').join('');
+function qr(seed){ // decorative QR-like pattern, not scannable
+  let s=seed, r=()=> (s=(s*9301+49297)%233280)/233280; const N=25, c=4.48; let out='';
+  const finder=(x,y)=>`<rect x="${x*c}" y="${y*c}" width="${7*c}" height="${7*c}" fill="#2b1d16"/><rect x="${(x+1)*c}" y="${(y+1)*c}" width="${5*c}" height="${5*c}" fill="#fffdf8"/><rect x="${(x+2)*c}" y="${(y+2)*c}" width="${3*c}" height="${3*c}" fill="#2b1d16"/>`;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){ const inF=(x<8&&y<8)||(x>N-9&&y<8)||(x<8&&y>N-9); if(!inF&&r()>.52) out+=`<rect x="${x*c}" y="${y*c}" width="${c}" height="${c}" fill="#2b1d16"/>`;}
+  return `<svg class="qr" viewBox="0 0 112 112">${out}${finder(0,0)}${finder(N-7,0)}${finder(0,N-7)}</svg>`;
+}
+const heroB = `<div class="hero"><svg class="corner tl"><use href="#paisley"/></svg><svg class="corner tr" style="transform:scaleX(-1)"><use href="#paisley"/></svg><svg class="corner bl" style="transform:scaleY(-1)"><use href="#paisley"/></svg><svg class="corner br" style="transform:scale(-1,-1)"><use href="#paisley"/></svg>
+  <div class="orn">${mg(3)}</div><div class="inv">॥ शुभ विवाह ॥ · आपणास सस्नेह निमंत्रण</div><div class="names">प्रिया &amp; रोहन</div><div class="date">रविवार, २८ डिसेंबर २०२६ · पुणे</div></div>`;
+const heroA = `<div class="hero"><div class="toran">${mg(9)}</div><div class="inv">आपणास सस्नेह निमंत्रण</div><div class="names">प्रिया &amp; रोहन</div><div class="date">विवाह सोहळा · २८ डिसेंबर २०२६</div><div class="div"><svg width="16" height="16"><use href="#mg"/></svg></div></div>`;
+const heroC = `<div class="hero"><div class="inv">आपणास सस्नेह निमंत्रण</div><div class="names">प्रिया &amp; रोहन</div><div class="date">हळद<span class="dot"></span>विवाह<span class="dot"></span>स्वागत · २७–२८ डिसेंबर</div></div>`;
+const heroD = `<div class="hero"><div class="zari"></div><div class="inv">॥ शुभ विवाह ॥ · आपणास सस्नेह निमंत्रण</div><div class="names">प्रिया &amp; रोहन</div><div class="date">रविवार, २८ डिसेंबर २०२६ · पुणे</div><div class="orn">${'<svg><use href="#mgg"/></svg>'.repeat(3)}</div></div>`;
+const heroE = `<div class="hero"><div class="orn">${'<svg><use href="#mge"/></svg>'.repeat(3)}</div><div class="inv">॥ शुभ विवाह ॥ · आपणास सस्नेह निमंत्रण</div><div class="names">प्रिया &amp; रोहन</div><div class="date">रविवार, २८ डिसेंबर २०२६ · पुणे</div></div>`;
+const hero = {A:heroA,B:heroB,C:heroC,D:heroD,E:heroE};
+
+function screen1(k){return `<div class="phone"><div class="scr">
+  <div class="lang"><span class="on">मराठी</span><span>English</span></div>${hero[k]}
+  <div class="who"><div class="lbl">हे आमंत्रण यांच्यासाठी आहे</div><div class="nm">श्री. अनिल जोशी व परिवार</div><div class="small">Shri. Anil Joshi &amp; family</div></div>
+  <div class="q">हे आमंत्रण आपल्यासाठीच आहे ना?</div>
+  <div class="acts"><div class="btn pri">हो, आम्हीच</div><div class="btn sec">नाही, हे आम्ही नाही</div></div>
+</div></div><p class="cap">1 · “Is this you?” (Marathi default)</p>`}
+
+function screen2(k){return `<div class="phone"><div class="scr" style="padding:0 0 14px">
+  <div class="lang"><span>मराठी</span><span class="on">English</span></div>
+  <div style="padding:10px 16px 8px"><div style="font-family:var(--display);font-size:20px;font-weight:700;color:var(--title);line-height:1.25">Tell us who’s coming</div><div class="small">Help us host you well. Joshi family · 3 functions</div></div>
+  <div style="padding:0 12px;display:grid;gap:10px">
+   <div class="fn"><h4>Wedding · विवाह</h4><div class="meta">Sun 28 Dec · 11:30 am · Sahyadri Lawns, Pune</div>
+    <div class="choices"><div class="ch on">✓ Coming</div><div class="ch">Can’t come</div></div>
+    <div class="row"><div class="rq">How many people?</div><div class="step"><b>−</b><output>4</output><b>+</b></div></div>
+    <div class="row"><div class="rq">How many vegetarian?<small>Non-vegetarian: 1</small></div><div class="step"><b>−</b><output>3</output><b>+</b></div></div>
+    <div class="row" style="display:block"><div class="rq">When will you arrive?</div><div class="arr"><span>Early</span><span class="on">On time</span><span>A little late</span></div></div>
+   </div>
+   <div class="fn" style="padding:12px 14px"><h4 style="font-size:17px">Reception · स्वागत</h4><div class="meta">Sun 28 Dec · 7:00 pm</div><div class="choices" style="margin-bottom:0"><div class="ch">Coming</div><div class="ch">Can’t come</div></div></div>
+  </div>
+  <div style="padding:12px 12px 0;margin-top:auto"><div class="btn pri">Send our reply</div></div>
+</div></div><p class="cap">2 · Reply form (English)</p>`}
+
+function dash(){const f=[["Haldi","हळद · Sat 10 am",212,168,"62%",[58,22,20]],["Wedding","विवाह · Sun 11:30 am",684,531,"71%",[52,19,29]],["Reception","स्वागत · Sun 7 pm",540,402,"66%",[44,24,32]]];
+ return `<div class="dash"><h3>How many are coming</h3><div class="sub">Both sides · 412 households invited · updated just now</div>
+ ${f.map(x=>`<div class="tile"><div class="nm">${x[0]}<small>${x[1]} · ${x[4]} replied · ${x[3]} confirmed</small></div><div class="ex">${x[2]}<small>Expected</small></div>
+ <div class="bar"><i style="width:${x[5][0]}%;background:var(--expected)"></i><i style="width:${x[5][1]}%;background:var(--nonveg,#e3a008)"></i><i style="width:${x[5][2]}%;background:transparent"></i></div></div>`).join('')}
+ <div class="legend"><span style="--c:var(--expected)">Veg</span><span style="--c:var(--nonveg,#e3a008)">Non-veg</span><span style="--c:var(--track)">Not replied</span></div></div>
+ <p class="cap">3 · Parents’ dashboard — the Expected number is the hero</p>`}
+
+function slip(k,seed){return `<div class="slip"><div><div class="ev">Priya &amp; Rohan · 28 Dec</div><div class="hh">श्री. अनिल जोशी व परिवार</div><div class="en">Shri. Anil Joshi &amp; family</div>
+ <div class="scan"><b>येणार का ते कळवा — स्कॅन करा</b><br>Scan to tell us who’s coming · Reply by 13 Dec</div></div>
+ <div>${qr(seed)}<div class="code">K7M2QX</div></div>
+ <div class="ph">No smartphone? Call 98765 43210 and give your code.</div></div>
+ <p class="cap">4 · Printed slip (97 × 70 mm, 8 per A4)</p>`}
+
+document.querySelectorAll('.dir[data-name]').forEach((el,i)=>{
+  const k=el.id, d=el.dataset;
+  const sw=d.sw.split('|').map(s=>{const[c,n]=s.split(':');return `<div class="sw"><i style="background:${c}"></i>${n}<br>${c}</div>`}).join('');
+  el.innerHTML=`<div class="dir-head"><div><div class="tag">${d.tag}</div><h2>${d.name}</h2><p>${d.pitch}</p></div><div class="swatches">${sw}</div></div>
+   <div class="grid"><div>${screen1(k)}</div><div>${screen2(k)}</div><div style="width:100%;display:grid;gap:28px;justify-items:center"><div style="width:100%;max-width:420px">${dash()}</div><div style="width:100%;max-width:380px">${slip(k,17+i*31)}</div></div></div>
+   <div class="verdict">${d.verdict}</div>`;
+});
+
+const pairs=[
+ {n:"Today: Noto Serif · Noto Sans",d:'"Noto Serif","Noto Serif Devanagari",serif',b:'"Noto Sans","Noto Sans Devanagari",sans-serif',w:"700",note:"The safe default. Every conjunct renders correctly, but it looks like a government form, not a wedding."},
+ {n:"Rozha One · Mukta",d:'"Rozha One",serif',b:'"Mukta",sans-serif',w:"400",rec:1,note:"Recommended. Rozha is a high-contrast display face drawn for Devanagari — it looks like patrika lettering. Mukta is one of the most readable Marathi text faces, and it's light to load."},
+ {n:"Tiro Devanagari Marathi · Hind",d:'"Tiro Devanagari Marathi",serif',b:'"Hind",sans-serif',w:"400",note:"Tiro was drawn specifically for Marathi (not Hindi) letterforms — classic, bookish, dignified. Hind is a plain, very clear text face. Calmer than Rozha."},
+ {n:"Yatra One · Baloo 2",d:'"Yatra One",serif',b:'"Baloo 2",sans-serif',w:"400",note:"Brush-lettered and rounded: warm, friendly, party-like. Good if Pangat goes beyond weddings; can feel casual for elders."}
+];
+const g=document.getElementById('fpgrid');
+pairs.forEach(p=>{const c=document.createElement('div');c.className='fpcard fp E'+(p.rec?' rec':'');c.dataset.w=p.w;
+ c.style.setProperty('--display',p.d);c.style.setProperty('--sans',p.b);c.style.fontFamily=p.b;
+ c.innerHTML=screen1('E').replace(/<p class="cap">.*?<\/p>/,'')+`<h3>${p.n.split(' · ')[0]} · प्रिया &amp; रोहन</h3><div class="pair">${p.n}${p.rec?' · recommended':''}</div>
+  <div class="body">कृपया प्रत्येक कार्यक्रमासाठी उत्तर द्या. Please answer for every function.</div><div class="num">684 <span style="font-family:var(--sans);font-size:13px;color:var(--ink-soft)">expected</span></div><div class="note">${p.note}</div>`;
+ g.appendChild(c);});
+const sw=document.getElementById('sw');
+pairs.forEach((p,i)=>{const b=document.createElement('button');b.textContent=p.n.replace('Today: ','');if(i===0)b.className='on';
+ b.onclick=()=>{sw.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.querySelectorAll('.dir[data-name]').forEach(d=>{d.classList.add('fp');d.dataset.w=p.w;d.style.setProperty('--display',p.d);d.style.setProperty('--sans',p.b);d.style.fontFamily=p.b;});};
+ sw.appendChild(b);});
+</script>
+</body>
+</html>
