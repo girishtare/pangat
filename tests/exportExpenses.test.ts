@@ -42,7 +42,9 @@ describe("expenses export", () => {
     const mandap = ex.getRow(3);
     expect(mandap.getCell(4).value).toBe("Wedding");
     expect(mandap.getCell(6).value).toBe(120000);
-    expect(mandap.getCell(6).numFmt).toBe(RUPEE_FORMAT);
+    // ExcelJS drops the backslashes (literal commas) when it reads a format back; the file keeps them.
+    expect(RUPEE_FORMAT).toContain(String.raw`#\,##\,##0`);
+    expect(mandap.getCell(6).numFmt).toBe(RUPEE_FORMAT.replace(/\\(.)/g, "$1"));
     expect(mandap.getCell(7).value).toBe("₹70,000 / ₹50,000");
     expect(mandap.getCell(10).value).toBe(50000);
     expect(mandap.getCell(11).value).toBe(70000);
