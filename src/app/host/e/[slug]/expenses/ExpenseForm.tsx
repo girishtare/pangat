@@ -353,7 +353,7 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
         <legend className="px-1 font-display text-base text-ink">Payments</legend>
         <input type="hidden" name="payments" value={sentPayments} />
         {payments.length > 0 && (
-          <div className="mt-2 overflow-x-auto">
+          <div className="relative mt-2 overflow-x-auto">{/* relative: keeps the screen-reader-only header inside the scroll box */}
             <table className="table-p">
               <thead>
                 <tr>
