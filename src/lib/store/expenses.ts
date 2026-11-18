@@ -138,9 +138,90 @@ export async function saveExpense(
   return { ok: true, id: data as string };
 }
 
-/** Deletes an expense; its payments go with it (cascade). */
+/** Deletes an expense; its payments go with it (cascade), and its bill file after. */
 export async function deleteExpense(eventId: string, id: string): Promise<boolean> {
-  const { data, error } = await admin().from("expenses").delete().eq("event_id", eventId).eq("id", id).select("id");
+  const { data, error } = await admin().from("expenses").delete().eq("event_id", eventId).eq("id", id).select("id, bill_path");
   if (error) throw new Error(`deleting the expense failed: ${error.message}`);
+  const gone = data ?? [];
+  await removeBillFiles(gone.map((r) => r.bill_path as string | null).filter((p): p is string => !!p));
+  return gone.length > 0;
+}
+
+/* ---------- Settlements ---------- */
+
+export async function addSettlement(
+  eventId: string,
+  userId: string,
+  s: { fromSide: Side; toSide: Side; amount: number; paidOn: string; method: Method; note: string | null },
+): Promise<void> {
+  const { error } = await admin().from("expense_settlements").insert({
+    event_id: eventId,
+    from_side: s.fromSide,
+    to_side: s.toSide,
+    amount_paise: s.amount,
+    paid_on: s.paidOn,
+    method: s.method,
+    note: s.note,
+    created_by: userId,
+  });
+  if (error) throw new Error(`saving the settlement failed: ${error.message}`);
+}
+
+export async function deleteSettlement(eventId: string, id: string): Promise<boolean> {
+  const { data, error } = await admin().from("expense_settlements").delete().eq("event_id", eventId).eq("id", id).select("id");
+  if (error) throw new Error(`deleting the settlement failed: ${error.message}`);
   return (data ?? []).length > 0;
+}
+
+/* ---------- Bills (private bucket `bills`, migration 0029) ---------- */
+
+const BILLS = "bills";
+export const BILL_MAX_BYTES = 20 * 1024 * 1024;
+/** What a bill can be, and the file ending it is stored with. */
+export const BILL_TYPES: Record<string, string> = {
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+/** A one-time link the owner's browser uploads a bill to, straight to Storage. Path: <event>/<expense>/<random>.<ext>. */
+export async function billUploadTarget(eventId: string, expenseId: string, ext: string): Promise<{ path: string; url: string }> {
+  const path = `${eventId}/${expenseId}/${crypto.randomUUID()}.${ext}`;
+  const { data, error } = await admin().storage.from(BILLS).createSignedUploadUrl(path);
+  if (error || !data) throw new Error(`bill upload link failed: ${error?.message}`);
+  return { path, url: data.signedUrl };
+}
+
+/** Is there a file at this path? (The browser says it uploaded; check before recording it.) */
+export async function billExists(path: string): Promise<boolean> {
+  const slash = path.lastIndexOf("/");
+  const { data, error } = await admin().storage.from(BILLS).list(path.slice(0, slash), { search: path.slice(slash + 1) });
+  if (error) throw new Error(`bill check failed: ${error.message}`);
+  return (data ?? []).some((f) => f.name === path.slice(slash + 1));
+}
+
+/** Records a bill on an expense (null = remove it), and deletes the file it replaces. */
+export async function setBill(eventId: string, expenseId: string, path: string | null): Promise<boolean> {
+  const { data: row, error: readError } = await admin().from("expenses").select("bill_path").eq("event_id", eventId).eq("id", expenseId).maybeSingle();
+  if (readError) throw new Error(`bill lookup failed: ${readError.message}`);
+  if (!row) return false;
+  const { error } = await admin().from("expenses").update({ bill_path: path, updated_at: new Date().toISOString() }).eq("id", expenseId);
+  if (error) throw new Error(`saving the bill failed: ${error.message}`);
+  if (row.bill_path && row.bill_path !== path) await removeBillFiles([row.bill_path]);
+  return true;
+}
+
+/** Deletes bill files from Storage (a failure is logged: the database is already right). */
+export async function removeBillFiles(paths: string[]): Promise<void> {
+  if (paths.length === 0) return;
+  const { error } = await admin().storage.from(BILLS).remove(paths);
+  if (error) console.error("bill files not deleted", error.message);
+}
+
+/** A link to the bill that works for an hour. */
+export async function billSignedUrl(path: string): Promise<string> {
+  const { data, error } = await admin().storage.from(BILLS).createSignedUrl(path, 3600);
+  if (error || !data) throw new Error(`bill link failed: ${error?.message}`);
+  return data.signedUrl;
 }

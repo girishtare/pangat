@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Check, Paperclip } from "lucide-react";
+import { Check } from "lucide-react";
 import {
   CATEGORIES,
   CATEGORY_LABEL,
@@ -25,6 +25,7 @@ import PhoneInput from "../../../../ui/PhoneInput";
 import { Alert } from "../../../../ui/kit";
 import { useFormAction } from "../../../../ui/useFormAction";
 import { Bar } from "./Bar";
+import { BillBox, uploadBill } from "./BillBox";
 import { deleteExpenseAction, saveExpenseAction, type FormState } from "./actions";
 
 type Mode = "bride" | "groom" | "shared";
@@ -84,6 +85,9 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
   const [payments, setPayments] = useState<DraftPayment[]>(() => fromSaved(expense));
   const [draft, setDraft] = useState({ paidOn: todayIst(), amount: "", paidBy: "bride" as Side, method: "upi" as Method, note: "" });
   const [draftError, setDraftError] = useState<string | null>(null);
+  // Adding: a bill chosen before the expense exists is uploaded once it's saved.
+  const [pendingBill, setPendingBill] = useState<File | null>(null);
+  const [billNote, setBillNote] = useState<{ ok: boolean; text: string } | null>(null);
 
   // Once saved, the payments shown are the saved ones (with their ids), so a
   // second save doesn't add the same payment again.
@@ -96,11 +100,24 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
   // An add form starts again empty after a successful add.
   useEffect(() => {
     if (state?.ok && !editing) {
+      const file = pendingBill;
+      const newId = state.id;
       setAmountText("");
       setSplit(startSplit());
       setPayments([]);
       setDraftError(null);
+      setPendingBill(null);
+      setBillNote(null);
+      if (file && newId) {
+        setBillNote({ ok: true, text: "Uploading the bill…" });
+        void uploadBill(slug, newId, file).then((r) => {
+          setBillNote(r);
+          router.refresh();
+        });
+      }
     }
+    // Only when a save comes back.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, editing]);
 
   const amount = rupeesOf(amountText);
@@ -485,11 +502,7 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex min-h-28 flex-col items-center justify-center rounded-[14px] border-2 border-dashed border-line bg-paper px-4 py-5 text-center">
-          <Paperclip className="h-5 w-5 text-ink-soft" aria-hidden="true" />
-          <p className="mt-1 font-semibold">Bills: coming next</p>
-          <p className="hint">Attaching a bill or receipt arrives in the next update.</p>
-        </div>
+        <BillBox slug={slug} expenseId={expense?.id} hasBill={!!expense?.billPath} pending={pendingBill} onPending={setPendingBill} />
         <label className="block">
           <span className="label">
             Notes <span className="font-normal text-ink-soft">(optional)</span>
@@ -499,6 +512,7 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
       </div>
 
       {state && <Alert tone={state.ok ? "success" : "error"}>{state.message}</Alert>}
+      {billNote && <Alert tone={billNote.ok ? "success" : "error"}>{billNote.text}</Alert>}
       {deleteError && <Alert tone="error">{deleteError}</Alert>}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
