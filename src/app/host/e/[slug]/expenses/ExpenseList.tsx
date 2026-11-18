@@ -267,7 +267,7 @@ export function ExpenseList({ slug, expenses, functions, initial, today }: { slu
               const by = paidByText(e);
               return (
                 <tr key={e.id}>
-                  <td className="min-w-[13rem]">
+                  <td className="min-w-[12rem]">
                     <button type="button" onClick={() => open(e.id)} className="text-left font-semibold text-kumkum underline decoration-1 underline-offset-2 hover:decoration-2">
                       {e.title}
                     </button>
@@ -310,8 +310,9 @@ export function ExpenseList({ slug, expenses, functions, initial, today }: { slu
                 <td className="border-t-2 border-line" />
                 <td className="border-t-2 border-line" />
                 <td className="whitespace-nowrap border-t-2 border-line text-center">{formatRupees(totals.amount)}</td>
-                <td className="whitespace-nowrap border-t-2 border-line px-3 text-center text-[0.8125rem]">
-                  Bride {formatRupees(totals.bride)} · Groom {formatRupees(totals.groom)}
+                <td className="border-t-2 border-line px-3 text-center text-[0.8125rem]">
+                  <span className="block whitespace-nowrap">Bride {formatRupees(totals.bride)}</span>
+                  <span className="block whitespace-nowrap">Groom {formatRupees(totals.groom)}</span>
                 </td>
                 <td className="whitespace-nowrap border-t-2 border-line text-center">{formatRupees(totals.paid)}</td>
                 <td className="whitespace-nowrap border-t-2 border-line text-center">{formatRupees(totals.due)}</td>

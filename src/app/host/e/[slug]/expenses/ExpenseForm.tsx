@@ -267,7 +267,7 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
         </label>
       </div>
 
-      <fieldset className="rounded-[14px] border border-line px-4 pb-4 pt-1">
+      <fieldset className="min-w-0 rounded-[14px] border border-line px-4 pb-4 pt-1">
         <legend className="px-1 font-display text-base text-ink">Who pays for it</legend>
         <input type="hidden" name="split" value={split.mode} />
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -349,7 +349,7 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
         )}
       </fieldset>
 
-      <fieldset className="rounded-[14px] border border-line px-4 pb-4 pt-1">
+      <fieldset className="min-w-0 rounded-[14px] border border-line px-4 pb-4 pt-1">
         <legend className="px-1 font-display text-base text-ink">Payments</legend>
         <input type="hidden" name="payments" value={sentPayments} />
         {payments.length > 0 && (
