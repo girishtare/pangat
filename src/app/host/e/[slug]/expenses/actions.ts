@@ -127,15 +127,26 @@ export async function saveExpenseAction(slug: string, id: string | null, _prev: 
   const sent = readPayments(String(fd.get("payments") ?? ""));
   if (!sent) return { ok: false, message: "A payment wasn't readable. Close the pop-up, reload the page and try again." };
 
+  // Bride's side only / Groom's side only: every payment is that side's (owner, 18 Nov: "Paid by" is asked only for shared ones).
+  const onlySide = split.split === "bride" || split.split === "groom" ? split.split : null;
+
   // Payments already saved stay as they were; only their ids come back from the pop-up.
-  let keep: { id: string; amount: number }[] = [];
+  // A saved payment recorded against the other side is saved again as this side's.
+  const keep: { id: string; amount: number }[] = [];
+  const resave: NewPayment[] = [];
   if (id) {
     const current = await findExpense(host.event.id, id);
     if (!current) return { ok: false, message: "That expense is no longer there. Reload the page." };
     const ids = new Set(sent.filter((p) => p.id).map((p) => p.id));
-    keep = current.payments.filter((p) => ids.has(p.id)).map((p) => ({ id: p.id, amount: p.amount }));
+    for (const p of current.payments.filter((x) => ids.has(x.id))) {
+      if (onlySide && p.paidBy !== onlySide) resave.push({ paidOn: p.paidOn, amount: p.amount, paidBy: onlySide, method: p.method, note: p.note });
+      else keep.push({ id: p.id, amount: p.amount });
+    }
   }
-  const add: NewPayment[] = sent.filter((p) => !p.id).map(({ paidOn, amount: a, paidBy, method, note }) => ({ paidOn, amount: a, paidBy, method, note }));
+  const add: NewPayment[] = [
+    ...resave,
+    ...sent.filter((p) => !p.id).map(({ paidOn, amount: a, paidBy, method, note }) => ({ paidOn, amount: a, paidBy: onlySide ?? paidBy, method, note })),
+  ];
   const paid = keep.reduce((s, p) => s + p.amount, 0) + add.reduce((s, p) => s + p.amount, 0);
   const over = checkAmountCoversPayments(amount, paid);
   if (over) return { ok: false, message: over };

@@ -218,12 +218,13 @@ export function ExpenseList({ slug, expenses, functions, initial, today }: { slu
   );
 
   return (
-    <section className="mt-8" aria-labelledby="all-expenses">
+    <section aria-labelledby="all-expenses">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="all-expenses" className="font-display text-[1.3125rem] text-kumkum">
+        {/* The tab above already says "All expenses"; the heading stays for screen readers. */}
+        <h2 id="all-expenses" className="sr-only">
           All expenses
         </h2>
-        <button type="button" onClick={() => filterDialog.current?.showModal()} className="btn btn-secondary btn-sm min-h-11 lg:hidden">
+        <button type="button" onClick={() => filterDialog.current?.showModal()} className="btn btn-secondary btn-sm min-h-11 w-full sm:ml-auto sm:w-auto lg:hidden">
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           Filter · Sort{filtered ? " (on)" : ""}
         </button>
