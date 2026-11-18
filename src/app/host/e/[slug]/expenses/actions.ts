@@ -16,9 +16,21 @@ import {
 } from "@/lib/expenses";
 import { normaliseMobile } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
-import { deleteExpense, findExpense, saveExpense, type NewPayment } from "@/lib/store/expenses";
+import {
+  addSettlement,
+  BILL_MAX_BYTES,
+  BILL_TYPES,
+  billExists,
+  billUploadTarget,
+  deleteExpense,
+  deleteSettlement,
+  findExpense,
+  saveExpense,
+  setBill,
+  type NewPayment,
+} from "@/lib/store/expenses";
 
-export type FormState = { ok: boolean; message: string } | null;
+export type FormState = { ok: boolean; message: string; id?: string } | null;
 
 async function owner(slug: string): Promise<{ host: HostContext } | { error: string }> {
   const gate = await hostGate(slug);
@@ -152,7 +164,7 @@ export async function saveExpenseAction(slug: string, id: string | null, _prev: 
   );
   if (!r.ok) return { ok: false, message: `The payments come to more than ${formatRupees(amount)}. Remove one and try again.` };
   revalidatePath(`/host/e/${slug}/expenses`);
-  return { ok: true, message: id ? "Expense saved." : `Added ${title}.` };
+  return { ok: true, message: id ? "Expense saved." : `Added ${title}.`, id: r.id };
 }
 
 export async function deleteExpenseAction(slug: string, id: string): Promise<FormState> {
@@ -161,4 +173,76 @@ export async function deleteExpenseAction(slug: string, id: string): Promise<For
   const gone = await deleteExpense(who.host.event.id, id);
   revalidatePath(`/host/e/${slug}/expenses`);
   return gone ? { ok: true, message: "Expense deleted." } : { ok: false, message: "That expense was already deleted." };
+}
+
+/* ---------- Settlements ---------- */
+
+/** Money one side hands the other to square up. */
+export async function addSettlementAction(slug: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const who = await owner(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const from = text(fd, "fromSide");
+  if (from !== "bride" && from !== "groom") return { ok: false, message: "Choose which side paid." };
+  const to = from === "bride" ? "groom" : "bride";
+  const amt = parseRupees(fd.get("amount"));
+  if (!amt.ok || amt.paise === null || amt.paise <= 0) return { ok: false, message: "Enter the amount handed over, in rupees." };
+  if (amt.paise > MAX_PAISE) return { ok: false, message: "That amount is too large." };
+  const paidOn = text(fd, "paidOn");
+  if (!DATE.test(paidOn)) return { ok: false, message: "Enter the date it was handed over." };
+  const method = text(fd, "method") as Method;
+  if (!METHODS.includes(method)) return { ok: false, message: "Choose how it was paid." };
+  const note = text(fd, "note") || null;
+  if (note && note.length > 200) return { ok: false, message: "Keep the note to 200 characters." };
+  await addSettlement(who.host.event.id, who.host.userId, { fromSide: from, toSide: to, amount: amt.paise, paidOn, method, note });
+  revalidatePath(`/host/e/${slug}/expenses`);
+  return { ok: true, message: `Recorded ${formatRupees(amt.paise)} from the ${from === "bride" ? "bride's" : "groom's"} side.` };
+}
+
+export async function removeSettlementAction(slug: string, id: string): Promise<FormState> {
+  const who = await owner(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const gone = await deleteSettlement(who.host.event.id, id);
+  revalidatePath(`/host/e/${slug}/expenses`);
+  return gone ? { ok: true, message: "Settlement removed." } : { ok: false, message: "That settlement was already removed." };
+}
+
+/* ---------- Bills ---------- */
+
+/** Step 1 of an upload: a one-time link the browser sends the bill to (owner only). */
+export async function billUploadStart(
+  slug: string,
+  expenseId: string,
+  size: number,
+  type: string,
+): Promise<{ ok: true; url: string; path: string } | { ok: false; message: string }> {
+  const who = await owner(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const ext = BILL_TYPES[type];
+  if (!ext) return { ok: false, message: "Please choose a PDF, or a JPG, PNG or WebP image." };
+  if (!(size > 0 && size <= BILL_MAX_BYTES)) return { ok: false, message: "The bill must be under 20 MB." };
+  if (!(await findExpense(who.host.event.id, expenseId))) return { ok: false, message: "That expense is no longer there. Reload the page." };
+  const t = await billUploadTarget(who.host.event.id, expenseId, ext);
+  return { ok: true, url: t.url, path: t.path };
+}
+
+/** Step 2: the browser has uploaded it; record it on the expense (the old file is deleted). */
+export async function billUploadDone(slug: string, expenseId: string, path: string): Promise<FormState> {
+  const who = await owner(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const prefix = `${who.host.event.id}/${expenseId}/`;
+  if (!path.startsWith(prefix) || path.slice(prefix.length).includes("/") || !Object.values(BILL_TYPES).some((e) => path.endsWith(`.${e}`))) {
+    return { ok: false, message: "That upload doesn't belong to this expense." };
+  }
+  if (!(await billExists(path))) return { ok: false, message: "The upload didn't arrive. Please try again." };
+  if (!(await setBill(who.host.event.id, expenseId, path))) return { ok: false, message: "That expense is no longer there. Reload the page." };
+  revalidatePath(`/host/e/${slug}/expenses`);
+  return { ok: true, message: "Bill attached." };
+}
+
+export async function billRemove(slug: string, expenseId: string): Promise<FormState> {
+  const who = await owner(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  if (!(await setBill(who.host.event.id, expenseId, null))) return { ok: false, message: "That expense is no longer there. Reload the page." };
+  revalidatePath(`/host/e/${slug}/expenses`);
+  return { ok: true, message: "Bill removed." };
 }

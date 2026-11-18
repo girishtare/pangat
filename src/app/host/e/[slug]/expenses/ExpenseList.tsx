@@ -291,7 +291,22 @@ export function ExpenseList({ slug, expenses, functions, initial, today }: { slu
                   <td>
                     <span className={`badge ${BADGE[st]}`}>{STATUS_LABEL[st]}</span>
                   </td>
-                  <td>{e.billPath ? <Paperclip className="mx-auto h-5 w-5 text-kumkum" aria-label="Bill attached" /> : <span aria-label="No bill">—</span>}</td>
+                  <td>
+                    {e.billPath ? (
+                      <a
+                        href={`/host/e/${slug}/expenses/bill?id=${e.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-kumkum hover:bg-kumkum-soft"
+                        aria-label={`Open the bill for ${e.title} (new tab)`}
+                        title="Open the bill"
+                      >
+                        <Paperclip className="h-5 w-5" aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <span aria-label="No bill">—</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -325,7 +340,7 @@ export function ExpenseList({ slug, expenses, functions, initial, today }: { slu
       </div>
       <p className="mt-2 hidden text-sm text-ink-soft md:block">
         Bar: <span className="font-bold text-kumkum">■ Bride&apos;s side</span> · <span className="font-bold text-haldi-deep">■ Groom&apos;s side</span>. Each name opens the
-        expense to edit it or add a payment.
+        expense to edit it, add a payment or attach the bill.
       </p>
 
       {/* Phones: one card per expense. */}
@@ -341,7 +356,17 @@ export function ExpenseList({ slug, expenses, functions, initial, today }: { slu
                 </button>
                 <span className="shrink-0 pt-2 font-bold">{formatRupees(e.amount)}</span>
               </div>
-              <p className="text-sm text-ink-soft">{[e.vendor, nameOf(e), CATEGORY_LABEL[e.category]].filter(Boolean).join(" · ")}</p>
+              <p className="text-sm text-ink-soft">
+                {[e.vendor, nameOf(e), CATEGORY_LABEL[e.category]].filter(Boolean).join(" · ")}
+                {e.billPath && (
+                  <>
+                    {" · "}
+                    <a href={`/host/e/${slug}/expenses/bill?id=${e.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 font-semibold text-kumkum underline">
+                      <Paperclip className="h-4 w-4" aria-hidden="true" /> Bill
+                    </a>
+                  </>
+                )}
+              </p>
               <Bar bridePct={(e.brideShare / e.amount) * 100} className="mt-3 h-2" />
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span>

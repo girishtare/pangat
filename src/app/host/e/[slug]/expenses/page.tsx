@@ -1,5 +1,5 @@
-import { Wallet } from "lucide-react";
-import { daysUntil, dueOf, dueSoon, formatRupees, SIDE_NAME, splitLabel, summarise, type Expense } from "@/lib/expenses";
+import { FileSpreadsheet, Wallet } from "lucide-react";
+import { daysUntil, dueOf, dueSoon, formatRupees, METHOD_LABEL, SIDE_NAME, splitLabel, summarise, type Expense, type Settlement } from "@/lib/expenses";
 import { hostGate } from "@/lib/host";
 import { loadExpenses } from "@/lib/store/expenses";
 import { todayIst } from "@/lib/todo";
@@ -11,6 +11,7 @@ import { EventShell, GateMessage } from "../../../HostChrome";
 import { Bar } from "./Bar";
 import { ExpenseForm } from "./ExpenseForm";
 import { ExpenseList, type Filters, type SortKey } from "./ExpenseList";
+import { RemoveSettlement, SettlementForm } from "./SettleForms";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +84,17 @@ export default async function Expenses({
       <PageHeader
         title="Expenses"
         subtitle="Every cost of the wedding, who pays what share, and who has paid. Only you, as the owner, see this page."
-        actions={expenses.length > 0 ? addButton : undefined}
+        actions={
+          expenses.length > 0 ? (
+            <>
+              {addButton}
+              <a href={`/host/e/${slug}/expenses/export`} className="btn btn-secondary" download>
+                <FileSpreadsheet className="h-5 w-5" aria-hidden="true" />
+                Export to Excel
+              </a>
+            </>
+          ) : undefined
+        }
       />
 
       {expenses.length === 0 ? (
@@ -140,7 +151,7 @@ export default async function Expenses({
           </div>
 
           <div className="mt-5 grid gap-4 xl:grid-cols-2">
-            <SettleUp s={s} />
+            <SettleUp s={s} slug={slug} settlements={settlements} />
             <DueSoon list={soon} today={today} />
           </div>
 
@@ -151,7 +162,7 @@ export default async function Expenses({
   );
 }
 
-function SettleUp({ s }: { s: ReturnType<typeof summarise> }) {
+function SettleUp({ s, slug, settlements }: { s: ReturnType<typeof summarise>; slug: string; settlements: Settlement[] }) {
   const sides: Side[] = ["bride", "groom"];
   const diff = (b: number) =>
     b === 0 ? (
@@ -212,6 +223,32 @@ function SettleUp({ s }: { s: ReturnType<typeof summarise> }) {
           </div>
         ))}
       </dl>
+      <div className="mt-4">
+        <PopupButton label="Record a settlement" title="Record a settlement" className="btn btn-secondary w-full bg-card sm:w-auto">
+          <SettlementForm slug={slug} from={s.owes?.from ?? "groom"} amount={s.owes?.amount ?? null} />
+        </PopupButton>
+      </div>
+
+      {settlements.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-sm font-bold text-ink">Settlements</h3>
+          <ul className="mt-2 divide-y divide-line rounded-[14px] bg-card px-4">
+            {settlements.map((x) => (
+              <li key={x.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 text-sm">
+                <span>
+                  <strong>{formatRupees(x.amount)}</strong> from {SIDE_NAME[x.fromSide]} to {SIDE_NAME[x.toSide]}
+                  <span className="block text-ink-soft">
+                    {dayOfDate(x.paidOn)} · {METHOD_LABEL[x.method]}
+                    {x.note ? ` · ${x.note}` : ""}
+                  </span>
+                </span>
+                <RemoveSettlement slug={slug} id={x.id} amount={x.amount} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <p className="mt-4 text-sm text-ink">
         When everything is paid: Bride&apos;s side {formatRupees(s.side.bride.shareOfTotal)} · Groom&apos;s side {formatRupees(s.side.groom.shareOfTotal)}.
       </p>

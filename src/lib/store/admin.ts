@@ -1023,8 +1023,15 @@ export async function deleteEvent(eventId: string): Promise<void> {
     .select("card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path")
     .eq("id", eventId)
     .maybeSingle();
+  // Bills too (expenses, migration 0029): note them before the rows cascade away.
+  const { data: bills } = await admin().from("expenses").select("bill_path").eq("event_id", eventId).not("bill_path", "is", null);
   const { error } = await admin().from("events").delete().eq("id", eventId);
   if (error) throw new Error(`deleting the event failed: ${error.message}`);
+  const billFiles = (bills ?? []).map((b) => b.bill_path as string);
+  if (billFiles.length) {
+    const { error: billError } = await admin().storage.from("bills").remove(billFiles);
+    if (billError) console.error("bill files not deleted", billError.message);
+  }
   const files = [ev?.card_bride_en_path, ev?.card_bride_mr_path, ev?.card_groom_en_path, ev?.card_groom_mr_path].filter(
     (p): p is string => !!p,
   );
