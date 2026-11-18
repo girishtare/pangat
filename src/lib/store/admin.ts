@@ -12,7 +12,7 @@ import { mailConfigured, sendCardMail } from "../mail";
 // first check, with hostGate(), that the signed-in user may make the change.
 
 let client: SupabaseClient | null = null;
-function admin(): SupabaseClient {
+export function admin(): SupabaseClient {
   const cfg = supabaseConfig();
   if (!cfg) throw new Error("Supabase is not configured");
   client ??= createClient(cfg.url, cfg.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });

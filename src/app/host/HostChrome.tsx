@@ -55,6 +55,7 @@ function navItems(host: HostContext, current: NavKey): NavItem[] {
     { key: "whatsapp", href: `${base}/whatsapp`, label: "WhatsApp" },
     { key: "todo", href: `${base}/todo`, label: "To-do" },
     { key: "numbers", href: `${base}/numbers`, label: "Caterer numbers", ownerOnly: true },
+    { key: "expenses", href: `${base}/expenses`, label: "Expenses", ownerOnly: true },
     { key: "settings", href: `${base}/settings`, label: "Event settings", ownerOnly: true },
   ];
   return all

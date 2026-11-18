@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Host · Expenses</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@600&amp;family=Noto+Sans+Devanagari:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5efe1}
+a{color:#790d16}a:hover{color:#5c0a11}
+</style>
+</helmet>
+<div style="background: #f5efe1; color: #2e1a1c; font-family: 'IBM Plex Sans', 'Noto Sans Devanagari', system-ui, sans-serif; font-size: 15px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: stretch; min-width: 0">
+  <div style="flex: 1 1 240px; max-width: 100%; border-right: 1px solid #e5d3af; background: #fffcf5"><aside style="width: 100%; min-height: 900px; box-sizing: border-box; padding: 22px 14px; background: #fffcf5; color: #2e1a1c; font-family: 'IBM Plex Sans', 'Noto Sans Devanagari', system-ui, sans-serif; font-size: 15px; line-height: 1.5; display: flex; flex-direction: column">
+  <img src="../../../public/brand/pangat-logo-en.png" alt="Pangat" style="height: 40px; width: auto; align-self: flex-start; margin: 0 8px">
+  <nav aria-label="Event" style="margin-top: 22px">
+    <ul style="margin: 0; padding: 0; list-style: none; display: grid; gap: 2px">
+      <li><a href="#dashboard" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: #2e1a1c; font-weight: 500">Dashboard</a></li>
+      <li><a href="#guests" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: #2e1a1c; font-weight: 500">Guest list</a></li>
+      <li><a href="#slips" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: #2e1a1c; font-weight: 500">Slips</a></li>
+      <li><a href="#whatsapp" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: #2e1a1c; font-weight: 500">WhatsApp</a></li>
+      <li><a href="#todo" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: #2e1a1c; font-weight: 500">To-do</a></li>
+      <li><a href="#numbers" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: #2e1a1c; font-weight: 500">Caterer numbers</a></li>
+      <li><a href="X1-Expenses.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; background: #790d16; color: #ffffff; font-weight: 600">Expenses <span style="margin-left: auto; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: #f2e4d8; color: #790d16">new</span></a></li>
+      <li><a href="#settings" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: #2e1a1c; font-weight: 500">Event settings</a></li>
+    </ul>
+  </nav>
+  <div style="margin: 14px 8px 0; padding: 10px 0; border-top: 1px solid #e5d3af; border-bottom: 1px solid #e5d3af"><a href="#all" style="font-weight: 600; text-decoration: none">All events</a></div>
+  <div style="margin: auto 8px 0; padding-top: 14px; font-size: 13px; color: #5e4446">girish@example.com<div style="margin-top: 4px"><a href="#signout" style="font-weight: 600">Sign out</a></div></div>
+</aside></div>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 20px 36px 56px; max-width: 1240px">
+    <p style="margin: 0 0 14px; font-family: 'Space Grotesk', 'Noto Sans Devanagari', sans-serif; font-weight: 600; color: #790d16">Priya &amp; Rohan's wedding · <span lang="mr">प्रिया &amp; रोहन यांचा विवाह</span></p>
+
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px">
+      <div>
+        <h1 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; letter-spacing: -0.01em; font-size: 28px; line-height: 1.2; color: #790d16">Expenses</h1>
+        <p style="margin: 2px 0 0; color: #5e4446">Every cost of the wedding, who pays what share, and who has paid. Only you, as the owner, see this page.</p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap">
+        <a href="X2-AddExpense.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border-radius: 12px; background: #790d16; color: #ffffff; font-weight: 600; text-decoration: none">+ Add expense</a>
+        <a href="#export" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border-radius: 12px; border: 2px solid #790d16; background: #fffcf5; color: #790d16; font-weight: 600; text-decoration: none">Export to Excel</a>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px">
+      <div style="background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 16px 18px">
+        <div style="font-size: 13px; font-weight: 600; color: #5e4446">Total</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; line-height: 1.15; color: #790d16">₹10,93,000</div>
+        <div style="font-size: 13px; color: #5e4446">6 expenses · 4 functions</div>
+      </div>
+      <div style="background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 16px 18px">
+        <div style="font-size: 13px; font-weight: 600; color: #5e4446">Paid</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; line-height: 1.15">₹7,18,000</div>
+        <div style="margin-top: 6px; height: 8px; border-radius: 99px; background: #ebe1cb; overflow: hidden" aria-hidden="true"><div style="width: 66%; height: 100%; background: #1d6b3f"></div></div>
+        <div style="font-size: 13px; color: #5e4446; margin-top: 4px">66% of the total</div>
+      </div>
+      <div style="background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 16px 18px">
+        <div style="font-size: 13px; font-weight: 600; color: #5e4446">Still due</div>
+        <div style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 30px; line-height: 1.15">₹3,75,000</div>
+        <div style="font-size: 13px; color: #5e4446">3 expenses · next on <strong style="color: #790d16">20 Dec</strong></div>
+      </div>
+      <div style="background: #fffcf5; border: 1px solid #e5d3af; border-radius: 20px; padding: 16px 18px">
+        <div style="font-size: 13px; font-weight: 600; color: #5e4446">Each side's share of the total</div>
+        <div style="margin-top: 6px; height: 10px; border-radius: 99px; overflow: hidden; display: flex" aria-hidden="true"><span style="width: 53.4%; background: #790d16"></span><span style="width: 46.6%; background: #aec4d4"></span></div>
+        <div style="margin-top: 8px; display: flex; justify-content: space-between; gap: 8px; font-size: 14px"><span><span style="color: #790d16; font-weight: 600">Bride's side</span><br><strong>₹5,84,000</strong></span><span style="text-align: right"><span style="color: #4f6b80; font-weight: 600">Groom's side</span><br><strong>₹5,09,000</strong></span></div>
+      </div>
+    </div>
+
+    <!-- SETTLE UP + DUE SOON -->
+    <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; align-items: start">
+      <section style="background: #e5d3af; border-radius: 20px; padding: 20px 22px">
+        <div style="font-size: 13px; font-weight: 600; color: #5e4446; text-transform: uppercase; letter-spacing: 0.06em">Settle up · for what's been paid so far</div>
+        <h2 style="margin: 4px 0 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.3">Groom's side owes Bride's side <span style="color: #790d16">₹89,833</span></h2>
+        <div style="margin-top: 12px; background: #fffcf5; border-radius: 14px; overflow: hidden">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center">
+            <thead><tr style="background: #f2e8d2"><th scope="col" style="text-align: left; padding: 9px 12px">Side</th><th scope="col" style="padding: 9px 8px">Its share of what's paid</th><th scope="col" style="padding: 9px 8px">Has paid</th><th scope="col" style="padding: 9px 12px">Difference</th></tr></thead>
+            <tbody>
+              <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 9px 12px"><span style="display: inline-block; padding: 1px 9px; border-radius: 999px; background: #f2e4d8; color: #790d16; font-size: 12px; font-weight: 600">Bride</span></th><td>₹3,78,167</td><td>₹4,68,000</td><td style="padding: 9px 12px; color: #1d6b3f; font-weight: 600">+₹89,833 extra</td></tr>
+              <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 9px 12px"><span style="display: inline-block; padding: 1px 9px; border-radius: 999px; background: #dfe8ef; color: #4f6b80; font-size: 12px; font-weight: 600">Groom</span></th><td>₹3,39,833</td><td>₹2,50,000</td><td style="padding: 9px 12px; color: #790d16; font-weight: 600">−₹89,833 short</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+          <a href="#settle" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #2e1a1c; background: #fffcf5; color: #2e1a1c; font-weight: 600; text-decoration: none">Record a settlement</a>
+          <span style="font-size: 13px; color: #5e4446">When everything is paid: Bride's side ₹5,84,000 · Groom's side ₹5,09,000.</span>
+        </div>
+      </section>
+
+      <section style="background: #dfe8ef; border: 1px solid #aec4d4; border-radius: 20px; padding: 20px 22px">
+        <h2 style="margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 18px">Due in the next 14 days</h2>
+        <ul style="margin: 0; padding: 0; list-style: none; display: grid; gap: 8px">
+          <li style="display: flex; justify-content: space-between; gap: 10px; background: #fffcf5; border-radius: 12px; padding: 10px 12px"><span><strong>Catering</strong> · Annapurna Caterers<br><span style="font-size: 13px; color: #5e4446">Shared 50 / 50</span></span><span style="text-align: right"><strong>₹2,80,000</strong><br><span style="font-size: 13px; color: #790d16; font-weight: 600">Sun 20 Dec</span></span></li>
+          <li style="display: flex; justify-content: space-between; gap: 10px; background: #fffcf5; border-radius: 12px; padding: 10px 12px"><span><strong>Mandap decor</strong> · Shubh Decorators<br><span style="font-size: 13px; color: #5e4446">Shared ₹70,000 / ₹50,000</span></span><span style="text-align: right"><strong>₹70,000</strong><br><span style="font-size: 13px; color: #5e4446">Thu 24 Dec</span></span></li>
+          <li style="display: flex; justify-content: space-between; gap: 10px; background: #fffcf5; border-radius: 12px; padding: 10px 12px"><span><strong>Haldi decor</strong> · Phoolwala Decor<br><span style="font-size: 13px; color: #5e4446">Bride's side only</span></span><span style="text-align: right"><strong>₹25,000</strong><br><span style="font-size: 13px; color: #5e4446">Sat 26 Dec</span></span></li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- FILTERS -->
+    <div style="margin-top: 26px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+      <h2 style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 21px; color: #790d16">All expenses</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <label style="display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; width: 220px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e4446" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Search</span><input placeholder="Search item or vendor" style="flex: 1; min-width: 0; border: 0; outline: none; font: inherit; background: transparent"></label>
+        <select aria-label="Function" style="min-height: 44px; padding: 0 10px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>All functions</option><option>Haldi</option><option>Wedding</option><option>Reception</option><option>General</option></select>
+        <select aria-label="Category" style="min-height: 44px; padding: 0 10px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>All categories</option><option>Catering</option><option>Venue</option><option>Decor</option></select>
+        <select aria-label="Who pays" style="min-height: 44px; padding: 0 10px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>Any split</option><option>Bride's side only</option><option>Groom's side only</option><option>Shared</option></select>
+        <select aria-label="Status" style="min-height: 44px; padding: 0 10px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>Any status</option><option>Paid</option><option>Part paid</option><option>Not paid</option></select>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div style="margin-top: 12px; overflow-x: auto; border: 1px solid #e5d3af; border-radius: 16px; background: #fffcf5">
+      <table style="width: 100%; min-width: 1000px; border-collapse: collapse; font-size: 14px; text-align: center">
+        <thead><tr style="background: #ebe1cb">
+          <th scope="col" style="text-align: left; padding: 11px 14px">Expense</th><th scope="col" style="padding: 11px 8px">Function</th><th scope="col" style="padding: 11px 8px">Category</th><th scope="col" style="padding: 11px 8px">Amount</th><th scope="col" style="padding: 11px 8px; min-width: 150px">Who pays</th><th scope="col" style="padding: 11px 8px">Paid</th><th scope="col" style="padding: 11px 8px">Due</th><th scope="col" style="padding: 11px 8px">Status</th><th scope="col" style="padding: 11px 14px">Bill</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 10px 14px; font-weight: 400"><a href="X2-AddExpense.dc.html" style="font-weight: 600">Catering</a><div style="font-size: 13px; color: #5e4446">Annapurna Caterers · +91 98201 45566</div></th><td>Wedding</td><td>Catering</td><td style="font-weight: 600">₹4,80,000</td><td><div style="height: 8px; border-radius: 99px; overflow: hidden; display: flex; max-width: 130px; margin: 0 auto" aria-hidden="true"><span style="width: 50%; background: #790d16"></span><span style="width: 50%; background: #aec4d4"></span></div><div style="font-size: 13px; margin-top: 3px">Shared 50 / 50</div></td><td>₹2,00,000<div style="font-size: 12px; color: #5e4446">by Bride's side</div></td><td>₹2,80,000<div style="font-size: 12px; color: #790d16; font-weight: 600">by 20 Dec</div></td><td><span style="padding: 2px 10px; border-radius: 999px; background: #dfe8ef; color: #4f6b80; font-size: 12px; font-weight: 600">Part paid</span></td><td style="padding: 10px 14px"><a href="#bill" aria-label="Catering bill (PDF)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg></a></td></tr>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 10px 14px; font-weight: 400"><a href="X2-AddExpense.dc.html" style="font-weight: 600">Hall hire</a><div style="font-size: 13px; color: #5e4446">Sahyadri Lawns</div></th><td>General</td><td>Venue</td><td style="font-weight: 600">₹3,50,000</td><td><div style="height: 8px; border-radius: 99px; overflow: hidden; display: flex; max-width: 130px; margin: 0 auto" aria-hidden="true"><span style="width: 60%; background: #790d16"></span><span style="width: 40%; background: #aec4d4"></span></div><div style="font-size: 13px; margin-top: 3px">Shared 60 / 40</div></td><td>₹3,50,000<div style="font-size: 12px; color: #5e4446">both sides</div></td><td style="color: #5e4446">—</td><td><span style="padding: 2px 10px; border-radius: 999px; background: #e2f2e7; color: #1d6b3f; font-size: 12px; font-weight: 600">Paid</span></td><td style="padding: 10px 14px"><a href="#bill" aria-label="Hall hire bill (photo)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg></a></td></tr>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 10px 14px; font-weight: 400"><a href="X2-AddExpense.dc.html" style="font-weight: 600">Mandap decor</a><div style="font-size: 13px; color: #5e4446">Shubh Decorators · +91 99200 31122</div></th><td>Wedding</td><td>Decor</td><td style="font-weight: 600">₹1,20,000</td><td><div style="height: 8px; border-radius: 99px; overflow: hidden; display: flex; max-width: 130px; margin: 0 auto" aria-hidden="true"><span style="width: 58.3%; background: #790d16"></span><span style="width: 41.7%; background: #aec4d4"></span></div><div style="font-size: 13px; margin-top: 3px">₹70,000 / ₹50,000</div></td><td>₹50,000<div style="font-size: 12px; color: #5e4446">by Groom's side</div></td><td>₹70,000<div style="font-size: 12px; color: #5e4446">by 24 Dec</div></td><td><span style="padding: 2px 10px; border-radius: 999px; background: #dfe8ef; color: #4f6b80; font-size: 12px; font-weight: 600">Part paid</span></td><td style="padding: 10px 14px; color: #5e4446">—</td></tr>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 10px 14px; font-weight: 400"><a href="X2-AddExpense.dc.html" style="font-weight: 600">Haldi decor</a><div style="font-size: 13px; color: #5e4446">Phoolwala Decor</div></th><td>Haldi</td><td>Decor</td><td style="font-weight: 600">₹45,000</td><td><div style="height: 8px; border-radius: 99px; overflow: hidden; display: flex; max-width: 130px; margin: 0 auto" aria-hidden="true"><span style="width: 100%; background: #790d16"></span></div><div style="font-size: 13px; margin-top: 3px">Bride's side only</div></td><td>₹20,000<div style="font-size: 12px; color: #5e4446">by Bride's side</div></td><td>₹25,000<div style="font-size: 12px; color: #5e4446">by 26 Dec</div></td><td><span style="padding: 2px 10px; border-radius: 999px; background: #dfe8ef; color: #4f6b80; font-size: 12px; font-weight: 600">Part paid</span></td><td style="padding: 10px 14px"><a href="#bill" aria-label="Haldi decor bill (photo)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg></a></td></tr>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 10px 14px; font-weight: 400"><a href="X2-AddExpense.dc.html" style="font-weight: 600">DJ and sound</a><div style="font-size: 13px; color: #5e4446">Beat Box Events</div></th><td>Reception</td><td>Music</td><td style="font-weight: 600">₹60,000</td><td><div style="height: 8px; border-radius: 99px; overflow: hidden; display: flex; max-width: 130px; margin: 0 auto" aria-hidden="true"><span style="width: 100%; background: #aec4d4"></span></div><div style="font-size: 13px; margin-top: 3px">Groom's side only</div></td><td>₹60,000<div style="font-size: 12px; color: #5e4446">by Groom's side</div></td><td style="color: #5e4446">—</td><td><span style="padding: 2px 10px; border-radius: 999px; background: #e2f2e7; color: #1d6b3f; font-size: 12px; font-weight: 600">Paid</span></td><td style="padding: 10px 14px; color: #5e4446">—</td></tr>
+          <tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 10px 14px; font-weight: 400"><a href="X2-AddExpense.dc.html" style="font-weight: 600">Invitation cards</a><div style="font-size: 13px; color: #5e4446">Kalpana Printers</div></th><td>General</td><td>Printing</td><td style="font-weight: 600">₹38,000</td><td><div style="height: 8px; border-radius: 99px; overflow: hidden; display: flex; max-width: 130px; margin: 0 auto" aria-hidden="true"><span style="width: 50%; background: #790d16"></span><span style="width: 50%; background: #aec4d4"></span></div><div style="font-size: 13px; margin-top: 3px">Shared 50 / 50</div></td><td>₹38,000<div style="font-size: 12px; color: #5e4446">by Bride's side</div></td><td style="color: #5e4446">—</td><td><span style="padding: 2px 10px; border-radius: 999px; background: #e2f2e7; color: #1d6b3f; font-size: 12px; font-weight: 600">Paid</span></td><td style="padding: 10px 14px"><a href="#bill" aria-label="Invitation cards bill (PDF)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.2 20.3a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg></a></td></tr>
+        </tbody>
+        <tfoot><tr style="border-top: 2px solid #e5d3af; background: #f2e8d2; font-weight: 600"><th scope="row" style="text-align: left; padding: 11px 14px">Total</th><td></td><td></td><td>₹10,93,000</td><td style="font-size: 13px">Bride ₹5,84,000 · Groom ₹5,09,000</td><td>₹7,18,000</td><td>₹3,75,000</td><td></td><td></td></tr></tfoot>
+      </table>
+    </div>
+    <p style="margin: 10px 0 0; font-size: 13px; color: #5e4446">Bar: <span style="color: #790d16; font-weight: 600">■ Bride's side</span> · <span style="color: #4f6b80; font-weight: 600">■ Groom's side</span>. Each name opens the expense to edit it, add a payment or attach the bill.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

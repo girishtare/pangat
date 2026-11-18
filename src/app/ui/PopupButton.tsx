@@ -14,11 +14,14 @@ export default function PopupButton({
   label,
   title,
   className = "btn btn-primary",
+  wide = false,
   children,
 }: {
   label: ReactNode;
   title: string;
   className?: string;
+  /** A wider pop-up (48rem) for long forms (Expenses). */
+  wide?: boolean;
   children: ReactNode;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -31,7 +34,7 @@ export default function PopupButton({
       <dialog
         ref={dialog}
         aria-labelledby={id}
-        className="card m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto whitespace-normal p-0 text-left text-[0.9375rem] font-normal text-ink outline-none"
+        className={`card m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] ${wide ? "max-w-3xl" : "max-w-xl"} overflow-y-auto whitespace-normal p-0 text-left text-[0.9375rem] font-normal text-ink outline-none`}
         onClick={(e) => {
           if (e.target === dialog.current) dialog.current?.close(); // click on the backdrop
         }}
