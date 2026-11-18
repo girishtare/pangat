@@ -85,6 +85,8 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
   const [payments, setPayments] = useState<DraftPayment[]>(() => fromSaved(expense));
   const [draft, setDraft] = useState({ paidOn: todayIst(), amount: "", paidBy: "bride" as Side, method: "upi" as Method, note: "" });
   const [draftError, setDraftError] = useState<string | null>(null);
+  // A payment being changed: its row is loaded into the boxes below the list (owner, 18 Nov).
+  const [editingKey, setEditingKey] = useState<string | null>(null);
   // Adding: a bill chosen before the expense exists is uploaded once it's saved.
   const [pendingBill, setPendingBill] = useState<File | null>(null);
   const [billNote, setBillNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -195,19 +197,43 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
     setSplit((s) => ({ ...s, brideAmt: rupeesInput(b), groomAmt: rupeesInput(validAmount - b) }));
   };
 
+  // One side pays for it all: its payments are that side's (owner, 18 Nov: "Paid by" only for shared ones).
+  const payer = (chosen: Side): Side => (split.mode === "shared" ? chosen : split.mode);
+
   const addPayment = () => {
     const a = rupeesOf(draft.amount);
     if (a === null || a <= 0) return setDraftError("Enter the amount paid, in rupees.");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.paidOn)) return setDraftError("Enter the date it was paid.");
     if (due === null) return setDraftError("Enter the total amount first.");
-    const err = checkPayment(due, a);
+    const old = editingKey ? payments.find((p) => p.key === editingKey) : undefined;
+    const err = checkPayment(due + (old?.amount ?? 0), a);
     if (err) return setDraftError(err);
-    setPayments((list) => [
-      ...list,
-      { key: `new-${Date.now()}-${list.length}`, paidOn: draft.paidOn, amount: a, paidBy: draft.paidBy, method: draft.method, note: draft.note.trim() || null },
-    ]);
+    const next = { paidOn: draft.paidOn, amount: a, paidBy: payer(draft.paidBy), method: draft.method, note: draft.note.trim() || null };
+    if (old) {
+      const same = old.paidOn === next.paidOn && old.amount === next.amount && old.paidBy === next.paidBy && old.method === next.method && old.note === next.note;
+      // A changed payment is saved again as a new one (the old one is removed when the expense is saved).
+      setPayments((list) => list.map((p) => (p.key !== old.key || same ? p : { key: `new-${Date.now()}`, ...next })));
+      setEditingKey(null);
+    } else {
+      setPayments((list) => [...list, { key: `new-${Date.now()}-${list.length}`, ...next }]);
+    }
     setDraft((d) => ({ ...d, amount: "", note: "" }));
     setDraftError(null);
+  };
+  const editPayment = (p: DraftPayment) => {
+    setEditingKey(p.key);
+    setDraft({ paidOn: p.paidOn, amount: rupeesInput(p.amount), paidBy: p.paidBy, method: p.method, note: p.note ?? "" });
+    setDraftError(null);
+  };
+  const stopEditing = () => {
+    setEditingKey(null);
+    setDraft((d) => ({ ...d, amount: "", note: "" }));
+    setDraftError(null);
+  };
+  const chooseMode = (m: Mode) => {
+    setSplit((s) => ({ ...s, mode: m }));
+    // Bride's side only / Groom's side only: every payment is that side's.
+    if (m !== "shared") setPayments((list) => list.map((p) => (p.paidBy === m ? p : { ...p, key: `new-${Date.now()}-${p.key}`, id: undefined, paidBy: m })));
   };
 
   const sentPayments = JSON.stringify(
@@ -290,7 +316,7 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {(["bride", "groom", "shared"] as const).map((m) => (
             <label key={m} className="choice relative min-h-12">
-              <input type="radio" name="splitMode" value={m} checked={split.mode === m} onChange={() => setSplit((s) => ({ ...s, mode: m }))} />
+              <input type="radio" name="splitMode" value={m} checked={split.mode === m} onChange={() => chooseMode(m)} />
               {split.mode === m && <Check className="h-4 w-4" aria-hidden="true" />}
               {m === "shared" ? "Shared" : `${SIDE_NAME[m]} only`}
             </label>
@@ -376,30 +402,43 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
                 <tr>
                   <th scope="col">Date</th>
                   <th scope="col">Amount</th>
-                  <th scope="col">Paid by</th>
+                  {split.mode === "shared" && <th scope="col">Paid by</th>}
                   <th scope="col">How</th>
                   <th scope="col">
-                    <span className="sr-only">Remove</span>
+                    <span className="sr-only">Edit or remove</span>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {payments.map((p) => (
-                  <tr key={p.key}>
+                  <tr key={p.key} className={p.key === editingKey ? "bg-haldi-soft" : undefined}>
                     <td className="whitespace-nowrap">{dayOfDate(p.paidOn)}</td>
                     <td className="whitespace-nowrap font-semibold">{formatRupees(p.amount)}</td>
-                    <td>
-                      <span className={`badge ${p.paidBy === "bride" ? "badge-bride" : "badge-groom"}`}>{SIDE_NAME[p.paidBy]}</span>
-                    </td>
+                    {split.mode === "shared" && (
+                      <td>
+                        <span className={`badge ${p.paidBy === "bride" ? "badge-bride" : "badge-groom"}`}>{SIDE_NAME[p.paidBy]}</span>
+                      </td>
+                    )}
                     <td>
                       {METHOD_LABEL[p.method]}
                       {p.note ? ` · ${p.note}` : ""}
                       {!p.id && <span className="block text-xs text-ink-soft">not saved yet</span>}
                     </td>
-                    <td>
+                    <td className="whitespace-nowrap">
                       <button
                         type="button"
-                        onClick={() => setPayments((list) => list.filter((x) => x.key !== p.key))}
+                        onClick={() => editPayment(p)}
+                        className="inline-flex min-h-11 items-center px-2 font-bold text-kumkum underline"
+                        aria-label={`Edit the payment of ${formatRupees(p.amount)} on ${dayOfDate(p.paidOn)}`}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (p.key === editingKey) stopEditing();
+                          setPayments((list) => list.filter((x) => x.key !== p.key));
+                        }}
                         className="inline-flex min-h-11 items-center px-2 font-bold text-kumkum underline"
                         aria-label={`Remove the payment of ${formatRupees(p.amount)} on ${dayOfDate(p.paidOn)}`}
                       >
@@ -413,7 +452,12 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
           </div>
         )}
 
-        <div className="mt-3 grid grid-cols-2 items-end gap-3 sm:grid-cols-[9.5rem_8rem_minmax(0,1fr)_minmax(0,1fr)_auto]">
+        {editingKey && <p className="mt-3 text-sm font-semibold text-haldi-deep">Changing the payment highlighted above.</p>}
+        <div
+          className={`mt-3 grid grid-cols-2 items-end gap-3 ${
+            split.mode === "shared" ? "sm:grid-cols-[9.5rem_8rem_minmax(0,1fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-[9.5rem_minmax(0,1fr)_minmax(0,1fr)_auto]"
+          }`}
+        >
           <label className="block">
             <span className="label">Date</span>
             <input type="date" value={draft.paidOn} onChange={(e) => setDraft((d) => ({ ...d, paidOn: e.target.value }))} className="input" />
@@ -439,13 +483,15 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
               />
             </span>
           </label>
-          <label className="block">
-            <span className="label">Paid by</span>
-            <select value={draft.paidBy} onChange={(e) => setDraft((d) => ({ ...d, paidBy: e.target.value as Side }))} className="input">
-              <option value="bride">Bride&apos;s side</option>
-              <option value="groom">Groom&apos;s side</option>
-            </select>
-          </label>
+          {split.mode === "shared" && (
+            <label className="block">
+              <span className="label">Paid by</span>
+              <select value={draft.paidBy} onChange={(e) => setDraft((d) => ({ ...d, paidBy: e.target.value as Side }))} className="input">
+                <option value="bride">Bride&apos;s side</option>
+                <option value="groom">Groom&apos;s side</option>
+              </select>
+            </label>
+          )}
           <label className="block">
             <span className="label">How</span>
             <select value={draft.method} onChange={(e) => setDraft((d) => ({ ...d, method: e.target.value as Method }))} className="input">
@@ -456,10 +502,17 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
               ))}
             </select>
           </label>
-          <button type="button" onClick={addPayment} className="btn btn-secondary col-span-2 min-h-11 sm:col-span-1">
-            Add
-          </button>
-          <label className="col-span-2 block sm:col-span-5">
+          <div className={`flex gap-2 ${split.mode === "shared" ? "col-span-2 sm:col-span-1" : ""}`}>
+            <button type="button" onClick={addPayment} className="btn btn-secondary min-h-11 flex-1 whitespace-nowrap">
+              {editingKey ? "Update" : "Add"}
+            </button>
+            {editingKey && (
+              <button type="button" onClick={stopEditing} className="btn btn-quiet btn-sm min-h-11">
+                Cancel
+              </button>
+            )}
+          </div>
+          <label className={`col-span-2 block ${split.mode === "shared" ? "sm:col-span-5" : "sm:col-span-4"}`}>
             <span className="label">
               Note <span className="font-normal text-ink-soft">(optional)</span>
             </span>
@@ -477,7 +530,7 @@ export function ExpenseForm({ slug, functions, expense, onDone }: { slug: string
             {draftError}
           </p>
         )}
-        {payments.some((p) => !p.id) && <p className="hint mt-2">New payments are saved when you save the expense.</p>}
+        {payments.some((p) => !p.id) && <p className="hint mt-2">New and changed payments are saved when you save the expense.</p>}
 
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
           <p>

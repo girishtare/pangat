@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Wallet } from "lucide-react";
+import { FileSpreadsheet, LayoutGrid, List, Wallet } from "lucide-react";
 import { daysUntil, dueOf, dueSoon, formatRupees, METHOD_LABEL, SIDE_NAME, splitLabel, summarise, type Expense, type Settlement } from "@/lib/expenses";
 import { hostGate } from "@/lib/host";
 import { loadExpenses } from "@/lib/store/expenses";
@@ -6,7 +6,7 @@ import { todayIst } from "@/lib/todo";
 import type { Side } from "@/lib/types";
 import { dayMonth, dayOfDate } from "@/lib/when";
 import PopupButton from "../../../../ui/PopupButton";
-import { Alert, EmptyState, PageHeader } from "../../../../ui/kit";
+import { Alert, EmptyState, PageHeader, PageTabs } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
 import { Bar } from "./Bar";
 import { ExpenseForm } from "./ExpenseForm";
@@ -73,6 +73,10 @@ export default async function Expenses({
     dir: sp.dir === "desc" ? "desc" : "asc",
   };
 
+  // Two tabs (owner, 18 Nov): Summary (the figures) and All expenses (the list).
+  const tab: "summary" | "all" = sp.tab === "all" ? "all" : "summary";
+  const base = `/host/e/${slug}/expenses`;
+
   const addButton = (
     <PopupButton label="+ Add expense" title="Add an expense" wide>
       <ExpenseForm slug={slug} functions={functions} />
@@ -104,6 +108,18 @@ export default async function Expenses({
         </EmptyState>
       ) : (
         <>
+          <PageTabs
+            label="Expenses"
+            current={tab}
+            tabs={[
+              { key: "summary", label: "Summary", href: base, icon: LayoutGrid },
+              { key: "all", label: "All expenses", href: `${base}?tab=all`, icon: List, count: expenses.length },
+            ]}
+          />
+          {tab === "all" ? (
+            <ExpenseList slug={slug} expenses={expenses} functions={functions} initial={initial} today={today} />
+          ) : (
+            <>
           {/* Summary. Phones: Total and Still due side by side, then Paid and each side's share across. */}
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
             <div className="card order-1 p-4 sm:p-5">
@@ -150,12 +166,12 @@ export default async function Expenses({
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <div className="mt-5 grid gap-4 xl:grid-cols-2 xl:items-start">
             <SettleUp s={s} slug={slug} settlements={settlements} />
             <DueSoon list={soon} today={today} />
           </div>
-
-          <ExpenseList slug={slug} expenses={expenses} functions={functions} initial={initial} today={today} />
+            </>
+          )}
         </>
       )}
     </EventShell>
