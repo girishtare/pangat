@@ -52,3 +52,14 @@ export function dayMonthYear(iso: string): string {
   const p = parts(iso, { day: "numeric", month: "short", year: "numeric" });
   return `${p.day} ${p.month} ${p.year}`;
 }
+
+/** "20 Dec", for a YYYY-MM-DD date (expenses: "by 20 Dec"). */
+export function dayMonth(date: string): string {
+  const p = parts(`${date}T12:00:00+05:30`, { day: "numeric", month: "short" });
+  return `${p.day} ${p.month}`;
+}
+
+/** "Sun 20 Dec", for a YYYY-MM-DD date. */
+export function dayOfDate(date: string): string {
+  return shortDay(`${date}T12:00:00+05:30`);
+}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Host · Edit expense (pop-up)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5efe1}
+a{color:#790d16}a:hover{color:#5c0a11}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1500px; box-sizing: border-box; background: rgba(43, 29, 22, 0.55); display: flex; justify-content: center; align-items: flex-start; padding: 40px 0; color: #2e1a1c; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+  <section role="dialog" aria-labelledby="dt" style="width: 760px; box-sizing: border-box; background: #fffcf5; border-radius: 22px; padding: 26px 28px; box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.5)">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+      <h2 id="dt" style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 21px; color: #790d16">Edit expense</h2>
+      <button type="button" aria-label="Close" style="width: 44px; height: 44px; border-radius: 12px; border: 0; background: transparent; color: #2e1a1c; font-size: 22px">×</button>
+    </div>
+
+    <!-- WHAT -->
+    <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <label style="grid-column: 1 / -1"><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px">What is it?</span><input value="Mandap decor" style="box-sizing: border-box; width: 100%; min-height: 48px; padding: 0 14px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"></label>
+      <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px">Vendor <span style="font-weight: 400; color: #5e4446">(optional)</span></span><input value="Shubh Decorators" style="box-sizing: border-box; width: 100%; min-height: 48px; padding: 0 14px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"></label>
+      <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px">Vendor's phone <span style="font-weight: 400; color: #5e4446">(optional)</span></span><span style="display: flex; gap: 6px"><select aria-label="Country code" style="width: 8.5rem; min-height: 48px; padding: 0 8px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>+91 India</option></select><input type="tel" value="99200 31122" style="flex: 1; min-width: 0; min-height: 48px; padding: 0 14px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"></span></label>
+      <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px">Function</span><select style="box-sizing: border-box; width: 100%; min-height: 48px; padding: 0 10px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>Wedding</option><option>Haldi</option><option>Reception</option><option>General (not one function)</option></select></label>
+      <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px">Category</span><select style="box-sizing: border-box; width: 100%; min-height: 48px; padding: 0 10px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>Decor</option><option>Catering</option><option>Venue</option><option>Clothes</option><option>Jewellery</option><option>Gifts</option><option>Music</option><option>Photography</option><option>Printing</option><option>Travel and stay</option><option>Other</option></select></label>
+      <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px">Total amount</span><span style="display: flex; align-items: center; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; overflow: hidden"><span style="padding: 0 12px; font-weight: 600; color: #5e4446">₹</span><input inputmode="numeric" value="1,20,000" style="flex: 1; min-width: 0; min-height: 44px; border: 0; outline: none; font: inherit; font-size: 18px; font-weight: 600"></span></label>
+    </div>
+
+    <!-- WHO PAYS -->
+    <fieldset style="margin: 20px 0 0; padding: 16px; border: 1px solid #e5d3af; border-radius: 16px">
+      <legend style="padding: 0 6px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 17px">Who pays for it</legend>
+      <div role="radiogroup" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <label style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; border: 2px solid #e5d3af; background: #ffffff; font-weight: 600"><input type="radio" name="who" style="position: absolute; opacity: 0">Bride's side only</label>
+        <label style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; border: 2px solid #e5d3af; background: #ffffff; font-weight: 600"><input type="radio" name="who" style="position: absolute; opacity: 0">Groom's side only</label>
+        <label style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; border: 2px solid #790d16; background: #790d16; color: #ffffff; font-weight: 600"><input type="radio" name="who" checked style="position: absolute; opacity: 0">✓ Shared</label>
+      </div>
+      <div style="margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <span style="font-weight: 600; font-size: 14px">Split by</span>
+        <span role="radiogroup" style="display: inline-flex; padding: 3px; border-radius: 12px; background: #ebe1cb; gap: 3px"><button type="button" aria-pressed="false" style="min-height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; font: inherit; font-weight: 500">Percentage</button><button type="button" aria-pressed="true" style="min-height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: #fffcf5; color: #790d16; font: inherit; font-weight: 600; box-shadow: 0 1px 3px rgba(46, 26, 28, 0.15)">Amount</button></span>
+        <button type="button" style="min-height: 38px; padding: 0 12px; border-radius: 10px; border: 2px solid #e5d3af; background: #ffffff; font: inherit; font-size: 14px; font-weight: 600">Half each</button>
+      </div>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+        <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #790d16">Bride's side</span><span style="display: flex; align-items: center; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff"><span style="padding: 0 12px; color: #5e4446">₹</span><input value="70,000" style="flex: 1; min-width: 0; min-height: 44px; border: 0; outline: none; font: inherit; font-weight: 600"><span style="padding: 0 12px; font-size: 13px; color: #5e4446">58%</span></span></label>
+        <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #4f6b80">Groom's side</span><span style="display: flex; align-items: center; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff"><span style="padding: 0 12px; color: #5e4446">₹</span><input value="50,000" style="flex: 1; min-width: 0; min-height: 44px; border: 0; outline: none; font: inherit; font-weight: 600"><span style="padding: 0 12px; font-size: 13px; color: #5e4446">42%</span></span></label>
+      </div>
+      <div style="margin-top: 10px; height: 10px; border-radius: 99px; overflow: hidden; display: flex" aria-hidden="true"><span style="width: 58.3%; background: #790d16"></span><span style="width: 41.7%; background: #aec4d4"></span></div>
+      <p style="margin: 6px 0 0; font-size: 13px; color: #1d6b3f; font-weight: 600">✓ Adds up to ₹1,20,000</p>
+    </fieldset>
+
+    <!-- PAYMENTS -->
+    <fieldset style="margin: 16px 0 0; padding: 16px; border: 1px solid #e5d3af; border-radius: 16px">
+      <legend style="padding: 0 6px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 17px">Payments</legend>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center">
+        <thead><tr style="background: #ebe1cb"><th scope="col" style="text-align: left; padding: 8px 10px">Date</th><th scope="col" style="padding: 8px">Amount</th><th scope="col" style="padding: 8px">Paid by</th><th scope="col" style="padding: 8px">How</th><th scope="col" style="padding: 8px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Remove</span></th></tr></thead>
+        <tbody><tr style="border-top: 1px solid #e5d3af"><th scope="row" style="text-align: left; padding: 8px 10px; font-weight: 400">Sat 12 Dec</th><td style="font-weight: 600">₹50,000</td><td><span style="padding: 1px 9px; border-radius: 999px; background: #dfe8ef; color: #4f6b80; font-size: 12px; font-weight: 600">Groom's side</span></td><td>UPI · advance</td><td><button type="button" style="min-height: 36px; padding: 0 10px; border: 0; background: transparent; color: #790d16; font: inherit; font-weight: 600; text-decoration: underline">Remove</button></td></tr></tbody>
+      </table>
+      <div style="margin-top: 12px; display: grid; grid-template-columns: 1.1fr 1fr 1.2fr 1fr auto; gap: 8px; align-items: end">
+        <label><span style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px">Date</span><input type="date" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 8px; border: 2px solid #e5d3af; border-radius: 10px; background: #ffffff; font: inherit"></label>
+        <label><span style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px">Amount</span><input inputmode="numeric" placeholder="₹" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 8px; border: 2px solid #e5d3af; border-radius: 10px; background: #ffffff; font: inherit"></label>
+        <label><span style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px">Paid by</span><select style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 6px; border: 2px solid #e5d3af; border-radius: 10px; background: #ffffff; font: inherit"><option>Bride's side</option><option>Groom's side</option></select></label>
+        <label><span style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px">How</span><select style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 6px; border: 2px solid #e5d3af; border-radius: 10px; background: #ffffff; font: inherit"><option>UPI</option><option>Cash</option><option>Bank transfer</option><option>Cheque</option><option>Card</option></select></label>
+        <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #790d16; background: #fffcf5; color: #790d16; font: inherit; font-weight: 600">Add</button>
+      </div>
+      <div style="margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px">
+        <span>Paid <strong>₹50,000</strong> · Still due <strong style="color: #790d16">₹70,000</strong></span>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600">Rest due by <input type="date" value="2026-12-24" style="min-height: 40px; padding: 0 8px; border: 2px solid #e5d3af; border-radius: 10px; background: #ffffff; font: inherit"></label>
+      </div>
+    </fieldset>
+
+    <!-- BILL + NOTES -->
+    <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 110px; padding: 12px; border: 2px dashed #e5d3af; border-radius: 14px; background: #f5efe1; text-align: center; font-weight: 600"><input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" style="position: absolute; opacity: 0; width: 1px">Attach the bill or receipt<span style="font-weight: 400; font-size: 13px; color: #5e4446">PDF, JPG, PNG or WebP · up to 20 MB · a phone photo is fine</span></label>
+      <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px">Notes <span style="font-weight: 400; color: #5e4446">(optional)</span></span><textarea rows="3" style="box-sizing: border-box; width: 100%; min-height: 84px; padding: 10px 12px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit; resize: vertical">Includes the stage and the entrance arch.</textarea></label>
+    </div>
+
+    <div style="margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px">
+      <button type="button" style="min-height: 44px; padding: 0 8px; border: 0; background: transparent; color: #790d16; font: inherit; font-weight: 600; text-decoration: underline">Delete expense</button>
+      <div style="display: flex; gap: 10px">
+        <button type="button" style="min-height: 48px; padding: 0 18px; border-radius: 12px; border: 2px solid #790d16; background: #fffcf5; color: #790d16; font: inherit; font-weight: 600">Cancel</button>
+        <button type="submit" style="min-height: 48px; padding: 0 22px; border-radius: 12px; border: 2px solid #790d16; background: #790d16; color: #ffffff; font: inherit; font-weight: 600">Save expense</button>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
