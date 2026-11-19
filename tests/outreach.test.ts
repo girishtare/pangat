@@ -1,6 +1,6 @@
 import { encode } from "uqr";
 import { describe, expect, it } from "vitest";
-import { chunk, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, textForLanguage, whatsappLink } from "@/lib/outreach";
+import { chunk, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, isLinkCode, shortLink, textForLanguage, whatsappLink } from "@/lib/outreach";
 import { qrPath } from "@/lib/qr";
 
 const vars = {
@@ -37,6 +37,14 @@ describe("messages", () => {
     const enOnly = fillMessage(DEFAULT_TEXT.invite, { ...vars, cardEn: "https://c/en" });
     expect(enOnly).not.toContain("निमंत्रण पत्रिका");
     expect(enOnly).toContain("Invitation card: https://c/en");
+  });
+
+  it("makes short links for the reply page and the cards", () => {
+    expect(shortLink("https://pangat.example/", "k3Xp9Qa2Lm")).toBe("https://pangat.example/i/k3Xp9Qa2Lm");
+    expect(shortLink("https://pangat.example", "k3Xp9Qa2Lm", "mr")).toBe("https://pangat.example/i/k3Xp9Qa2Lm/mr");
+    expect(isLinkCode("k3Xp9Qa2Lm")).toBe(true);
+    expect(isLinkCode("k3Xp9Qa2L")).toBe(false);
+    expect(isLinkCode("k3Xp9Qa2L-")).toBe(false);
   });
 
   it("leaves unknown braces alone and handles a missing phone", () => {

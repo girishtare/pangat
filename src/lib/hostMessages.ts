@@ -1,7 +1,7 @@
 import "server-only";
 import type { HostContext } from "./host";
 import { formatDay } from "./i18n";
-import { CARD_PLACEHOLDERS, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, textForLanguage, whatsappLink, type MessageKind } from "./outreach";
+import { CARD_PLACEHOLDERS, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, shortLink, textForLanguage, whatsappLink, type MessageKind } from "./outreach";
 import type { Bilingual, Side } from "./types";
 
 interface Recipient {
@@ -9,6 +9,8 @@ interface Recipient {
   nameMr: string | null;
   side: Side;
   token: string;
+  /** The short key for /i/ links (migration 0032); the long token links are used without it. */
+  linkCode?: string | null;
   mobile: string | null;
   /** The household's slip language; also picks which invitation card to link. */
   slipLang?: "both" | "en" | "mr";
@@ -32,7 +34,8 @@ export function householdMessage(host: HostContext, base: string, g: Recipient, 
     date: formatDay(host.event.cutoffAt, "en"),
     dateMr: formatDay(host.event.cutoffAt, "mr"),
     phone: displayPhone(host.event.contactPhone[g.side]),
-    link: guestLink(base, g.token, "link", lang === "both" ? undefined : lang),
+    // /i/<code> opens the reply page in the household's language, like ?l= on the long link.
+    link: g.linkCode ? shortLink(base, g.linkCode) : guestLink(base, g.token, "link", lang === "both" ? undefined : lang),
     cardMr: cards.mr,
     cardEn: cards.en,
   });
@@ -52,9 +55,10 @@ function cardLinks(host: HostContext, base: string, g: Recipient): { mr: string 
   const lang = g.slipLang ?? "both";
   const root = base.replace(/\/+$/, "");
   const cards = host.event.cards[g.side]; // the household's own side's card
+  const link = (l: "mr" | "en") => (g.linkCode ? shortLink(base, g.linkCode, l) : `${root}/r/${g.token}/card?l=${l}`);
   return {
-    mr: cards.mr && lang !== "en" ? `${root}/r/${g.token}/card?l=mr` : null,
-    en: cards.en && lang !== "mr" ? `${root}/r/${g.token}/card?l=en` : null,
+    mr: cards.mr && lang !== "en" ? link("mr") : null,
+    en: cards.en && lang !== "mr" ? link("en") : null,
   };
 }
 

@@ -111,6 +111,18 @@ export function guestLink(base: string, token: string, channel: "qr" | "link", l
   return `${base.replace(/\/+$/, "")}/r/${token}${qs ? `?${qs}` : ""}`;
 }
 
+/**
+ * The short links in WhatsApp messages (owner, 19 Nov; migration 0032): /i/<code> opens the reply page,
+ * /i/<code>/mr or /en the invitation card. Ten letters and digits instead of the 22-character token.
+ */
+export function shortLink(base: string, linkCode: string, card?: "en" | "mr"): string {
+  return `${base.replace(/\/+$/, "")}/i/${linkCode}${card ? `/${card}` : ""}`;
+}
+
+export function isLinkCode(value: string): boolean {
+  return /^[A-Za-z0-9]{10}$/.test(value);
+}
+
 /** Shows a stored +91 mobile the way people write it: 98765 43210. */
 export function displayPhone(mobile: string | null): string | null {
   if (!mobile) return null;
