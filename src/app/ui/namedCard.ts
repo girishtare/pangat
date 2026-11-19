@@ -76,18 +76,26 @@ export async function makeNamedCard(
   lang: CardLang,
   /** For the placement preview: page 1 only, optionally cut to a band of it (fractions of the page height, from the top). */
   preview?: { band?: [number, number] },
+  /** Says which step it is on, so a failure on a guest's phone can be traced (?debug=1). */
+  onStep?: (step: string) => void,
 ): Promise<Blob> {
+  const step = (s: string) => onStep?.(s);
   if (type === "application/pdf") {
+    step("loading the PDF library");
     const { PDFDocument } = await import("pdf-lib");
+    step("opening the card PDF");
     const pdf = await PDFDocument.load(file);
     const page = pdf.getPage(0);
     // The visible page (crop box), which needn't start at 0,0: on the 19 Nov cards page 1 starts
     // 42 points in and 79 up, and placing from 0,0 put the name 79 points too low.
     const { x: X0, y: Y0, width: W, height: H } = page.getCropBox();
+    step("loading the font");
     const fit = await fitLines(lines, layout.size * H * SCALE, layout.w * W * SCALE, family, lang);
     for (let i = 0; i < fit.lines.length; i++) {
       if (!fit.lines[i]) continue;
+      step(`drawing line ${i + 1}`);
       const d = await drawLine(fit.lines[i], fit.px, layout.w * W * SCALE, family, lang);
+      step(`placing line ${i + 1}`);
       const img = await pdf.embedPng(await canvasPng(d.canvas));
       const baselineFromTop = (layout.y1 + i * layout.gap) * H;
       page.drawImage(img, {
@@ -105,6 +113,7 @@ export async function makeNamedCard(
         page.setCropBox(X0, Y0 + H * (1 - bottom), W, H * (bottom - top));
       }
     }
+    step("saving the PDF");
     const bytes = await pdf.save();
     return new Blob([bytes as BlobPart], { type: "application/pdf" });
   }
