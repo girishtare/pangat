@@ -11,16 +11,23 @@ export type MessageKind = "invite" | "reminder";
  * suffix (_en, _mr) so more languages can be added later. The old unsuffixed
  * {name}, {event} and {date} still work in texts saved before (same as _en).
  */
-export const PLACEHOLDERS = ["{name_en}", "{name_mr}", "{event_en}", "{event_mr}", "{date_en}", "{date_mr}", "{phone}", "{link}"] as const;
+export const PLACEHOLDERS = ["{name_en}", "{name_mr}", "{event_en}", "{event_mr}", "{date_en}", "{date_mr}", "{phone}", "{link}", "{card_mr}", "{card_en}"] as const;
+
+/** The invitation card links (owner, 19 Nov). A line holding one is left out when that card isn't there. */
+export const CARD_PLACEHOLDERS = { mr: "{card_mr}", en: "{card_en}" } as const;
 
 // Marathi first-draft wording: have a native reader check it, like src/lib/i18n.ts.
 export const DEFAULT_TEXT: Record<MessageKind, string> = {
+  // The card link first, then the reply link, in each language (owner, 19 Nov).
   invite:
     "नमस्कार {name_mr}!\n" +
-    "{event_mr} साठी आपणांस सस्नेह निमंत्रण. कृपया {date_mr} पर्यंत कोण कोण येणार ते या लिंकवर कळवा.\n\n" +
+    "{event_mr} साठी आपणांस सस्नेह निमंत्रण.\n" +
+    "निमंत्रण पत्रिका: {card_mr}\n" +
+    "कृपया {date_mr} पर्यंत कोण कोण येणार ते या लिंकवर कळवा: {link}\n\n" +
     "Namaskar {name_en}!\n" +
-    "You are warmly invited to {event_en}. Please tell us who's coming by {date_en}, using this link:\n\n" +
-    "{link}",
+    "You are warmly invited to {event_en}.\n" +
+    "Invitation card: {card_en}\n" +
+    "Please tell us who's coming by {date_en}, using this link: {link}",
   reminder:
     "नमस्कार {name_mr}!\n" +
     "{event_mr} साठी आपले उत्तर अजून आलेले नाही. कृपया {date_mr} पर्यंत या लिंकवर कळवा.\n\n" +
@@ -38,10 +45,16 @@ export interface MessageVars {
   dateMr: string;
   phone: string | null;
   link: string;
+  /** The invitation card links; null or missing when that card isn't uploaded (or not for this household). */
+  cardMr?: string | null;
+  cardEn?: string | null;
 }
 
 /** Fills {placeholders}; Marathi ones fall back to English when missing. Unknown braces are left alone. */
 export function fillMessage(template: string, v: MessageVars): string {
+  // A line with a card link that isn't there goes, label and all ("Invitation card: ").
+  const lines = template.split("\n").filter((l) => !(l.includes(CARD_PLACEHOLDERS.mr) && !v.cardMr) && !(l.includes(CARD_PLACEHOLDERS.en) && !v.cardEn));
+  template = lines.join("\n");
   const map: Record<string, string> = {
     "{name_en}": v.name,
     "{name_mr}": v.nameMr || v.name,
@@ -55,6 +68,8 @@ export function fillMessage(template: string, v: MessageVars): string {
     "{date}": v.date,
     "{phone}": v.phone ?? "",
     "{link}": v.link,
+    "{card_mr}": v.cardMr ?? "",
+    "{card_en}": v.cardEn ?? "",
   };
   return template.replace(/\{[a-z_]+\}/g, (m) => map[m] ?? m);
 }
