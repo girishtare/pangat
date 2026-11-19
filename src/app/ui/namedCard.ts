@@ -48,7 +48,16 @@ function canvasPng(c: HTMLCanvasElement): Promise<Uint8Array> {
  * The card with the lines written in. `type` is the card's file type
  * ("application/pdf" or an image type); `family` the CSS font family.
  */
-export async function makeNamedCard(file: ArrayBuffer, type: string, lines: string[], layout: NameLayout, family: string, lang: CardLang): Promise<Blob> {
+export async function makeNamedCard(
+  file: ArrayBuffer,
+  type: string,
+  lines: string[],
+  layout: NameLayout,
+  family: string,
+  lang: CardLang,
+  /** For the placement preview: page 1 only, optionally cut to a band of it (fractions of the page height, from the top). */
+  preview?: { band?: [number, number] },
+): Promise<Blob> {
   if (type === "application/pdf") {
     const { PDFDocument } = await import("pdf-lib");
     const pdf = await PDFDocument.load(file);
@@ -68,6 +77,13 @@ export async function makeNamedCard(file: ArrayBuffer, type: string, lines: stri
         width: d.canvas.width / SCALE,
         height: d.canvas.height / SCALE,
       });
+    }
+    if (preview) {
+      for (let p = pdf.getPageCount() - 1; p > 0; p--) pdf.removePage(p);
+      if (preview.band) {
+        const [top, bottom] = preview.band;
+        page.setCropBox(X0, Y0 + H * (1 - bottom), W, H * (bottom - top));
+      }
     }
     const bytes = await pdf.save();
     return new Blob([bytes as BlobPart], { type: "application/pdf" });

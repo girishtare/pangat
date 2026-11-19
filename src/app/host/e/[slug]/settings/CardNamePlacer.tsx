@@ -38,6 +38,8 @@ export default function CardNamePlacer({
   const [layout, setLayout] = useState<NameLayout>(saved ?? DEFAULT_LAYOUT[lang]);
   const [file, setFile] = useState<ArrayBuffer | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  // Whole page 1 fitted in the box, or a close-up of the lines (owner, 19 Nov: no scrolling after each nudge).
+  const [view, setView] = useState<"page" | "close">("page");
   const [problem, setProblem] = useState<string | null>(null);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, start] = useTransition();
@@ -57,7 +59,9 @@ export default function CardNamePlacer({
     if (!file) return;
     const timer = setTimeout(async () => {
       try {
-        const blob = await makeNamedCard(file, type, lines, layout, family, lang);
+        const top = Math.max(0, layout.y1 - 0.08);
+        const bottom = Math.min(1, layout.y1 + layout.gap * Math.max(1, lines.length - 1) + 0.08);
+        const blob = await makeNamedCard(file, type, lines, layout, family, lang, { band: view === "close" ? [top, bottom] : undefined });
         const url = URL.createObjectURL(blob);
         if (lastUrl.current) URL.revokeObjectURL(lastUrl.current);
         lastUrl.current = url;
@@ -70,7 +74,7 @@ export default function CardNamePlacer({
     return () => clearTimeout(timer);
     // lines/type/family don't change while the page is open
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file, layout]);
+  }, [file, layout, view]);
   useEffect(() => () => void (lastUrl.current && URL.revokeObjectURL(lastUrl.current)), []);
 
   const nudge = (k: keyof NameLayout, by: number) => setLayout((l) => ({ ...l, [k]: round(Math.min(1, Math.max(0, l[k] + by))) }));
@@ -144,15 +148,35 @@ export default function CardNamePlacer({
           {status && <p className={`text-sm font-semibold ${status.ok ? "text-leaf" : "text-kumkum"}`}>{status.text}</p>}
         </div>
         <div className="min-w-0">
+          {type === "application/pdf" && (
+            <div role="group" aria-label="Preview" className="mb-2 inline-flex gap-1 rounded-xl bg-paper-deep p-1">
+              {(["page", "close"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={view === v}
+                  onClick={() => setView(v)}
+                  className={`min-h-10 rounded-lg px-3 text-sm font-bold ${view === v ? "bg-card text-kumkum shadow-sm" : "text-ink hover:bg-card/70"}`}
+                >
+                  {v === "page" ? "Whole page" : "Close-up"}
+                </button>
+              ))}
+            </div>
+          )}
           {problem ? (
             <p className="text-sm font-semibold text-kumkum">{problem}</p>
           ) : !preview ? (
             <p className="text-sm text-ink-soft">Loading the card…</p>
           ) : type === "application/pdf" ? (
-            <iframe src={`${preview}#page=1&view=FitH&toolbar=0`} title="Card with the sample name" className="h-[32rem] w-full rounded-lg border border-line bg-paper" />
+            <iframe
+              key={preview}
+              src={`${preview}#page=1&view=Fit&toolbar=0&navpanes=0`}
+              title="Card with the sample name"
+              className={`${view === "close" ? "h-[14rem]" : "h-[32rem]"} w-full rounded-lg border border-line bg-paper`}
+            />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Card with the sample name" className="w-full rounded-lg border border-line" />
+            <img src={preview} alt="Card with the sample name" className="max-h-[32rem] w-full rounded-lg border border-line object-contain" />
           )}
         </div>
       </div>
