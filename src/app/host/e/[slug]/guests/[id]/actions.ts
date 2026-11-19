@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { MAX_LOCATION, MAX_NOTES, sameHousehold, normaliseMobile, parseSide } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
-import { deleteHousehold, loadHousehold, saveOnBehalf, updateHousehold, type HouseholdDetail } from "@/lib/store/admin";
+import { setPlaceNameMr, deleteHousehold, loadHousehold, saveOnBehalf, updateHousehold, type HouseholdDetail } from "@/lib/store/admin";
 import { loadHouseholdKeys } from "@/lib/store/supabase";
 import type { ArrivalSlot, FunctionInfo } from "@/lib/types";
 import { MAX_HEADS, normalise } from "@/lib/validate";
@@ -112,7 +112,17 @@ export async function saveHousehold(slug: string, id: string, _prev: FormState, 
   if (sameMobile && sameMobile.side === side) return { ok: false, message: "Another household on this side already has that mobile." };
 
   await updateHousehold(host.event.id, hh.id, { side, nameEn, nameMr, mobile: mob.value, softCap: cap, location, notes, slipLang, inviteBy }, functionIds);
-  return done(sameMobile ? `Saved. Note: this mobile is also on the ${SIDE_NAMES[sameMobile.side]}.` : "Saved.");
+
+  // The place in Marathi (owner, 19 Nov): kept per event, keyed by the place as typed; owner only.
+  let placeNote = "";
+  const placeMr = text(fd.get("locationMr")).slice(0, 80);
+  if (location && placeMr && host.event.placeNamesMr[location] !== placeMr) {
+    if (host.canManage) {
+      const before = await setPlaceNameMr(host.event.id, location, placeMr);
+      if (before) placeNote = ` Marathi for ${location} updated for every household there.`;
+    } else placeNote = " The Marathi place wasn't saved: only the owner can save a new Marathi place.";
+  }
+  return done((sameMobile ? `Saved. Note: this mobile is also on the ${SIDE_NAMES[sameMobile.side]}.` : "Saved.") + placeNote);
 }
 
 export async function removeHousehold(slug: string, id: string, _prev: FormState): Promise<FormState> {
