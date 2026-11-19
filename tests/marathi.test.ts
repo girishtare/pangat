@@ -36,7 +36,7 @@ describe("suggestPrompt", () => {
 
 describe("isSuggestKind", () => {
   it("accepts the three kinds only", () => {
-    expect(["event", "function", "household"].every(isSuggestKind)).toBe(true);
+    expect(["event", "function", "household", "place"].every(isSuggestKind)).toBe(true);
     expect(isSuggestKind("message")).toBe(false);
     expect(isSuggestKind(undefined)).toBe(false);
   });

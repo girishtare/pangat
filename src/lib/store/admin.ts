@@ -4,7 +4,7 @@ import { supabaseConfig } from "../supabase/config";
 import type { MessageKind } from "../outreach";
 import type { FunctionNumbers } from "../pilot";
 import type { Side } from "../types";
-import { readLayouts, type CardKey, type NameLayout } from "../cardName";
+import { readLayouts, readPlaces, type CardKey, type NameLayout } from "../cardName";
 import { coOwnerInviteCard } from "../emailDesign";
 import { onlyChangedReplies } from "./changed";
 import { mailConfigured, sendCardMail } from "../mail";
@@ -1104,10 +1104,10 @@ export async function setCardNameLayout(eventId: string, key: CardKey, layout: N
 export async function namedCardForGuest(
   token: string,
   lang: CardLang,
-): Promise<{ path: string; layout: NameLayout | null; nameEn: string; nameMr: string | null; location: string | null } | null> {
+): Promise<{ path: string; layout: NameLayout | null; nameEn: string; nameMr: string | null; location: string | null; placesMr: Record<string, string> } | null> {
   const { data, error } = await admin()
     .from("households")
-    .select("side, name_en, name_mr, location, events(card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, card_name_layout)")
+    .select("side, name_en, name_mr, location, events(card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, card_name_layout, place_names_mr)")
     .eq("token", token)
     .maybeSingle();
   if (error) throw new Error(`card lookup failed: ${error.message}`);
@@ -1116,7 +1116,32 @@ export async function namedCardForGuest(
   const path = row?.events?.[`card_${row.side}_${lang}_path`] ?? null;
   if (!path) return null;
   const layout = readLayouts(row.events.card_name_layout)[`${row.side as Side}-${lang}` as CardKey] ?? null;
-  return { path, layout, nameEn: row.name_en, nameMr: row.name_mr ?? null, location: row.location ?? null };
+  return { path, layout, nameEn: row.name_en, nameMr: row.name_mr ?? null, location: row.location ?? null, placesMr: readPlaces(row.events.place_names_mr) };
+}
+
+/**
+ * Sets the Marathi for one place (Add household, owner, 19 Nov), keeping the
+ * others. Returns the Marathi it had before (null if none).
+ */
+export async function setPlaceNameMr(eventId: string, place: string, marathi: string): Promise<string | null> {
+  const { data: ev, error: readError } = await admin().from("events").select("place_names_mr").eq("id", eventId).single();
+  if (readError) throw new Error(`places lookup failed: ${readError.message}`);
+  const all = readPlaces(ev?.place_names_mr);
+  const before = all[place] ?? null;
+  if (before === marathi) return before;
+  const { error } = await admin()
+    .from("events")
+    .update({ place_names_mr: { ...all, [place]: marathi } })
+    .eq("id", eventId);
+  if (error) throw new Error(`saving the place failed: ${error.message}`);
+  return before;
+}
+
+/** Saves the event's Marathi place names (replaces them all; blanks are left out). */
+export async function setPlaceNamesMr(eventId: string, places: Record<string, string>): Promise<void> {
+  const clean = readPlaces(places);
+  const { error } = await admin().from("events").update({ place_names_mr: Object.keys(clean).length ? clean : null }).eq("id", eventId);
+  if (error) throw new Error(`saving the places failed: ${error.message}`);
 }
 
 /** A guest's card, by their household's token: their own side's card in that language, if the event has it. */
