@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RefreshOnSave } from "../../../../ui/tabSync";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, CircleCheck, Download, Search, Settings, TriangleAlert, Users } from "lucide-react";
 import { LiveSearch } from "../../../../ui/LiveSearch";
 import { ListPager } from "../../../../ui/ListPager";
@@ -172,6 +173,8 @@ export default async function GuestList({
 
   return (
     <EventShell host={host} current="guests">
+      {/* A household saved in its own tab refreshes this list (owner, 19 Nov). */}
+      <RefreshOnSave slug={slug} />
       <PageHeader
         title="Guest list"
         subtitle="One household = one printed card = one link, one QR code and one short code."
@@ -335,7 +338,7 @@ export default async function GuestList({
                   {pageRows.map((g) => (
                     <tr key={g.id}>
                       <td className="max-w-[18rem]">
-                        <Link href={link(g.id)} className="wrap-names font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
+                        <Link href={link(g.id)} target="_blank" className="wrap-names font-bold text-kumkum underline underline-offset-2 hover:text-kumkum-dark">
                           {g.nameEn}
                         </Link>
                         {g.nameMr ? (
@@ -415,7 +418,7 @@ export default async function GuestList({
             <ul className="mt-3 space-y-3 lg:hidden">
               {pageRows.map((g) => (
                 <li key={g.id} className="card overflow-hidden">
-                  <Link href={link(g.id)} className="block p-4 hover:bg-paper-deep/40">
+                  <Link href={link(g.id)} target="_blank" className="block p-4 hover:bg-paper-deep/40">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="wrap-names font-bold text-kumkum underline underline-offset-2">{g.nameEn}</p>
