@@ -178,8 +178,15 @@ export default async function GuestList({
         actions={
           canAdd ? (
             <>
-              <PopupButton label="+ Add a household" title="Add one household">
-                <AddHouseholdForm slug={slug} hostSide={host.side} functions={host.functions.map((f) => ({ id: f.id, name: f.name.en }))} />
+              <PopupButton label="+ Add a household" title="Add one household" wide>
+                <AddHouseholdForm
+                  slug={slug}
+                  hostSide={host.side}
+                  functions={host.functions.map((f) => ({ id: f.id, name: f.name.en }))}
+                  places={[...new Set(guests.map((g) => (g.location ?? "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b))}
+                  placesMr={host.event.placeNamesMr}
+                  isOwner={host.canManage}
+                />
               </PopupButton>
               <PopupButton label="Import from Excel" title="Import from Excel" className="btn btn-secondary">
                 <ImportForm slug={slug} />
