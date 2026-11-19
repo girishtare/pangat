@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import readExcelFile from "read-excel-file/node";
 import { checkSheet, pickSheet, rowsToText, type SheetCheck } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
+import { setPlaceNameMr } from "@/lib/store/admin";
 import { insertHouseholds, loadHouseholdKeys, type NewHousehold } from "@/lib/store/supabase";
 import { newShortCode, newToken } from "@/lib/token";
 
@@ -97,7 +98,8 @@ export async function readSpreadsheet(slug: string, formData: FormData): Promise
   }
 }
 
-export type AddState = SaveResult | null;
+/** Add one household: the import's result, plus a word about the Marathi place when one was saved or held back. */
+export type AddState = (SaveResult & { placeNote?: string }) | null;
 
 const oneLine = (v: FormDataEntryValue | null) => String(v ?? "").replace(/[\t\r\n]+/g, " ").trim();
 
@@ -127,6 +129,20 @@ export async function addHousehold(slug: string, _prev: AddState, formData: Form
       ...result,
       error: "This household is already on the guest list (same mobile, or same name with no different mobile or location, on this side). Nothing was added.",
     };
+  }
+  // The place in Marathi (owner, 19 Nov): kept per event, keyed by the place as typed
+  // (Event settings → Places in Marathi). Only the owner may change that list.
+  const place = row[4];
+  const placeMr = oneLine(formData.get("locationMr")).slice(0, 80);
+  if (result.ok && place && placeMr) {
+    const gate = await hostGate(slug);
+    if (gate.ok && gate.host.canManage) {
+      const before = await setPlaceNameMr(gate.host.event.id, place, placeMr);
+      revalidatePath("/host", "layout");
+      if (before && before !== placeMr) return { ...result, placeNote: `Marathi for ${place} updated for every household there.` };
+    } else if (gate.ok && gate.host.event.placeNamesMr[place] !== placeMr) {
+      return { ...result, placeNote: "The Marathi place wasn't saved: only the owner can save a new Marathi place." };
+    }
   }
   return result;
 }

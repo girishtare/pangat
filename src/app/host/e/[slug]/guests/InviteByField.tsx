@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * ticked, and trying says why, in red beside it. Emptying the Mobile box
  * unticks it. (The server checks the same.)
  */
-export default function InviteByField({ card = true, wa = false }: { card?: boolean; wa?: boolean }) {
+export default function InviteByField({ card = true, wa = false, hint = true }: { card?: boolean; wa?: boolean; hint?: boolean }) {
   const box = useRef<HTMLFieldSetElement>(null);
   const [hasMobile, setHasMobile] = useState(true);
   const [waOn, setWaOn] = useState(wa);
@@ -67,7 +67,7 @@ export default function InviteByField({ card = true, wa = false }: { card?: bool
           </span>
         )}
       </div>
-      <span className="hint mt-1 block">Tick one or both. The Guest list shows an icon for each, with a tick box for &quot;sent&quot;.</span>
+      {hint && <span className="hint mt-1 block">Tick one or both. The Guest list shows an icon for each, with a tick box for &quot;sent&quot;.</span>}
     </fieldset>
   );
 }

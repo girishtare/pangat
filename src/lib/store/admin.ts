@@ -1119,6 +1119,24 @@ export async function namedCardForGuest(
   return { path, layout, nameEn: row.name_en, nameMr: row.name_mr ?? null, location: row.location ?? null, placesMr: readPlaces(row.events.place_names_mr) };
 }
 
+/**
+ * Sets the Marathi for one place (Add household, owner, 19 Nov), keeping the
+ * others. Returns the Marathi it had before (null if none).
+ */
+export async function setPlaceNameMr(eventId: string, place: string, marathi: string): Promise<string | null> {
+  const { data: ev, error: readError } = await admin().from("events").select("place_names_mr").eq("id", eventId).single();
+  if (readError) throw new Error(`places lookup failed: ${readError.message}`);
+  const all = readPlaces(ev?.place_names_mr);
+  const before = all[place] ?? null;
+  if (before === marathi) return before;
+  const { error } = await admin()
+    .from("events")
+    .update({ place_names_mr: { ...all, [place]: marathi } })
+    .eq("id", eventId);
+  if (error) throw new Error(`saving the place failed: ${error.message}`);
+  return before;
+}
+
 /** Saves the event's Marathi place names (replaces them all; blanks are left out). */
 export async function setPlaceNamesMr(eventId: string, places: Record<string, string>): Promise<void> {
   const clean = readPlaces(places);
