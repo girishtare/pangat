@@ -2,7 +2,8 @@
 
 import InviteByField from "../InviteByField";
 import PhoneInput from "../../../../../ui/PhoneInput";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { announceSaved, closeIfOpenedAsTab } from "../../../../../ui/tabSync";
 import { Check, Copy, Save, Trash } from "lucide-react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../../ui/kit";
@@ -11,6 +12,17 @@ import { recordReply, removeHousehold, saveHousehold, type FormState } from "./a
 import { useFormAction } from "../../../../../ui/useFormAction";
 
 const MAX = 30;
+
+/** After a save: refresh the Guest list in the other tab, and close this one if it was opened as a new tab (owner, 19 Nov). */
+function useAfterSave(slug: string, state: FormState | null) {
+  useEffect(() => {
+    if (!state?.ok) return;
+    announceSaved(slug);
+    // A moment to see "Saved" before the tab goes.
+    const t = setTimeout(closeIfOpenedAsTab, 600);
+    return () => clearTimeout(t);
+  }, [slug, state]);
+}
 
 function Message({ state }: { state: FormState }) {
   if (!state) return null;
@@ -136,6 +148,7 @@ function ReplyRow({ f }: { f: ReplyFn }) {
 
 export function ReplyForm({ slug, id, functions }: { slug: string; id: string; functions: ReplyFn[] }) {
   const [state, action, pending] = useFormAction(recordReply.bind(null, slug, id), { keep: true });
+  useAfterSave(slug, state);
   // React resets a form after its action runs, which would put the radios back to
   // the first-loaded reply. Keying the rows on the saved reply remounts them with
   // what the server now holds.
@@ -171,6 +184,7 @@ export function DetailsForm(props: {
   functions: { id: string; name: string; invited: boolean; replied: boolean }[];
 }) {
   const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id), { keep: true });
+  useAfterSave(props.slug, state);
   return (
     <form onSubmit={action} className="space-y-4">
       <label className="block">
