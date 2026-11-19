@@ -53,16 +53,18 @@ export async function makeNamedCard(file: ArrayBuffer, type: string, lines: stri
     const { PDFDocument } = await import("pdf-lib");
     const pdf = await PDFDocument.load(file);
     const page = pdf.getPage(0);
-    const { width: W, height: H } = page.getSize();
+    // The visible page (crop box), which needn't start at 0,0: on the 19 Nov cards page 1 starts
+    // 42 points in and 79 up, and placing from 0,0 put the name 79 points too low.
+    const { x: X0, y: Y0, width: W, height: H } = page.getCropBox();
     for (let i = 0; i < lines.length; i++) {
       if (!lines[i]) continue;
       const d = await drawLine(lines[i], layout.size * H * SCALE, layout.w * W * SCALE, family, lang);
       const img = await pdf.embedPng(await canvasPng(d.canvas));
       const baselineFromTop = (layout.y1 + i * layout.gap) * H;
       page.drawImage(img, {
-        x: layout.x * W,
+        x: X0 + layout.x * W,
         // PDF measures from the bottom: the picture's bottom edge sits below the baseline by its descent.
-        y: H - baselineFromTop - (d.canvas.height - d.baseline) / SCALE,
+        y: Y0 + H - baselineFromTop - (d.canvas.height - d.baseline) / SCALE,
         width: d.canvas.width / SCALE,
         height: d.canvas.height / SCALE,
       });
