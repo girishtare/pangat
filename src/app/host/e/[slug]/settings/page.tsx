@@ -10,6 +10,9 @@ import { AddFunctionButton, EditHostForm, EventForm, FunctionEditor, InviteCoOwn
 import PopupButton from "../../../../ui/PopupButton";
 import DeleteEvent from "./DeleteEvent";
 import CardUpload from "./CardUpload";
+import CardNamePlacer from "./CardNamePlacer";
+import { cardTypeOf } from "@/lib/cardName";
+import { cardFont } from "../../../../cardFont";
 import { CalendarDays, Pencil, SlidersHorizontal, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -41,12 +44,30 @@ export default async function EventSettings({
     );
   }
 
-  const [usage, hosts, households, views] = await Promise.all([
+  // A real household per side for the "Name on the envelope" preview (one with a place, by name).
+  const sampleFor = async (side: "bride" | "groom") => {
+    if (tab !== "details" || (!host.event.cards[side].en && !host.event.cards[side].mr)) return null;
+    const { data } = await host.client
+      .from("households")
+      .select("name_en, name_mr, location")
+      .eq("event_id", host.event.id)
+      .eq("side", side)
+      .not("location", "is", null)
+      .order("name_en")
+      .limit(1);
+    const h = data?.[0];
+    return h ? { nameEn: h.name_en as string, nameMr: (h.name_mr as string | null) ?? null, location: (h.location as string | null) ?? null } : null;
+  };
+  const [usage, hosts, households, views, sampleBride, sampleGroom] = await Promise.all([
     Promise.all(host.functions.map((f) => functionUsage(host.event.id, f.id))),
     listHosts(host.event.id),
     loadHouseholdKeys(host.event.id),
     dashboardViewStats(host.event.id),
+    sampleFor("bride"),
+    sampleFor("groom"),
   ]);
+  const fallbackSample = { nameEn: "Shri A. Joshi and family", nameMr: "श्री. अ. जोशी सहपरिवार", location: "Borivali, Mumbai" };
+  const samples = { bride: sampleBride ?? fallbackSample, groom: sampleGroom ?? fallbackSample };
   // A co-owner of both sides counts on each side's limit.
   const coOwners = {
     bride: hosts.filter((h) => h.role === "co_owner" && h.side !== "groom").length,
@@ -147,6 +168,25 @@ export default async function EventSettings({
                 <div className="grid gap-3 md:grid-cols-2">
                   <CardUpload slug={slug} side={sd} lang="mr" has={!!host.event.cards[sd].mr} />
                   <CardUpload slug={slug} side={sd} lang="en" has={!!host.event.cards[sd].en} />
+                </div>
+                {/* The guest's name and place on the envelope page (owner, 19 Nov). */}
+                <div className="mt-3 space-y-3">
+                  {(["mr", "en"] as const).map((l) => {
+                    const path = host.event.cards[sd][l];
+                    return path ? (
+                      <CardNamePlacer
+                        key={l}
+                        slug={slug}
+                        side={sd}
+                        lang={l}
+                        type={cardTypeOf(path)}
+                        sample={samples[sd]}
+                        saved={host.event.cardNameLayout[`${sd}-${l}`] ?? null}
+                        family={cardFont.style.fontFamily}
+                        fontClass={cardFont.className}
+                      />
+                    ) : null;
+                  })}
                 </div>
               </div>
             ))}

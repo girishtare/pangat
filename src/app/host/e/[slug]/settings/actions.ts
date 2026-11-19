@@ -7,6 +7,7 @@ import { istInputToIso, isValidDate } from "@/lib/events";
 import { normaliseMobile } from "@/lib/guestlist";
 import { hostGate, type HostContext } from "@/lib/host";
 import { sendCardMail } from "@/lib/mail";
+import { parseLayout } from "@/lib/cardName";
 import { whatsappLink } from "@/lib/outreach";
 import { publicBaseUrl } from "@/lib/site";
 import type { Side } from "@/lib/types";
@@ -27,6 +28,7 @@ import {
   removeHost,
   resendInvite,
   setCard,
+  setCardNameLayout,
   updateEvent,
   updateHost,
   updateFunction,
@@ -385,4 +387,24 @@ export async function cardRemove(slug: string, side: string, lang: string): Prom
   if (!l || !sd) return { ok: false, message: "Choose a side, and English or Marathi." };
   await setCard(who.host.event.id, sd, l, null);
   return done("Card removed.");
+}
+
+/* ---------- Name on the invitation card ---------- */
+
+/** Where the guest's name and place go on one card (owner only); null turns it off. */
+export async function saveCardNameLayout(slug: string, side: string, lang: string, layout: unknown): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  const l = cardLang(lang);
+  const sd = cardSide(side);
+  if (!l || !sd) return { ok: false, message: "Choose a side, and English or Marathi." };
+  if (layout === null) {
+    await setCardNameLayout(who.host.event.id, `${sd}-${l}`, null);
+    return done("Turned off: guests get the plain card.");
+  }
+  const parsed = parseLayout(layout);
+  if (!parsed) return { ok: false, message: "That placement is off the page. Undo your changes and try again." };
+  if (!who.host.event.cards[sd][l]) return { ok: false, message: "Upload the card first." };
+  await setCardNameLayout(who.host.event.id, `${sd}-${l}`, parsed);
+  return done("Saved. Guests' card links now show their name and place.");
 }
