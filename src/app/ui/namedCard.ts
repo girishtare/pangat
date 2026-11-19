@@ -15,6 +15,24 @@ interface Drawn {
 }
 
 /**
+ * Loads the card font for this text. A phone on a weak connection can fail to
+ * fetch it ("NetworkError", owner's phone, 19 Nov): try three times, then go on
+ * anyway, and the browser writes the name in the phone's own Devanagari font
+ * rather than the guest getting no named card.
+ */
+async function loadFont(spec: string, text: string): Promise<void> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await document.fonts.load(spec, text);
+      return;
+    } catch (e) {
+      console.warn(`card font, try ${attempt} of 3:`, e);
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 700 * attempt));
+    }
+  }
+}
+
+/**
  * The lines to write: the name (on one line, or two when it's long), then the
  * place on the next line. The letter size is the layout's, made smaller only
  * when a name line still doesn't fit (one very long word); the place shrinks
@@ -22,7 +40,7 @@ interface Drawn {
  */
 async function fitLines(lines: string[], fontPx: number, maxWidth: number, family: string, lang: CardLang): Promise<{ lines: string[]; px: number }> {
   const style = lang === "en" ? "italic " : "";
-  await document.fonts.load(`${style}${Math.round(fontPx)}px ${family}`, lines.join(" "));
+  await loadFont(`${style}${Math.round(fontPx)}px ${family}`, lines.join(" "));
   const g = document.createElement("canvas").getContext("2d")!;
   g.font = `${style}${fontPx}px ${family}`;
   const width = (s: string) => g.measureText(s).width;
@@ -36,7 +54,7 @@ async function fitLines(lines: string[], fontPx: number, maxWidth: number, famil
 /** One line of text on its own canvas, shrunk to fit `maxWidth` (pixels), at most `fontPx` high. */
 async function drawLine(text: string, fontPx: number, maxWidth: number, family: string, lang: CardLang): Promise<Drawn> {
   const style = lang === "en" ? "italic " : "";
-  await document.fonts.load(`${style}${Math.round(fontPx)}px ${family}`, text);
+  await loadFont(`${style}${Math.round(fontPx)}px ${family}`, text);
   const c = document.createElement("canvas");
   const g = c.getContext("2d")!;
   let px = fontPx;
