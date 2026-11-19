@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add one household (phone)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=Space+Grotesk:wght@600&amp;family=Noto+Sans+Devanagari:wght@400;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5efe1}
+</style>
+</helmet>
+<section role="dialog" aria-labelledby="t" style="width: 390px; height: 844px; box-sizing: border-box; background: #fffcf5; color: #2e1a1c; font-family: 'IBM Plex Sans', 'Noto Sans Devanagari', system-ui, sans-serif; font-size: 15px; line-height: 1.45; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px 8px 16px; background: #ebe1cb; border-bottom: 1px solid #e5d3af">
+    <h2 id="t" style="margin: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 18px; color: #790d16">Add one household</h2>
+    <button type="button" aria-label="Close" style="width: 44px; height: 44px; border: 0; background: transparent; color: #790d16; font-size: 22px">×</button>
+  </header>
+
+  <div style="flex: 1; overflow: hidden; padding: 12px 16px; display: grid; gap: 12px; align-content: start">
+    <fieldset style="margin: 0; padding: 10px 12px 12px; border: 1px solid #e5d3af; border-radius: 14px">
+      <legend style="padding: 0 4px; font-weight: 600; font-size: 14px">Name</legend>
+      <label style="display: block"><span style="display: block; font-size: 13px; color: #5e4446">In English</span><input placeholder="Shri. A. Joshi &amp; family" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit; font-size: 16px"></label>
+      <label style="display: block; margin-top: 6px"><span style="display: block; font-size: 13px; color: #5e4446">In Marathi (optional)</span><input lang="mr" placeholder="श्री. अ. जोशी सहपरिवार" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit; font-size: 16px"></label>
+    </fieldset>
+    <fieldset style="margin: 0; padding: 10px 12px 12px; border: 1px solid #e5d3af; border-radius: 14px">
+      <legend style="padding: 0 4px; font-weight: 600; font-size: 14px">Location <span style="font-weight: 400; color: #5e4446">(optional)</span></legend>
+      <label style="display: block"><span style="display: block; font-size: 13px; color: #5e4446">In English</span><input placeholder="e.g. Borivali, Mumbai" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit; font-size: 16px"></label>
+      <label style="display: block; margin-top: 6px"><span style="display: block; font-size: 13px; color: #5e4446">In Marathi</span><input lang="mr" placeholder="उदा. बोरिवली, मुंबई" style="box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit; font-size: 16px"></label>
+    </fieldset>
+    <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border-radius: 12px; border: 2px solid #790d16; background: #fffcf5; color: #790d16; font: inherit; font-weight: 600">Suggest Marathi for both</button>
+    <fieldset style="margin: 0; padding: 0; border: 0"><legend style="font-weight: 600; font-size: 14px; margin-bottom: 4px">Side</legend>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <label style="display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px; border: 2px solid #790d16; background: #790d16; color: #ffffff; font-weight: 600"><input type="radio" name="s" checked style="position: absolute; opacity: 0">Bride's side</label>
+        <label style="display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px; border: 2px solid #e5d3af; background: #ffffff; font-weight: 600"><input type="radio" name="s" style="position: absolute; opacity: 0">Groom's side</label>
+      </div>
+    </fieldset>
+    <label><span style="display: block; font-weight: 600; font-size: 14px; margin-bottom: 4px">Mobile <span style="font-weight: 400; color: #5e4446">(for WhatsApp)</span></span>
+      <span style="display: flex; gap: 6px"><select aria-label="Country code" style="width: 6.5rem; min-height: 44px; padding: 0 6px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit"><option>+91</option></select><input type="tel" placeholder="98765 43210" style="flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 2px solid #e5d3af; border-radius: 12px; background: #ffffff; font: inherit; font-size: 16px"></span></label>
+    <div style="text-align: center; font-size: 13px; color: #5e4446">↓ Language, invitation, functions, Guest Count, notes</div>
+  </div>
+
+  <footer style="padding: 10px 16px 14px; border-top: 1px solid #e5d3af; background: #fffcf5; display: grid; gap: 8px; box-shadow: 0 -8px 16px -12px rgba(46, 26, 28, 0.25)">
+    <button type="submit" style="min-height: 48px; border-radius: 12px; border: 2px solid #790d16; background: #790d16; color: #ffffff; font: inherit; font-weight: 600">Save household and close</button>
+    <button type="submit" style="min-height: 48px; border-radius: 12px; border: 2px solid #790d16; background: #fffcf5; color: #790d16; font: inherit; font-weight: 600">Save household and add new</button>
+  </footer>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
