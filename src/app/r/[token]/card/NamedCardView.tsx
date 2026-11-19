@@ -51,24 +51,45 @@ export default function NamedCardView({
   const t = TEXT[lang];
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  // ?debug=1: on a failure, stay and say which step failed and why (owner, 19 Nov: it failed on a phone).
+  const [debug, setDebug] = useState<string | null>(null);
 
   useEffect(() => {
     let made: string | null = null;
     let cancelled = false;
+    let step = "downloading the card";
+    const showDebug = new URLSearchParams(window.location.search).get("debug") === "1";
+    const fail = (why: string) => {
+      if (cancelled) return;
+      console.error(`named card failed while ${step}: ${why}`);
+      if (showDebug) {
+        setDebug(`Failed while ${step}: ${why} · ${navigator.userAgent}`);
+        setFailed(true);
+      } else {
+        // A guest gets the plain card at once rather than an error.
+        window.location.replace(url);
+      }
+    };
+    // A phone that takes too long gets the plain card too.
+    const slow = setTimeout(() => fail("took longer than 25 seconds"), 25_000);
     (async () => {
       try {
         const res = await fetch(url);
-        if (!res.ok) throw new Error(String(res.status));
-        const blob = await makeNamedCard(await res.arrayBuffer(), type, lines, layout, family, lang);
+        if (!res.ok) throw new Error(`download answered ${res.status}`);
+        const file = await res.arrayBuffer();
+        const blob = await makeNamedCard(file, type, lines, layout, family, lang, undefined, (s) => (step = s));
         if (cancelled) return;
+        clearTimeout(slow);
         made = URL.createObjectURL(blob);
         setBlobUrl(made);
-      } catch {
-        if (!cancelled) setFailed(true);
+      } catch (e) {
+        clearTimeout(slow);
+        fail(e instanceof Error ? `${e.name}: ${e.message}` : String(e));
       }
     })();
     return () => {
       cancelled = true;
+      clearTimeout(slow);
       if (made) URL.revokeObjectURL(made);
     };
     // Made once per visit.
@@ -115,6 +136,7 @@ export default function NamedCardView({
       {failed && (
         <div className="mt-6 rounded-[14px] border border-sand bg-card-e p-4">
           <p>{t.failed}</p>
+          {debug && <p className="mt-2 break-words text-left font-mono text-xs text-ink-e-soft">{debug}</p>}
           <a href={url} className="btn btn-secondary mt-3 min-h-[52px] text-base">
             {t.plain}
           </a>
