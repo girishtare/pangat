@@ -11,6 +11,7 @@ import PopupButton from "../../../../ui/PopupButton";
 import DeleteEvent from "./DeleteEvent";
 import CardUpload from "./CardUpload";
 import CardNamePlacer from "./CardNamePlacer";
+import PlacesMarathi from "./PlacesMarathi";
 import { cardTypeOf } from "@/lib/cardName";
 import { cardFont } from "../../../../cardFont";
 import { CalendarDays, Pencil, SlidersHorizontal, Users } from "lucide-react";
@@ -66,6 +67,20 @@ export default async function EventSettings({
     sampleFor("bride"),
     sampleFor("groom"),
   ]);
+  // Every place the households stay at, with how many households, for "Places in Marathi".
+  const anyMarathiCard = !!(host.event.cards.bride.mr || host.event.cards.groom.mr);
+  const places =
+    tab === "details" && anyMarathiCard
+      ? await (async () => {
+          const { data } = await host.client.from("households").select("location").eq("event_id", host.event.id).not("location", "is", null).range(0, 4999);
+          const count = new Map<string, number>();
+          for (const r of data ?? []) {
+            const loc = String(r.location ?? "").trim();
+            if (loc) count.set(loc, (count.get(loc) ?? 0) + 1);
+          }
+          return [...count].map(([en, n]) => ({ en, count: n })).sort((a, b) => b.count - a.count || a.en.localeCompare(b.en));
+        })()
+      : [];
   const fallbackSample = { nameEn: "Shri A. Joshi and family", nameMr: "श्री. अ. जोशी सहपरिवार", location: "Borivali, Mumbai" };
   const samples = { bride: sampleBride ?? fallbackSample, groom: sampleGroom ?? fallbackSample };
   // A co-owner of both sides counts on each side's limit.
@@ -184,12 +199,14 @@ export default async function EventSettings({
                         saved={host.event.cardNameLayout[`${sd}-${l}`] ?? null}
                         family={cardFont.style.fontFamily}
                         fontClass={cardFont.className}
+                        placesMr={host.event.placeNamesMr}
                       />
                     ) : null;
                   })}
                 </div>
               </div>
             ))}
+            {places.length > 0 && <PlacesMarathi slug={slug} places={places} saved={host.event.placeNamesMr} />}
           </div>
         </Section>
       )}

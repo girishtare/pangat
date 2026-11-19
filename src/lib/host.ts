@@ -5,7 +5,7 @@ import type { FunctionRef } from "./guestlist";
 import { isDemo } from "./store";
 import { loadHostAccess } from "./store/supabase";
 import { hostClient } from "./supabase/session";
-import { readLayouts, type CardKey, type NameLayout } from "./cardName";
+import { readLayouts, readPlaces, type CardKey, type NameLayout } from "./cardName";
 import type { Bilingual, Side } from "./types";
 
 export interface HostEvent {
@@ -26,6 +26,8 @@ export interface HostEvent {
   cards: Record<Side, { en: string | null; mr: string | null }>;
   /** Where the guest's name and place go on each card (migration 0030); missing = the plain card. */
   cardNameLayout: Partial<Record<CardKey, NameLayout>>;
+  /** Marathi spelling of each household location, for the Marathi card (migration 0031). */
+  placeNamesMr: Record<string, string>;
 }
 
 export interface HostContext {
@@ -86,7 +88,7 @@ export const hostGate = cache(async (slug: string): Promise<HostGate> => {
     client
       .from("events")
       .select(
-        "id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, card_name_layout, functions(id, name_en, name_mr, starts_at, venue, map_url, catered, veg_only, sort_order, icon)",
+        "id, slug, name_en, name_mr, cutoff_at, yes_show_rate, pending_show_rate, contact_phone_bride, contact_phone_groom, wa_invite_text, wa_reminder_text, caterer_due_on, caterer_final_on, card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, card_name_layout, place_names_mr, functions(id, name_en, name_mr, starts_at, venue, map_url, catered, veg_only, sort_order, icon)",
       )
       .eq("slug", slug)
       .maybeSingle(),
@@ -135,6 +137,7 @@ export const hostGate = cache(async (slug: string): Promise<HostGate> => {
           groom: { en: ev.card_groom_en_path ?? null, mr: ev.card_groom_mr_path ?? null },
         },
         cardNameLayout: readLayouts(ev.card_name_layout),
+        placeNamesMr: readPlaces(ev.place_names_mr),
       },
       functions: (fns ?? []).map((f) => ({
         id: f.id,

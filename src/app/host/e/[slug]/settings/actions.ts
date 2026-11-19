@@ -29,6 +29,7 @@ import {
   resendInvite,
   setCard,
   setCardNameLayout,
+  setPlaceNamesMr,
   updateEvent,
   updateHost,
   updateFunction,
@@ -407,4 +408,20 @@ export async function saveCardNameLayout(slug: string, side: string, lang: strin
   if (!who.host.event.cards[sd][l]) return { ok: false, message: "Upload the card first." };
   await setCardNameLayout(who.host.event.id, `${sd}-${l}`, parsed);
   return done("Saved. Guests' card links now show their name and place.");
+}
+
+/** The event's Marathi place names, for the Marathi card's envelope (owner only). */
+export async function savePlacesMr(slug: string, values: unknown): Promise<FormState> {
+  const who = await manager(slug);
+  if ("error" in who) return { ok: false, message: who.error };
+  if (!values || typeof values !== "object") return { ok: false, message: "Nothing to save." };
+  const out: Record<string, string> = {};
+  for (const [en, mr] of Object.entries(values as Record<string, unknown>)) {
+    const text = typeof mr === "string" ? mr.replace(/\s+/g, " ").trim() : "";
+    if (!text) continue;
+    if (text.length > 80 || en.length > 80) return { ok: false, message: `Keep "${en.slice(0, 40)}" to 80 characters.` };
+    out[en] = text;
+  }
+  await setPlaceNamesMr(who.host.event.id, out);
+  return done(`Saved ${Object.keys(out).length} place${Object.keys(out).length === 1 ? "" : "s"} in Marathi.`);
 }
