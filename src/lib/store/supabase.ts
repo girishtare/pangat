@@ -242,6 +242,8 @@ export interface GuestRow {
   mobile: string | null;
   shortCode: string;
   token: string;
+  /** The short key for /i/ links (migration 0032). */
+  linkCode?: string | null;
   softCap: number | null;
   location: string | null;
   notes: string | null;
@@ -265,7 +267,7 @@ export type { InviteModes } from "../invites";
 export async function listGuests(client: SupabaseClient, eventId: string): Promise<GuestRow[]> {
   const { data, error } = await client
     .from("households")
-    .select("id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, created_at, slip_lang, invite_by_card, invite_by_wa, card_sent_at, wa_sent_at, print_requested_at, invites(function_id), responses(function_id, heads)")
+    .select("id, side, name_en, name_mr, mobile, short_code, token, link_code, soft_cap, location, notes, created_at, slip_lang, invite_by_card, invite_by_wa, card_sent_at, wa_sent_at, print_requested_at, invites(function_id), responses(function_id, heads)")
     .eq("event_id", eventId)
     .order("side")
     .order("created_at")
@@ -279,6 +281,7 @@ export async function listGuests(client: SupabaseClient, eventId: string): Promi
     mobile: r.mobile,
     shortCode: r.short_code,
     token: r.token,
+    linkCode: r.link_code ?? null,
     softCap: r.soft_cap,
     location: r.location ?? null,
     notes: r.notes ?? null,

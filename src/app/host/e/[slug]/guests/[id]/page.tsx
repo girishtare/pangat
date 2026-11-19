@@ -75,7 +75,7 @@ export default async function Household({ params }: { params: Promise<{ slug: st
           </div>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <CopyLink path={`/r/${hh.token}`} />
+          <CopyLink path={hh.linkCode ? `/i/${hh.linkCode}` : `/r/${hh.token}`} />
           <Link href={`/host/e/${slug}/slips?tab=print&ids=${hh.id}`} className="btn btn-secondary">
             <Printer className="h-5 w-5" aria-hidden="true" />
             Print this slip

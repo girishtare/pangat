@@ -479,6 +479,8 @@ export interface HouseholdDetail {
   mobile: string | null;
   shortCode: string;
   token: string;
+  /** The short key for /i/ links (migration 0032). */
+  linkCode: string | null;
   softCap: number | null;
   location: string | null;
   notes: string | null;
@@ -500,7 +502,7 @@ export interface HouseholdDetail {
 export async function loadHousehold(eventId: string, householdId: string): Promise<HouseholdDetail | null> {
   const { data, error } = await admin()
     .from("households")
-    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, soft_cap, location, notes, slip_lang, invite_by_card, invite_by_wa, invites(function_id), responses(*)")
+    .select("id, event_id, side, name_en, name_mr, mobile, short_code, token, link_code, soft_cap, location, notes, slip_lang, invite_by_card, invite_by_wa, invites(function_id), responses(*)")
     .eq("id", householdId)
     .eq("event_id", eventId)
     .maybeSingle();
@@ -517,6 +519,7 @@ export async function loadHousehold(eventId: string, householdId: string): Promi
     mobile: r.mobile,
     shortCode: r.short_code,
     token: r.token,
+    linkCode: r.link_code ?? null,
     softCap: r.soft_cap,
     location: r.location ?? null,
     notes: r.notes ?? null,
@@ -795,6 +798,7 @@ export interface LookupHousehold {
   nameMr: string | null;
   mobile: string | null;
   token: string;
+  linkCode: string | null;
 }
 
 export interface LookupRequest {
@@ -805,10 +809,10 @@ export interface LookupRequest {
   matched: LookupHousehold | null;
 }
 
-const HH_COLS = "id, side, name_en, name_mr, mobile, token";
+const HH_COLS = "id, side, name_en, name_mr, mobile, token, link_code";
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const toLookupHousehold = (r: any): LookupHousehold | null =>
-  r ? { id: r.id, side: r.side, nameEn: r.name_en, nameMr: r.name_mr, mobile: r.mobile, token: r.token } : null;
+  r ? { id: r.id, side: r.side, nameEn: r.name_en, nameMr: r.name_mr, mobile: r.mobile, token: r.token, linkCode: r.link_code ?? null } : null;
 
 export async function listPendingLookups(eventId: string): Promise<LookupRequest[]> {
   const { data, error } = await admin()
@@ -1142,6 +1146,15 @@ export async function setPlaceNamesMr(eventId: string, places: Record<string, st
   const clean = readPlaces(places);
   const { error } = await admin().from("events").update({ place_names_mr: Object.keys(clean).length ? clean : null }).eq("id", eventId);
   if (error) throw new Error(`saving the places failed: ${error.message}`);
+}
+
+/** A short link's household (/i/<code>, migration 0032): its token and language, or null. */
+export async function householdByLinkCode(code: string): Promise<{ token: string; slipLang: "both" | "en" | "mr" } | null> {
+  const { data, error } = await admin().from("households").select("token, slip_lang").eq("link_code", code).maybeSingle();
+  if (error) throw new Error(`short link lookup failed: ${error.message}`);
+  if (!data) return null;
+  const lang = data.slip_lang === "en" || data.slip_lang === "mr" ? data.slip_lang : "both";
+  return { token: data.token as string, slipLang: lang };
 }
 
 /** A guest's card, by their household's token: their own side's card in that language, if the event has it. */
