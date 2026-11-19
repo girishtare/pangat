@@ -39,7 +39,7 @@ export default async function GuestCard({ params, searchParams }: { params: Prom
         lines={lines}
         layout={card.layout}
         lang={lang}
-        family={cardFont.style.fontFamily}
+        family={`${cardFont.style.fontFamily}, serif`}
         fontClass={cardFont.className}
         fileName={cardFileName(card.nameEn, type === "application/pdf" ? "pdf" : "jpg")}
         back={`/r/${encodeURIComponent(token)}`}
