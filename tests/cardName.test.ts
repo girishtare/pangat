@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardFileName, cardLines, cardTypeOf, DEFAULT_LAYOUT, parseLayout, readLayouts } from "@/lib/cardName";
+import { cardFileName, cardLines, cardTypeOf, DEFAULT_LAYOUT, parseLayout, readLayouts, readPlaces, wrapName } from "@/lib/cardName";
 
 describe("name on the invitation card", () => {
   it("writes the name in the card's language, then the place", () => {
@@ -10,6 +10,26 @@ describe("name on the invitation card", () => {
   it("falls back to the English name, and leaves out a missing place", () => {
     expect(cardLines("mr", { nameEn: "Joshi family", nameMr: null, location: null })).toEqual(["Joshi family"]);
     expect(cardLines("en", { nameEn: " Joshi family ", nameMr: "", location: "  " })).toEqual(["Joshi family"]);
+  });
+  it("adds सहपरिवार / and family when the card asks, once", () => {
+    const h = { nameEn: "Anita Tare", nameMr: "अनिता तरे", location: null };
+    expect(cardLines("mr", h, { family: true })).toEqual(["अनिता तरे सहपरिवार"]);
+    expect(cardLines("en", h, { family: true })).toEqual(["Anita Tare and family"]);
+    expect(cardLines("mr", { ...h, nameMr: "श्री. अ. जोशी सहपरिवार" }, { family: true })).toEqual(["श्री. अ. जोशी सहपरिवार"]);
+    expect(cardLines("en", { ...h, nameEn: "Joshi family" }, { family: true })).toEqual(["Joshi family"]);
+    expect(cardLines("mr", h)).toEqual(["अनिता तरे"]);
+  });
+  it("writes the place in Marathi on the Marathi card when the event has it", () => {
+    const h = { nameEn: "Anita Tare", nameMr: "अनिता तरे", location: "Borivali, Mumbai" };
+    const placesMr = { "Borivali, Mumbai": "बोरिवली, मुंबई" };
+    expect(cardLines("mr", h, { placesMr })).toEqual(["अनिता तरे", "बोरिवली, मुंबई"]);
+    expect(cardLines("en", h, { placesMr })).toEqual(["Anita Tare", "Borivali, Mumbai"]);
+    expect(cardLines("mr", { ...h, location: "Pune" }, { placesMr })).toEqual(["अनिता तरे", "Pune"]);
+    expect(readPlaces({ "Borivali, Mumbai": " बोरिवली ", Pune: "", Thane: 3 })).toEqual({ "Borivali, Mumbai": "बोरिवली" });
+  });
+  it("keeps the family setting with a placement", () => {
+    expect(parseLayout(DEFAULT_LAYOUT.mr)?.family).toBe(true);
+    expect(parseLayout({ ...DEFAULT_LAYOUT.en, family: "yes" })?.family).toBe(false);
   });
   it("accepts a sensible placement and refuses one off the page", () => {
     expect(parseLayout(DEFAULT_LAYOUT.en)).toEqual(DEFAULT_LAYOUT.en);
@@ -22,6 +42,14 @@ describe("name on the invitation card", () => {
     const saved = readLayouts({ "bride-en": DEFAULT_LAYOUT.en, "bride-mr": { x: 2 }, "groom-xx": DEFAULT_LAYOUT.mr });
     expect(Object.keys(saved)).toEqual(["bride-en"]);
     expect(readLayouts(null)).toEqual({});
+  });
+  it("puts a long name on two lines, as many words first as fit", () => {
+    const w = (t: string) => t.length; // one unit per character
+    expect(wrapName("Anita Tare", w, 20)).toEqual(["Anita Tare"]);
+    expect(wrapName("Shri Anil Ramchandra Deshpande and family", w, 20)).toEqual(["Shri Anil Ramchandra", "Deshpande and family"]);
+    expect(wrapName("Supercalifragilistic", w, 10)).toEqual(["Supercalifragilistic"]);
+    expect(wrapName("Averyveryverylongword short", w, 10)).toEqual(["Averyveryverylongword", "short"]);
+    expect(wrapName("  अनिता   तरे ", w, 20)).toEqual(["अनिता तरे"]);
   });
   it("names the file and knows its type", () => {
     expect(cardFileName("Anita / Tare", "pdf")).toBe("Invitation card - Anita Tare.pdf");

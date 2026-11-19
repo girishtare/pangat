@@ -1,4 +1,4 @@
-import { CARD_INK, type CardLang, type NameLayout } from "@/lib/cardName";
+import { CARD_INK, wrapName, type CardLang, type NameLayout } from "@/lib/cardName";
 
 // Writes a guest's name and place onto page 1 of their invitation card, in the
 // browser. The letters are drawn by the browser (which joins Marathi letters
@@ -12,6 +12,25 @@ interface Drawn {
   canvas: HTMLCanvasElement;
   /** Pixels from the canvas top to the text's baseline. */
   baseline: number;
+}
+
+/**
+ * The lines to write: the name (on one line, or two when it's long), then the
+ * place on the next line. The letter size is the layout's, made smaller only
+ * when a name line still doesn't fit (one very long word); the place shrinks
+ * on its own if it must.
+ */
+async function fitLines(lines: string[], fontPx: number, maxWidth: number, family: string, lang: CardLang): Promise<{ lines: string[]; px: number }> {
+  const style = lang === "en" ? "italic " : "";
+  await document.fonts.load(`${style}${Math.round(fontPx)}px ${family}`, lines.join(" "));
+  const g = document.createElement("canvas").getContext("2d")!;
+  g.font = `${style}${fontPx}px ${family}`;
+  const width = (s: string) => g.measureText(s).width;
+  const [name = "", place = ""] = lines;
+  const nameLines = wrapName(name, width, maxWidth);
+  const widest = Math.max(...nameLines.map(width));
+  const px = widest > maxWidth ? Math.max(fontPx * 0.55, (fontPx * maxWidth) / widest) : fontPx;
+  return { lines: place ? [...nameLines, place] : nameLines, px };
 }
 
 /** One line of text on its own canvas, shrunk to fit `maxWidth` (pixels), at most `fontPx` high. */
@@ -48,7 +67,16 @@ function canvasPng(c: HTMLCanvasElement): Promise<Uint8Array> {
  * The card with the lines written in. `type` is the card's file type
  * ("application/pdf" or an image type); `family` the CSS font family.
  */
-export async function makeNamedCard(file: ArrayBuffer, type: string, lines: string[], layout: NameLayout, family: string, lang: CardLang): Promise<Blob> {
+export async function makeNamedCard(
+  file: ArrayBuffer,
+  type: string,
+  lines: string[],
+  layout: NameLayout,
+  family: string,
+  lang: CardLang,
+  /** For the placement preview: page 1 only, optionally cut to a band of it (fractions of the page height, from the top). */
+  preview?: { band?: [number, number] },
+): Promise<Blob> {
   if (type === "application/pdf") {
     const { PDFDocument } = await import("pdf-lib");
     const pdf = await PDFDocument.load(file);
@@ -56,9 +84,10 @@ export async function makeNamedCard(file: ArrayBuffer, type: string, lines: stri
     // The visible page (crop box), which needn't start at 0,0: on the 19 Nov cards page 1 starts
     // 42 points in and 79 up, and placing from 0,0 put the name 79 points too low.
     const { x: X0, y: Y0, width: W, height: H } = page.getCropBox();
-    for (let i = 0; i < lines.length; i++) {
-      if (!lines[i]) continue;
-      const d = await drawLine(lines[i], layout.size * H * SCALE, layout.w * W * SCALE, family, lang);
+    const fit = await fitLines(lines, layout.size * H * SCALE, layout.w * W * SCALE, family, lang);
+    for (let i = 0; i < fit.lines.length; i++) {
+      if (!fit.lines[i]) continue;
+      const d = await drawLine(fit.lines[i], fit.px, layout.w * W * SCALE, family, lang);
       const img = await pdf.embedPng(await canvasPng(d.canvas));
       const baselineFromTop = (layout.y1 + i * layout.gap) * H;
       page.drawImage(img, {
@@ -68,6 +97,13 @@ export async function makeNamedCard(file: ArrayBuffer, type: string, lines: stri
         width: d.canvas.width / SCALE,
         height: d.canvas.height / SCALE,
       });
+    }
+    if (preview) {
+      for (let p = pdf.getPageCount() - 1; p > 0; p--) pdf.removePage(p);
+      if (preview.band) {
+        const [top, bottom] = preview.band;
+        page.setCropBox(X0, Y0 + H * (1 - bottom), W, H * (bottom - top));
+      }
     }
     const bytes = await pdf.save();
     return new Blob([bytes as BlobPart], { type: "application/pdf" });
@@ -89,9 +125,10 @@ export async function makeNamedCard(file: ArrayBuffer, type: string, lines: stri
     c.height = H;
     const g = c.getContext("2d")!;
     g.drawImage(img, 0, 0);
-    for (let i = 0; i < lines.length; i++) {
-      if (!lines[i]) continue;
-      const d = await drawLine(lines[i], layout.size * H, layout.w * W, family, lang);
+    const fit = await fitLines(lines, layout.size * H, layout.w * W, family, lang);
+    for (let i = 0; i < fit.lines.length; i++) {
+      if (!fit.lines[i]) continue;
+      const d = await drawLine(fit.lines[i], fit.px, layout.w * W, family, lang);
       g.drawImage(d.canvas, layout.x * W, (layout.y1 + i * layout.gap) * H - d.baseline);
     }
     return await new Promise<Blob>((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas"))), "image/jpeg", 0.92));

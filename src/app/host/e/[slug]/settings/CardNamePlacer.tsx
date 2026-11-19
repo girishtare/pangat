@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Minus, Plus } from "lucide-react";
-import { cardLines, DEFAULT_LAYOUT, type CardLang, type NameLayout } from "@/lib/cardName";
+import { cardLines, DEFAULT_LAYOUT, FAMILY_WORD, type CardLang, type NameLayout } from "@/lib/cardName";
 import type { Side } from "@/lib/types";
 import { makeNamedCard } from "../../../../ui/namedCard";
 import { saveCardNameLayout } from "./actions";
@@ -24,6 +24,7 @@ export default function CardNamePlacer({
   saved,
   family,
   fontClass,
+  placesMr,
 }: {
   slug: string;
   side: Side;
@@ -33,16 +34,19 @@ export default function CardNamePlacer({
   saved: NameLayout | null;
   family: string;
   fontClass: string;
+  placesMr: Record<string, string>;
 }) {
   const router = useRouter();
   const [layout, setLayout] = useState<NameLayout>(saved ?? DEFAULT_LAYOUT[lang]);
   const [file, setFile] = useState<ArrayBuffer | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  // Whole page 1 fitted in the box, or a close-up of the lines (owner, 19 Nov: no scrolling after each nudge).
+  const [view, setView] = useState<"page" | "close">("page");
   const [problem, setProblem] = useState<string | null>(null);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, start] = useTransition();
   const lastUrl = useRef<string | null>(null);
-  const lines = cardLines(lang, sample);
+  const lines = cardLines(lang, sample, { family: layout.family, placesMr });
   const changed = !saved || (Object.keys(layout) as (keyof NameLayout)[]).some((k) => layout[k] !== saved[k]);
 
   useEffect(() => {
@@ -57,7 +61,9 @@ export default function CardNamePlacer({
     if (!file) return;
     const timer = setTimeout(async () => {
       try {
-        const blob = await makeNamedCard(file, type, lines, layout, family, lang);
+        const top = Math.max(0, layout.y1 - 0.08);
+        const bottom = Math.min(1, layout.y1 + layout.gap * 2 + 0.08); // up to three lines
+        const blob = await makeNamedCard(file, type, lines, layout, family, lang, { band: view === "close" ? [top, bottom] : undefined });
         const url = URL.createObjectURL(blob);
         if (lastUrl.current) URL.revokeObjectURL(lastUrl.current);
         lastUrl.current = url;
@@ -68,12 +74,13 @@ export default function CardNamePlacer({
       }
     }, 250);
     return () => clearTimeout(timer);
-    // lines/type/family don't change while the page is open
+    // type/family font don't change while the page is open; lines follow the layout (family word)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file, layout]);
+  }, [file, layout, view, placesMr]);
   useEffect(() => () => void (lastUrl.current && URL.revokeObjectURL(lastUrl.current)), []);
 
-  const nudge = (k: keyof NameLayout, by: number) => setLayout((l) => ({ ...l, [k]: round(Math.min(1, Math.max(0, l[k] + by))) }));
+  type Num = Exclude<keyof NameLayout, "family">;
+  const nudge = (k: Num, by: number) => setLayout((l) => ({ ...l, [k]: round(Math.min(1, Math.max(0, l[k] + by))) }));
   const save = (value: NameLayout | null) =>
     start(async () => {
       const r = await saveCardNameLayout(slug, side, lang, value);
@@ -88,7 +95,7 @@ export default function CardNamePlacer({
       {children}
     </button>
   );
-  const row = (title: string, k: keyof NameLayout, step: number, less: [string, ReactNode], more: [string, ReactNode]) => (
+  const row = (title: string, k: Num, step: number, less: [string, ReactNode], more: [string, ReactNode]) => (
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm font-semibold">{title}</span>
       <span className="flex gap-2">
@@ -122,7 +129,16 @@ export default function CardNamePlacer({
           {row("Letter size", "size", 0.001, ["Smaller", <Minus key="s" className={icon} />], ["Larger", <Plus key="b" className={icon} />])}
           {row("Space between lines", "gap", 0.002, ["Lines closer", <Minus key="c" className={icon} />], ["Lines further apart", <Plus key="f" className={icon} />])}
           {row("Line length", "w", 0.01, ["Shorter", <Minus key="n" className={icon} />], ["Longer", <Plus key="w" className={icon} />])}
-          <p className="hint">A long name is made smaller to fit the line length.</p>
+          <p className="hint">A name too long for the line goes on to the next line, and the place one line further down.</p>
+          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
+              checked={!!layout.family}
+              onChange={(e) => setLayout((l) => ({ ...l, family: e.target.checked }))}
+              className="h-5 w-5 accent-kumkum"
+            />
+            Add &ldquo;<span lang={lang}>{FAMILY_WORD[lang]}</span>&rdquo; after the name
+          </label>
           <div className="flex flex-wrap gap-2 pt-2">
             <button type="button" disabled={saving || !changed} onClick={() => save(layout)} className="btn btn-primary btn-sm min-h-11">
               {saving ? "Saving…" : saved ? "Save changes" : "Save and turn on"}
@@ -144,15 +160,35 @@ export default function CardNamePlacer({
           {status && <p className={`text-sm font-semibold ${status.ok ? "text-leaf" : "text-kumkum"}`}>{status.text}</p>}
         </div>
         <div className="min-w-0">
+          {type === "application/pdf" && (
+            <div role="group" aria-label="Preview" className="mb-2 inline-flex gap-1 rounded-xl bg-paper-deep p-1">
+              {(["page", "close"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={view === v}
+                  onClick={() => setView(v)}
+                  className={`min-h-10 rounded-lg px-3 text-sm font-bold ${view === v ? "bg-card text-kumkum shadow-sm" : "text-ink hover:bg-card/70"}`}
+                >
+                  {v === "page" ? "Whole page" : "Close-up"}
+                </button>
+              ))}
+            </div>
+          )}
           {problem ? (
             <p className="text-sm font-semibold text-kumkum">{problem}</p>
           ) : !preview ? (
             <p className="text-sm text-ink-soft">Loading the card…</p>
           ) : type === "application/pdf" ? (
-            <iframe src={`${preview}#page=1&view=FitH&toolbar=0`} title="Card with the sample name" className="h-[32rem] w-full rounded-lg border border-line bg-paper" />
+            <iframe
+              key={preview}
+              src={`${preview}#page=1&view=Fit&toolbar=0&navpanes=0`}
+              title="Card with the sample name"
+              className={`${view === "close" ? "h-[14rem]" : "h-[32rem]"} w-full rounded-lg border border-line bg-paper`}
+            />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="Card with the sample name" className="w-full rounded-lg border border-line" />
+            <img src={preview} alt="Card with the sample name" className="max-h-[32rem] w-full rounded-lg border border-line object-contain" />
           )}
         </div>
       </div>

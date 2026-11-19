@@ -29,7 +29,7 @@ export default async function GuestCard({ params, searchParams }: { params: Prom
   const url = await cardSignedUrl(card.path);
   if (!card.layout) redirect(url);
 
-  const lines = cardLines(lang, card);
+  const lines = cardLines(lang, card, { family: card.layout.family, placesMr: card.placesMr });
   const type = cardTypeOf(card.path);
   return (
     <main className={`${shell} flex flex-col items-center px-5 py-8`}>
