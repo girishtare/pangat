@@ -8,6 +8,7 @@ import { saveInviteModes } from "../guests/inviteActions";
 import type { MessageKind } from "@/lib/outreach";
 import { ReplyBadge, SideBadge, WhatsAppIcon } from "../../../../ui/kit";
 import { recordSend } from "./actions";
+import { ShareCardButton } from "./ShareCard";
 import { SendButton } from "./WhatsAppForms";
 
 export interface ListRow {
@@ -95,7 +96,23 @@ function sortRows(rows: ListRow[], key: SortKey, dir: "asc" | "desc"): ListRow[]
   return [...rows].sort((a, b) => cmp(a, b) || byName(a, b));
 }
 
-export default function DistributionList({ slug, kind, rows, showSide }: { slug: string; kind: MessageKind; rows: ListRow[]; showSide: boolean }) {
+/** The invitation message inside a wa.me link. */
+const messageOf = (href: string) => new URL(href).searchParams.get("text") ?? "";
+
+export default function DistributionList({
+  slug,
+  kind,
+  rows,
+  showSide,
+  cardFont,
+}: {
+  slug: string;
+  kind: MessageKind;
+  rows: ListRow[];
+  showSide: boolean;
+  /** The font names are written in on the card (Share card). */
+  cardFont: { family: string; className: string };
+}) {
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   // "Add to WA invitation" (owner, 14 Nov): a card-only household with a mobile gets WhatsApp too; the button then
   // becomes "Send invitation". Shown at once; saved on the household.
@@ -451,6 +468,12 @@ export default function DistributionList({ slug, kind, rows, showSide }: { slug:
               </div>
             </div>
             {r.href && <div className="mt-3">{sendCell(r, true)}</div>}
+            {/* Phones: the card with their name, attached in WhatsApp (owner, 19 Nov). */}
+            {kind === "invite" && r.href && canSend(r) && (
+              <div className="mt-2">
+                <ShareCardButton slug={slug} householdId={r.id} text={messageOf(r.href)} family={cardFont.family} fontClass={cardFont.className} />
+              </div>
+            )}
           </li>
         ))}
       </ul>

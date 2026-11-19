@@ -11,6 +11,7 @@ const TEXT = {
     making: "Preparing your card…",
     open: "Open the card",
     save: "Save the card",
+    share: "Share the card",
     failed: "Your card couldn't be prepared here.",
     plain: "Open the card without your name",
     back: "Back to your reply",
@@ -20,6 +21,7 @@ const TEXT = {
     making: "पत्रिका तयार होत आहे…",
     open: "पत्रिका उघडा",
     save: "पत्रिका जतन करा",
+    share: "पत्रिका पाठवा",
     failed: "पत्रिका इथे तयार होऊ शकली नाही.",
     plain: "नावाशिवाय पत्रिका उघडा",
     back: "उत्तराकडे परत",
@@ -50,6 +52,8 @@ export default function NamedCardView({
 }) {
   const t = TEXT[lang];
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  // Phones can hand the made card to WhatsApp and other apps (owner, 19 Nov).
+  const [shareFile, setShareFile] = useState<File | null>(null);
   const [failed, setFailed] = useState(false);
   // ?debug=1: on a failure, stay and say which step failed and why (owner, 19 Nov: it failed on a phone).
   const [debug, setDebug] = useState<string | null>(null);
@@ -82,6 +86,12 @@ export default function NamedCardView({
         clearTimeout(slow);
         made = URL.createObjectURL(blob);
         setBlobUrl(made);
+        const f = new File([blob], fileName, { type: blob.type });
+        try {
+          if (navigator.canShare?.({ files: [f] })) setShareFile(f);
+        } catch {
+          // No sharing here: Open and Save still work.
+        }
       } catch (e) {
         clearTimeout(slow);
         fail(e instanceof Error ? `${e.name}: ${e.message}` : String(e));
@@ -122,6 +132,15 @@ export default function NamedCardView({
             <a href={blobUrl} download={fileName} className="btn btn-secondary min-h-[52px] text-base">
               {t.save}
             </a>
+            {shareFile && (
+              <button
+                type="button"
+                onClick={() => navigator.share({ files: [shareFile] }).catch(() => undefined)}
+                className="btn btn-secondary min-h-[52px] text-base"
+              >
+                {t.share}
+              </button>
+            )}
           </div>
           {isPdf ? (
             // Phones open the PDF in their own viewer (the buttons above); laptops also see it here.

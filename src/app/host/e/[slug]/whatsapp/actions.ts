@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { hostGate } from "@/lib/host";
 import { DEFAULT_TEXT, type MessageKind } from "@/lib/outreach";
 import { readCount } from "@/lib/pilot";
-import { addEffort, loadHousehold, recordNudge, saveMessageText, setInviteModes, setInviteSent } from "@/lib/store/admin";
+import { cardLines, cardTypeOf, type CardLang, type NameLayout } from "@/lib/cardName";
+import { addEffort, cardSignedUrl, loadHousehold, namedCardForGuest, recordNudge, saveMessageText, setInviteModes, setInviteSent } from "@/lib/store/admin";
 
 export type FormState = { ok: boolean; message: string } | null;
 
@@ -25,6 +26,48 @@ export async function recordSend(slug: string, householdId: string, kind: Messag
   }
   revalidatePath(`/host/e/${slug}/whatsapp`);
   return { ok: true };
+}
+
+export interface CardToShare {
+  /** A link to the card file that works for an hour. */
+  url: string;
+  type: string;
+  lang: CardLang;
+  /** Where the name goes (null: send the plain card) and the lines to write. */
+  layout: NameLayout | null;
+  lines: string[];
+  /** For the file name: "Invitation card - <name>.pdf". */
+  name: string;
+}
+
+/**
+ * The household's invitation card(s) for Share card (owner, 19 Nov): their side's card in their language
+ * (Both: Marathi and English), with the lines to write on it.
+ */
+export async function cardsToShare(slug: string, householdId: string): Promise<{ ok: true; cards: CardToShare[] } | { ok: false; message: string }> {
+  const gate = await hostGate(slug);
+  if (!gate.ok) return { ok: false, message: "Please sign in again." };
+  const hh = await loadHousehold(gate.host.event.id, householdId);
+  if (!hh || (gate.host.side && gate.host.side !== hh.side)) return { ok: false, message: "That household isn't on your list." };
+  const langs: CardLang[] = hh.slipLang === "both" ? ["mr", "en"] : [hh.slipLang];
+  const cards: CardToShare[] = [];
+  for (const lang of langs) {
+    const c = await namedCardForGuest(hh.token, lang);
+    if (!c) continue;
+    cards.push({
+      url: await cardSignedUrl(c.path),
+      type: cardTypeOf(c.path),
+      lang,
+      layout: c.layout,
+      lines: c.layout ? cardLines(lang, c, { family: c.layout.family, placesMr: c.placesMr }) : [],
+      name: langs.length > 1 ? `${c.nameEn} (${lang === "mr" ? "Marathi" : "English"})` : c.nameEn,
+    });
+  }
+  if (!cards.length) {
+    const side = hh.side === "bride" ? "bride's side" : "groom's side";
+    return { ok: false, message: `No invitation card is uploaded for the ${side} in this language yet (Event settings, Invitation card).` };
+  }
+  return { ok: true, cards };
 }
 
 export async function saveText(slug: string, kind: MessageKind, _prev: FormState, fd: FormData): Promise<FormState> {
