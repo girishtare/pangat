@@ -4,6 +4,7 @@ import { supabaseConfig } from "../supabase/config";
 import type { MessageKind } from "../outreach";
 import type { FunctionNumbers } from "../pilot";
 import type { Side } from "../types";
+import { readLayouts, type CardKey, type NameLayout } from "../cardName";
 import { coOwnerInviteCard } from "../emailDesign";
 import { onlyChangedReplies } from "./changed";
 import { mailConfigured, sendCardMail } from "../mail";
@@ -1086,6 +1087,36 @@ export async function cardSignedUrl(path: string): Promise<string> {
   const { data, error } = await admin().storage.from(CARDS).createSignedUrl(path, 3600);
   if (error || !data) throw new Error(`card link failed: ${error?.message}`);
   return data.signedUrl;
+}
+
+/** Saves (or, with null, removes) where the guest's name goes on one card. */
+export async function setCardNameLayout(eventId: string, key: CardKey, layout: NameLayout | null): Promise<void> {
+  const { data: ev, error: readError } = await admin().from("events").select("card_name_layout").eq("id", eventId).single();
+  if (readError) throw new Error(`card layout lookup failed: ${readError.message}`);
+  const all = { ...readLayouts(ev?.card_name_layout) } as Record<string, NameLayout>;
+  if (layout) all[key] = layout;
+  else delete all[key];
+  const { error } = await admin().from("events").update({ card_name_layout: Object.keys(all).length ? all : null }).eq("id", eventId);
+  if (error) throw new Error(`saving the card layout failed: ${error.message}`);
+}
+
+/** What a guest's own card needs: the card, where the name goes (if set), and their name and place. */
+export async function namedCardForGuest(
+  token: string,
+  lang: CardLang,
+): Promise<{ path: string; layout: NameLayout | null; nameEn: string; nameMr: string | null; location: string | null } | null> {
+  const { data, error } = await admin()
+    .from("households")
+    .select("side, name_en, name_mr, location, events(card_bride_en_path, card_bride_mr_path, card_groom_en_path, card_groom_mr_path, card_name_layout)")
+    .eq("token", token)
+    .maybeSingle();
+  if (error) throw new Error(`card lookup failed: ${error.message}`);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const row = data as any;
+  const path = row?.events?.[`card_${row.side}_${lang}_path`] ?? null;
+  if (!path) return null;
+  const layout = readLayouts(row.events.card_name_layout)[`${row.side as Side}-${lang}` as CardKey] ?? null;
+  return { path, layout, nameEn: row.name_en, nameMr: row.name_mr ?? null, location: row.location ?? null };
 }
 
 /** A guest's card, by their household's token: their own side's card in that language, if the event has it. */
