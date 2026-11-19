@@ -122,6 +122,11 @@ export default async function WhatsApp({
             ))}
             : they&apos;re filled in for each family. The Marathi is a first draft: have a native reader check it.
           </p>
+          <p className="mb-3 text-[0.9375rem] text-ink-soft">
+            <code className="rounded bg-paper-deep px-1 font-mono text-sm text-ink">{"{card_mr}"}</code> and{" "}
+            <code className="rounded bg-paper-deep px-1 font-mono text-sm text-ink">{"{card_en}"}</code> are the invitation card links. A line
+            with one is left out when that card isn&apos;t uploaded. A message without them gets the card links at the end.
+          </p>
           <TextEditor slug={slug} kind={kind} text={template} canEdit={host.canManage} isDefault={!host.event.messageText[kind]} />
         </section>
 

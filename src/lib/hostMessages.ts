@@ -1,7 +1,7 @@
 import "server-only";
 import type { HostContext } from "./host";
 import { formatDay } from "./i18n";
-import { DEFAULT_TEXT, displayPhone, fillMessage, guestLink, textForLanguage, whatsappLink, type MessageKind } from "./outreach";
+import { CARD_PLACEHOLDERS, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, textForLanguage, whatsappLink, type MessageKind } from "./outreach";
 import type { Bilingual, Side } from "./types";
 
 interface Recipient {
@@ -22,7 +22,9 @@ interface Recipient {
 export function householdMessage(host: HostContext, base: string, g: Recipient, kind: MessageKind): string {
   const name: Bilingual = host.event.name;
   const lang = g.slipLang ?? "both";
-  return withCardLinks(host, base, g, fillMessage(textForLanguage(host.event.messageText[kind] ?? DEFAULT_TEXT[kind], lang), {
+  const template = host.event.messageText[kind] ?? DEFAULT_TEXT[kind];
+  const cards = cardLinks(host, base, g);
+  const filled = fillMessage(textForLanguage(template, lang), {
     name: g.nameEn,
     nameMr: g.nameMr,
     event: name.en,
@@ -31,22 +33,29 @@ export function householdMessage(host: HostContext, base: string, g: Recipient, 
     dateMr: formatDay(host.event.cutoffAt, "mr"),
     phone: displayPhone(host.event.contactPhone[g.side]),
     link: guestLink(base, g.token, "link", lang === "both" ? undefined : lang),
-  }));
+    cardMr: cards.mr,
+    cardEn: cards.en,
+  });
+  // A card the text doesn't place itself goes at the end, as before {card_mr} and {card_en} existed.
+  const tail: string[] = [];
+  if (cards.mr && !template.includes(CARD_PLACEHOLDERS.mr)) tail.push(`निमंत्रण पत्रिका: ${cards.mr}`);
+  if (cards.en && !template.includes(CARD_PLACEHOLDERS.en)) tail.push(`Invitation card: ${cards.en}`);
+  return tail.length ? `${filled}\n\n${tail.join("\n")}` : filled;
 }
 
 /**
  * WhatsApp links can't carry a file, so the invitation card goes as a link:
  * Marathi, English or both, by the household's slip language, for each of
- * its side's cards the owner has uploaded.
+ * its side's cards the owner has uploaded (null where there is none).
  */
-function withCardLinks(host: HostContext, base: string, g: Recipient, text: string): string {
+function cardLinks(host: HostContext, base: string, g: Recipient): { mr: string | null; en: string | null } {
   const lang = g.slipLang ?? "both";
   const root = base.replace(/\/+$/, "");
-  const lines: string[] = [];
   const cards = host.event.cards[g.side]; // the household's own side's card
-  if (cards.mr && lang !== "en") lines.push(`निमंत्रण पत्रिका: ${root}/r/${g.token}/card?l=mr`);
-  if (cards.en && lang !== "mr") lines.push(`Invitation card: ${root}/r/${g.token}/card?l=en`);
-  return lines.length ? `${text}\n\n${lines.join("\n")}` : text;
+  return {
+    mr: cards.mr && lang !== "en" ? `${root}/r/${g.token}/card?l=mr` : null,
+    en: cards.en && lang !== "mr" ? `${root}/r/${g.token}/card?l=en` : null,
+  };
 }
 
 /** wa.me link with that message, or null if the household has no usable mobile. */

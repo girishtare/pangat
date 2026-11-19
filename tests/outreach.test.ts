@@ -26,6 +26,19 @@ describe("messages", () => {
     expect(fillMessage(DEFAULT_TEXT.reminder, vars)).not.toMatch(/\{[a-z_]+\}/);
   });
 
+  it("puts the card links where the text says, and drops a card line with no card", () => {
+    const both = fillMessage(DEFAULT_TEXT.invite, { ...vars, cardMr: "https://c/mr", cardEn: "https://c/en" });
+    expect(both).toContain("निमंत्रण पत्रिका: https://c/mr\nकृपया");
+    expect(both).toContain("Invitation card: https://c/en\nPlease tell us");
+    const none = fillMessage(DEFAULT_TEXT.invite, vars);
+    expect(none).not.toContain("निमंत्रण पत्रिका");
+    expect(none).not.toContain("Invitation card");
+    expect(none).toContain("सस्नेह निमंत्रण.\nकृपया");
+    const enOnly = fillMessage(DEFAULT_TEXT.invite, { ...vars, cardEn: "https://c/en" });
+    expect(enOnly).not.toContain("निमंत्रण पत्रिका");
+    expect(enOnly).toContain("Invitation card: https://c/en");
+  });
+
   it("leaves unknown braces alone and handles a missing phone", () => {
     expect(fillMessage("{phone}|{nope}|{name}", { ...vars, phone: null })).toBe("|{nope}|Shri. A. Joshi & family");
     // New _en names and the old unsuffixed ones fill the same.
