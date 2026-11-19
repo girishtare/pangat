@@ -2,12 +2,13 @@
 
 import InviteByField from "../InviteByField";
 import PhoneInput from "../../../../../ui/PhoneInput";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useMarathiSuggest } from "../../../../../ui/useMarathiSuggest";
 import { announceSaved, closeIfOpenedAsTab } from "../../../../../ui/tabSync";
-import { Check, Copy, Save, Trash } from "lucide-react";
+import { Check, ChevronLeft, Copy, Languages, Save, Trash } from "lucide-react";
 import type { Side } from "@/lib/types";
 import { Alert } from "../../../../../ui/kit";
-import { MarathiInput } from "../../../../../ui/MarathiInput";
 import { recordReply, removeHousehold, saveHousehold, type FormState } from "./actions";
 import { useFormAction } from "../../../../../ui/useFormAction";
 
@@ -182,70 +183,186 @@ export function DetailsForm(props: {
   lang: "both" | "en" | "mr";
   inviteBy: { card: boolean; wa: boolean };
   functions: { id: string; name: string; invited: boolean; replied: boolean }[];
+  /** The event's places as typed, and their Marathi (Places in Marathi). */
+  places: string[];
+  placesMr: Record<string, string>;
+  isOwner: boolean;
 }) {
   const [state, action, pending] = useFormAction(saveHousehold.bind(null, props.slug, props.id), { keep: true });
-  useAfterSave(props.slug, state);
+  const router = useRouter();
+  const then = useRef<"stay" | "back">("stay");
+  const form = useRef<HTMLFormElement>(null);
+  const s = useMarathiSuggest();
+  const listId = useId();
+  const field = (n: string) => form.current?.elements.namedItem(n) as HTMLInputElement | null;
+
+  // After a save: refresh the Guest list elsewhere; close this tab if it was opened from the list;
+  // "Save and back" in the same tab goes back to the list.
+  useEffect(() => {
+    if (!state?.ok) return;
+    announceSaved(props.slug);
+    const back = then.current === "back";
+    const t = setTimeout(() => {
+      if (!closeIfOpenedAsTab() && back) router.push(`/host/e/${props.slug}/guests`);
+    }, back ? 300 : 600);
+    return () => clearTimeout(t);
+    // Once per save.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const submitter = (e.nativeEvent as SubmitEvent).submitter;
+    then.current = submitter instanceof HTMLButtonElement && submitter.value === "back" ? "back" : "stay";
+    action(e);
+  };
+
+  // A place already used in this event: fill its Marathi, if the box is empty.
+  const fillPlace = () => {
+    const en = field("location")?.value.trim() ?? "";
+    const mr = field("locationMr");
+    if (en && mr && !mr.value.trim() && props.placesMr[en]) mr.value = props.placesMr[en];
+  };
+  const suggestBoth = () =>
+    s.suggest(
+      [
+        { kind: "household", english: field("nameEn")?.value ?? "", input: field("nameMr") },
+        { kind: "place", english: field("location")?.value ?? "", input: field("locationMr") },
+      ],
+      { onlyEmpty: true, emptyMessage: "Type the English name or location first." },
+    );
+  const sub = "mb-1 block text-sm text-ink-soft";
+  const forget = (e: FormEvent<HTMLInputElement>) => e.nativeEvent.isTrusted && s.canUndo && s.forgetUndo();
+
   return (
-    <form onSubmit={action} className="space-y-4">
-      <label className="block">
-        <span className="label">Name in English</span>
-        <input name="nameEn" required maxLength={120} defaultValue={props.nameEn} className="input" />
-      </label>
-      <MarathiInput label="Name in Marathi" kind="household" from="nameEn" defaultValue={props.nameMr} />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="label">Mobile</span>
+    <form id="household-details" ref={form} onSubmit={onSubmit} className="space-y-3">
+      <fieldset className="min-w-0">
+        <legend className="label">Name</legend>
+        <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+          <label className="block">
+            <span className={sub}>In English</span>
+            <input name="nameEn" required maxLength={120} defaultValue={props.nameEn} aria-label="Name in English" className="input" />
+          </label>
+          <label className="block">
+            <span className={sub}>In Marathi</span>
+            <input name="nameMr" lang="mr" maxLength={120} defaultValue={props.nameMr ?? ""} aria-label="Name in Marathi" className="input" onInput={forget} />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset className="min-w-0">
+        <legend className="label">
+          Location <span className="font-normal text-ink-soft">(where they stay)</span>
+        </legend>
+        <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+          <label className="block">
+            <span className={sub}>In English</span>
+            <input
+              name="location"
+              maxLength={80}
+              list={listId}
+              autoComplete="off"
+              defaultValue={props.location ?? ""}
+              aria-label="Location in English"
+              className="input"
+              placeholder="e.g. Borivali, Mumbai"
+              onChange={fillPlace}
+              onBlur={fillPlace}
+            />
+            <datalist id={listId}>
+              {props.places.map((p) => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
+          </label>
+          <label className="block">
+            <span className={sub}>In Marathi</span>
+            <input
+              name="locationMr"
+              lang="mr"
+              maxLength={80}
+              defaultValue={props.location ? (props.placesMr[props.location] ?? "") : ""}
+              aria-label="Location in Marathi"
+              className="input"
+              placeholder="उदा. बोरिवली, मुंबई"
+              onInput={forget}
+            />
+            {!props.isOwner && <span className="hint mt-1 block">Only the owner can save a new Marathi place.</span>}
+          </label>
+        </div>
+      </fieldset>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <span className="hint hidden sm:block">Fills both Marathi boxes from the English. Check before you save.</span>
+        <button type="button" onClick={suggestBoth} disabled={s.pending} className="btn btn-secondary min-h-11 w-full shrink-0 sm:w-auto">
+          <Languages className="h-5 w-5" aria-hidden="true" />
+          {s.pending ? "Suggesting…" : "Suggest Marathi"}
+        </button>
+      </div>
+      {s.note && (
+        <p role={s.note.ok ? "status" : "alert"} className={`text-sm sm:text-right ${s.note.ok ? "text-ink-soft" : "text-kumkum"}`}>
+          {s.note.text}{" "}
+          {s.note.ok && s.canUndo && (
+            <button type="button" onClick={s.undo} className="inline-flex min-h-11 items-center font-bold text-kumkum underline underline-offset-2">
+              Undo
+            </button>
+          )}
+        </p>
+      )}
+
+      <hr className="border-line" />
+
+      <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+        {props.hostSide ? (
+          <div>
+            <p className="label">Side</p>
+            <p className="flex min-h-11 items-center">{props.side === "bride" ? "Bride's side" : "Groom's side"}</p>
+          </div>
+        ) : (
+          <fieldset className="min-w-0">
+            <legend className="label">Side</legend>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="choice relative min-h-11">
+                <input type="radio" name="side" value="bride" defaultChecked={props.side === "bride"} /> Bride&apos;s side
+              </label>
+              <label className="choice relative min-h-11">
+                <input type="radio" name="side" value="groom" defaultChecked={props.side === "groom"} /> Groom&apos;s side
+              </label>
+            </div>
+          </fieldset>
+        )}
+        <label className="block min-w-0">
+          <span className="label">
+            Mobile <span className="font-normal text-ink-soft">(for WhatsApp; blank if none)</span>
+          </span>
           <PhoneInput name="mobile" label="Mobile" defaultValue={props.mobile} />
         </label>
-        <label className="block">
-          <span className="label">
-            Guest Count <span className="font-normal text-ink-soft">(optional)</span>
-          </span>
-          <input name="cap" type="number" min={1} max={30} defaultValue={props.softCap ?? ""} className="input" />
-        </label>
-      </div>
-      <label className="block">
-        <span className="label">
-          Location <span className="font-normal text-ink-soft">(where they stay)</span>
-        </span>
-        <input name="location" maxLength={80} defaultValue={props.location ?? ""} className="input" placeholder="e.g. Borivali, Mumbai" />
-      </label>
-      <fieldset>
-        <legend className="label">Language</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {(
-            [
-              ["mr", "मराठी", "mr"],
-              ["en", "English", undefined],
-              ["both", "Both", undefined],
-            ] as const
-          ).map(([value, label, l]) => (
-            <label key={value} className="choice relative">
-              <input type="radio" name="lang" value={value} defaultChecked={props.lang === value} /> <span lang={l}>{label}</span>
-            </label>
-          ))}
-        </div>
-        <span className="hint mt-1 block">Their slip, WhatsApp message and reply page use it. Both opens in Marathi; guests can switch.</span>
-      </fieldset>
-      <InviteByField card={props.inviteBy.card} wa={props.inviteBy.wa} />
-      {!props.hostSide && (
-        <fieldset>
-          <legend className="label">Side</legend>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="choice relative">
-              <input type="radio" name="side" value="bride" defaultChecked={props.side === "bride"} /> Bride&apos;s side
-            </label>
-            <label className="choice relative">
-              <input type="radio" name="side" value="groom" defaultChecked={props.side === "groom"} /> Groom&apos;s side
-            </label>
+
+        <fieldset className="min-w-0">
+          <legend className="label">
+            Language <span className="font-normal text-ink-soft">(slip, WhatsApp, reply page)</span>
+          </legend>
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                ["mr", "मराठी", "mr"],
+                ["en", "English", undefined],
+                ["both", "Both", undefined],
+              ] as const
+            ).map(([value, label, l]) => (
+              <label key={value} className="choice relative min-h-11">
+                <input type="radio" name="lang" value={value} defaultChecked={props.lang === value} /> <span lang={l}>{label}</span>
+              </label>
+            ))}
           </div>
         </fieldset>
-      )}
-      <fieldset>
+        <InviteByField card={props.inviteBy.card} wa={props.inviteBy.wa} hint={false} />
+      </div>
+
+      <fieldset className="min-w-0">
         <legend className="label">Invited to</legend>
         <div className="flex flex-wrap gap-2">
           {props.functions.map((f) => (
-            <label key={f.id} className="choice choice-check" title={f.replied ? "They have replied for this function" : undefined}>
+            <label key={f.id} className="choice choice-check min-h-11" title={f.replied ? "They have replied for this function" : undefined}>
               <input type="checkbox" name="functions" value={f.id} defaultChecked={f.invited} disabled={f.replied} />
               {f.name}
               {f.replied && <span className="text-xs font-normal">(replied)</span>}
@@ -254,18 +371,48 @@ export function DetailsForm(props: {
         </div>
         {props.functions.some((f) => f.replied) && <p className="hint mt-1">Functions they have replied to stay ticked.</p>}
       </fieldset>
-      <label className="block">
-        <span className="label">
-          Comments / Notes <span className="font-normal text-ink-soft">(optional)</span>
-        </span>
-        <textarea name="notes" maxLength={500} rows={3} defaultValue={props.notes ?? ""} className="input" />
-      </label>
+
+      <div className="grid gap-x-4 gap-y-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+        <label className="block">
+          <span className="label">
+            Guest Count <span className="font-normal text-ink-soft">(optional)</span>
+          </span>
+          <input name="cap" type="number" min={1} max={30} defaultValue={props.softCap ?? ""} className="input" />
+        </label>
+        <label className="block min-w-0">
+          <span className="label">
+            Comments / Notes <span className="font-normal text-ink-soft">(optional)</span>
+          </span>
+          <input name="notes" maxLength={500} defaultValue={props.notes ?? ""} className="input" />
+        </label>
+      </div>
+
       <Message state={state} />
-      <button type="submit" disabled={pending} className="btn btn-secondary w-full sm:w-auto">
+      <button type="submit" disabled={pending} className="btn btn-primary min-h-11 w-full sm:w-auto">
         <Save className="h-5 w-5" aria-hidden="true" />
-        {pending ? "Saving…" : "Save details"}
+        {pending && then.current === "stay" ? "Saving…" : "Save details"}
       </button>
     </form>
+  );
+}
+
+/**
+ * The link back to the Guest list, at the top of the household page (owner,
+ * 19 Nov): it saves the details first, like "Save details", then goes back
+ * (or closes this tab when it was opened from the list).
+ */
+export function SaveAndBack() {
+  return (
+    <button
+      type="submit"
+      form="household-details"
+      name="then"
+      value="back"
+      className="inline-flex min-h-11 items-center gap-1 font-bold text-kumkum hover:text-kumkum-dark"
+    >
+      <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+      Save and back to Guest list
+    </button>
   );
 }
 

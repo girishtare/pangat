@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
 import { displayPhone } from "@/lib/outreach";
@@ -8,7 +8,7 @@ import { loadHousehold } from "@/lib/store/admin";
 import { shortDay, shortStamp } from "@/lib/when";
 import { Alert, Section } from "../../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../../HostChrome";
-import { CopyLink, DeleteHousehold, DetailsForm, ReplyForm } from "./HouseholdForms";
+import { CopyLink, DeleteHousehold, DetailsForm, ReplyForm, SaveAndBack } from "./HouseholdForms";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +25,13 @@ export default async function Household({ params }: { params: Promise<{ slug: st
   if (!gate.ok) return <GateMessage gate={gate} title="Household" />;
   const { host } = gate;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const hh = await loadHousehold(host.event.id, id);
+  const [hh, placeRows] = await Promise.all([
+    loadHousehold(host.event.id, id),
+    host.client.from("households").select("location").eq("event_id", host.event.id).not("location", "is", null).range(0, 4999),
+  ]);
   if (!hh || (host.side && host.side !== hh.side)) notFound();
+  const places = [...new Set((placeRows.data ?? []).map((r) => String(r.location ?? "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const locationMr = hh.location ? (host.event.placeNamesMr[hh.location] ?? null) : null;
 
   const invited = host.functions.filter((f) => hh.functionIds.includes(f.id));
   const latest = hh.responses.map((r) => r.updatedAt).sort().at(-1);
@@ -35,11 +40,9 @@ export default async function Household({ params }: { params: Promise<{ slug: st
 
   return (
     <EventShell host={host} current="guests">
+      {/* Saves the details first, then back to the list (owner, 19 Nov). */}
       <nav aria-label="Breadcrumb" className="mb-3">
-        <Link href={`/host/e/${slug}/guests`} className="inline-flex min-h-11 items-center gap-1 font-bold text-kumkum hover:text-kumkum-dark">
-          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-          Guest list
-        </Link>
+        <SaveAndBack />
       </nav>
 
       <header className="card mb-5 flex flex-wrap items-center justify-between gap-4 p-[18px] sm:p-7">
@@ -55,7 +58,17 @@ export default async function Household({ params }: { params: Promise<{ slug: st
               {hh.side === "bride" ? "Bride's side" : "Groom's side"}
             </span>
             {hh.mobile ? <span>{displayPhone(hh.mobile)}</span> : <span className="font-bold text-kumkum">No mobile</span>}
-            {hh.location && <span>{hh.location}</span>}
+            {hh.location && (
+              <span>
+                {hh.location}
+                {locationMr && (
+                  <span lang="mr" className="text-ink-soft">
+                    {" "}
+                    · {locationMr}
+                  </span>
+                )}
+              </span>
+            )}
             <span>
               Code <span className="font-display text-base tracking-[0.2em]">{hh.shortCode}</span>
             </span>
@@ -133,6 +146,9 @@ export default async function Household({ params }: { params: Promise<{ slug: st
                 invited: hh.functionIds.includes(f.id),
                 replied: hh.responses.some((r) => r.functionId === f.id),
               }))}
+              places={places}
+              placesMr={host.event.placeNamesMr}
+              isOwner={host.canManage}
             />
           </Section>
           <DeleteHousehold slug={slug} id={hh.id} name={hh.nameEn} replied={hh.responses.length > 0} />

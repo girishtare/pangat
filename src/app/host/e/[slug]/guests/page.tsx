@@ -87,6 +87,7 @@ export default async function GuestList({
           g.nameEn.toLowerCase().includes(qLower) ||
           (g.nameMr ?? "").includes(q) ||
           (g.location ?? "").toLowerCase().includes(qLower) ||
+          (g.location ? (host.event.placeNamesMr[g.location] ?? "") : "").includes(q.trim()) ||
           (g.notes ?? "").toLowerCase().includes(qLower) ||
           g.shortCode === q.toUpperCase() ||
           (qDigits.length >= 4 && (g.mobile ?? "").includes(qDigits)),
@@ -362,7 +363,15 @@ export default async function GuestList({
                         <SideBadge side={g.side} />
                       </td>
                       <td className="whitespace-nowrap">{g.mobile ? displayPhone(g.mobile) : <span className="font-bold text-kumkum">No mobile</span>}</td>
-                      <td className="max-w-[12rem] text-sm">{g.location ?? <span className="text-ink-soft">—</span>}</td>
+                      <td className="max-w-[12rem] text-sm">
+                        {g.location ?? <span className="text-ink-soft">—</span>}
+                        {/* The place in Marathi, from Places in Marathi (owner, 19 Nov). */}
+                        {g.location && host.event.placeNamesMr[g.location] && (
+                          <span lang="mr" className="block text-ink-soft">
+                            {host.event.placeNamesMr[g.location]}
+                          </span>
+                        )}
+                      </td>
                       <td className="whitespace-nowrap font-display tracking-[0.2em]">{g.shortCode}</td>
                       <td className="text-sm">{invitedTo(g.functionIds)}</td>
                       <td>
@@ -442,7 +451,14 @@ export default async function GuestList({
                       {g.location && (
                         <>
                           <dt className="text-ink-soft">Location</dt>
-                          <dd className="text-right">{g.location}</dd>
+                          <dd className="text-right">
+                            {g.location}
+                            {host.event.placeNamesMr[g.location] && (
+                              <span lang="mr" className="block font-normal text-ink-soft">
+                                {host.event.placeNamesMr[g.location]}
+                              </span>
+                            )}
+                          </dd>
                         </>
                       )}
                       <dt className="text-ink-soft">Code</dt>
