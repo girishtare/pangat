@@ -140,7 +140,7 @@ export async function addHousehold(slug: string, _prev: AddState, formData: Form
       const before = await setPlaceNameMr(gate.host.event.id, place, placeMr);
       revalidatePath("/host", "layout");
       if (before && before !== placeMr) return { ...result, placeNote: `Marathi for ${place} updated for every household there.` };
-    } else if (gate.ok && gate.host.placeNamesMr[place] !== placeMr) {
+    } else if (gate.ok && gate.host.event.placeNamesMr[place] !== placeMr) {
       return { ...result, placeNote: "The Marathi place wasn't saved: only the owner can save a new Marathi place." };
     }
   }
