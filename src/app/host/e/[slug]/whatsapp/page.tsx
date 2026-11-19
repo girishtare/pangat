@@ -10,6 +10,7 @@ import { listGuests } from "@/lib/store/supabase";
 import { shortStamp } from "@/lib/when";
 import { Alert, EmptyState, PageHeader, PageTabs } from "../../../../ui/kit";
 import { EventShell, GateMessage } from "../../../HostChrome";
+import { cardFont } from "../../../../cardFont";
 import DistributionList from "./DistributionList";
 import { EffortForm, TextEditor } from "./WhatsAppForms";
 
@@ -183,6 +184,7 @@ export default async function WhatsApp({
             slug={slug}
             kind={kind}
             showSide={!host.side}
+            cardFont={{ family: `${cardFont.style.fontFamily}, serif`, className: cardFont.className }}
             rows={rows.map((g) => {
               const n = nudges.get(g.id);
               return {
@@ -210,6 +212,12 @@ export default async function WhatsApp({
           &quot;Invitation sent&quot; and &quot;Reminders&quot; record when the message was opened in WhatsApp from here; Pangat can&apos;t see
           whether it was actually sent.
         </p>
+        {kind === "invite" && (
+          <p className="hint mt-2 lg:hidden">
+            <b>Share card with their name</b> makes that household&apos;s invitation card with their name on it and attaches it, with the
+            message, in WhatsApp. WhatsApp then asks you to pick the contact.
+          </p>
+        )}
       </section>
       )}
 
