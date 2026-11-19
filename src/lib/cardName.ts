@@ -110,3 +110,16 @@ export function cardTypeOf(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
   return ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
 }
+
+/**
+ * A name too long for one line goes on to a second (owner, 19 Nov): the first
+ * line takes as many words as fit, the rest go below. `width` measures text in
+ * the card's font. One word, or a name that fits, stays on one line.
+ */
+export function wrapName(name: string, width: (s: string) => number, max: number): string[] {
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || width(words.join(" ")) <= max) return [words.join(" ")];
+  let i = words.length - 1;
+  while (i > 1 && width(words.slice(0, i).join(" ")) > max) i--;
+  return [words.slice(0, i).join(" "), words.slice(i).join(" ")];
+}

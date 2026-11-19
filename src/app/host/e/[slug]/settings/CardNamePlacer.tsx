@@ -62,7 +62,7 @@ export default function CardNamePlacer({
     const timer = setTimeout(async () => {
       try {
         const top = Math.max(0, layout.y1 - 0.08);
-        const bottom = Math.min(1, layout.y1 + layout.gap * Math.max(1, lines.length - 1) + 0.08);
+        const bottom = Math.min(1, layout.y1 + layout.gap * 2 + 0.08); // up to three lines
         const blob = await makeNamedCard(file, type, lines, layout, family, lang, { band: view === "close" ? [top, bottom] : undefined });
         const url = URL.createObjectURL(blob);
         if (lastUrl.current) URL.revokeObjectURL(lastUrl.current);
@@ -129,7 +129,7 @@ export default function CardNamePlacer({
           {row("Letter size", "size", 0.001, ["Smaller", <Minus key="s" className={icon} />], ["Larger", <Plus key="b" className={icon} />])}
           {row("Space between lines", "gap", 0.002, ["Lines closer", <Minus key="c" className={icon} />], ["Lines further apart", <Plus key="f" className={icon} />])}
           {row("Line length", "w", 0.01, ["Shorter", <Minus key="n" className={icon} />], ["Longer", <Plus key="w" className={icon} />])}
-          <p className="hint">A long name is made smaller to fit the line length.</p>
+          <p className="hint">A name too long for the line goes on to the next line, and the place one line further down.</p>
           <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
             <input
               type="checkbox"

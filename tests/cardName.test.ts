@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardFileName, cardLines, cardTypeOf, DEFAULT_LAYOUT, parseLayout, readLayouts, readPlaces } from "@/lib/cardName";
+import { cardFileName, cardLines, cardTypeOf, DEFAULT_LAYOUT, parseLayout, readLayouts, readPlaces, wrapName } from "@/lib/cardName";
 
 describe("name on the invitation card", () => {
   it("writes the name in the card's language, then the place", () => {
@@ -42,6 +42,14 @@ describe("name on the invitation card", () => {
     const saved = readLayouts({ "bride-en": DEFAULT_LAYOUT.en, "bride-mr": { x: 2 }, "groom-xx": DEFAULT_LAYOUT.mr });
     expect(Object.keys(saved)).toEqual(["bride-en"]);
     expect(readLayouts(null)).toEqual({});
+  });
+  it("puts a long name on two lines, as many words first as fit", () => {
+    const w = (t: string) => t.length; // one unit per character
+    expect(wrapName("Anita Tare", w, 20)).toEqual(["Anita Tare"]);
+    expect(wrapName("Shri Anil Ramchandra Deshpande and family", w, 20)).toEqual(["Shri Anil Ramchandra", "Deshpande and family"]);
+    expect(wrapName("Supercalifragilistic", w, 10)).toEqual(["Supercalifragilistic"]);
+    expect(wrapName("Averyveryverylongword short", w, 10)).toEqual(["Averyveryverylongword", "short"]);
+    expect(wrapName("  अनिता   तरे ", w, 20)).toEqual(["अनिता तरे"]);
   });
   it("names the file and knows its type", () => {
     expect(cardFileName("Anita / Tare", "pdf")).toBe("Invitation card - Anita Tare.pdf");
