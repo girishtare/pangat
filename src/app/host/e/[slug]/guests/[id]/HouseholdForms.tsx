@@ -64,7 +64,8 @@ export interface ReplyFn {
 function ReplyRow({ f }: { f: ReplyFn }) {
   const [coming, setComing] = useState<"yes" | "no" | "">(f.current?.status ?? "");
   const [heads, setHeads] = useState(f.current?.status === "yes" ? f.current.heads : 2);
-  const [veg, setVeg] = useState(f.current?.status === "yes" ? f.current.veg : 0);
+  // A new reply starts at 0 non-veg (everyone veg), as on the guest page (owner, 20 Nov).
+  const [veg, setVeg] = useState(f.current?.status === "yes" ? f.current.veg : 2);
   const num = "input min-h-12 w-full min-w-0 px-3 text-base font-bold tabular-nums sm:w-20";
   return (
     <fieldset className="min-w-0 rounded-[14px] border border-line px-4 pb-4 pt-1">
