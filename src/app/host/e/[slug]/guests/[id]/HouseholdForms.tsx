@@ -98,30 +98,32 @@ function ReplyRow({ f }: { f: ReplyFn }) {
                 value={heads}
                 onChange={(e) => {
                   const v = Math.min(MAX, Math.max(1, Number(e.target.value) || 1));
-                  setVeg((old) => (old === heads ? v : Math.min(old, v)));
+                  // The non-veg count stays; the veg count takes the change.
+                  setVeg((old) => Math.max(0, v - (heads - old)));
                   setHeads(v);
                 }}
                 className={num}
               />
             </label>
             {f.catered && !f.vegOnly && (
+              // Non-veg is asked, veg follows (owner, 20 Nov); the form still sends the veg count.
               <label className="flex min-w-0 items-center gap-2.5">
-                <span className="text-ink-soft">Veg</span>
+                <span className="text-ink-soft">Non-veg</span>
                 <input
-                  name={`veg_${f.id}`}
                   type="number"
                   inputMode="numeric"
                   min={0}
                   max={heads}
-                  value={veg}
-                  onChange={(e) => setVeg(Math.min(heads, Math.max(0, Number(e.target.value) || 0)))}
+                  value={heads - veg}
+                  onChange={(e) => setVeg(heads - Math.min(heads, Math.max(0, Number(e.target.value) || 0)))}
                   className={num}
                 />
-                <span className="hidden text-sm text-ink-soft sm:inline">non-veg {heads - veg}</span>
+                <input type="hidden" name={`veg_${f.id}`} value={veg} />
+                <span className="hidden text-sm text-ink-soft sm:inline">veg {veg}</span>
               </label>
             )}
           </div>
-          {f.catered && !f.vegOnly && <p className="text-sm text-ink-soft sm:hidden">Non-veg: {heads - veg}</p>}
+          {f.catered && !f.vegOnly && <p className="text-sm text-ink-soft sm:hidden">Veg: {veg}</p>}
           {f.catered && f.vegOnly && <p className="text-sm text-ink-soft">Veg only: everyone counts as veg.</p>}
           <fieldset className="grid grid-cols-3 items-center gap-2 sm:flex sm:flex-wrap">
             <legend className="sr-only">Arrival</legend>

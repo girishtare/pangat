@@ -77,8 +77,9 @@ export default function GuestFlow({
     setAnswers((prev) => {
       const next = { ...prev[id], ...patch };
       next.heads = Math.min(Math.max(next.heads, 1), MAX_HEADS);
-      // Keep "all vegetarian" as the default while the headcount changes.
-      if (patch.heads !== undefined && prev[id].veg === prev[id].heads) next.veg = next.heads;
+      // The non-veg count is what they set (owner, 20 Nov: non-veg first); a headcount change moves the veg count.
+      // It starts at 0 non-veg, i.e. everyone veg, as before (owner, 19 Nov).
+      if (patch.heads !== undefined && patch.veg === undefined) next.veg = next.heads - (prev[id].heads - prev[id].veg);
       next.veg = Math.min(Math.max(next.veg, 0), next.heads);
       return { ...prev, [id]: next };
     });
@@ -203,19 +204,19 @@ export default function GuestFlow({
                       {f.catered && !f.vegOnly && (
                         <div className={`${dashedRow} flex items-center justify-between gap-2.5 py-3`}>
                           <span className="min-w-0">
-                            <span className="block font-bold">{t(lang, "howManyVeg")}</span>
+                            <span className="block font-bold">{t(lang, "howManyNonVeg")}</span>
                             <span className="text-sm text-ink-e-soft">
-                              {t(lang, "nonVeg")}: {a.heads - a.veg}
+                              {t(lang, "vegetarian")}: {a.veg}
                             </span>
                           </span>
                           <div className="shrink-0">
                             <Stepper
                               variant="guest"
-                              label={t(lang, "howManyVeg")}
-                              value={a.veg}
+                              label={t(lang, "howManyNonVeg")}
+                              value={a.heads - a.veg}
                               min={0}
                               max={a.heads}
-                              onChange={(veg) => update(f.id, { veg })}
+                              onChange={(nonVeg) => update(f.id, { veg: a.heads - nonVeg })}
                               lessLabel={less}
                               moreLabel={more}
                             />
@@ -541,11 +542,11 @@ function Choice({ children, selected, onClick, tone }: { children: React.ReactNo
   );
 }
 
-/** "all veg", "all non-veg", or "2 veg, 1 non-veg", in the guest's language. */
+/** "all veg", "all non-veg", or "1 non-veg, 2 veg" (non-veg first), in the guest's language. */
 function dietSplit(heads: number, veg: number, lang: Lang): string {
   if (veg >= heads) return t(lang, "allVeg");
   if (veg <= 0) return t(lang, "allNonVeg");
-  return `${veg} ${t(lang, "veg")}, ${heads - veg} ${t(lang, "nonVegShort")}`;
+  return `${heads - veg} ${t(lang, "nonVegShort")}, ${veg} ${t(lang, "veg")}`;
 }
 
 /**
