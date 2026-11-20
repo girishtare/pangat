@@ -3,7 +3,10 @@ import { CircleCheck, Clock, MessageSquareText, Users } from "lucide-react";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
 import { householdMessage } from "@/lib/hostMessages";
-import { DEFAULT_TEXT, displayPhone, PLACEHOLDERS, whatsappLink, type MessageKind } from "@/lib/outreach";
+import { CARD_PLACEHOLDERS, DEFAULT_TEXT, displayPhone, PLACEHOLDERS, whatsappLink, type MessageKind } from "@/lib/outreach";
+
+// The card placeholders are optional (explained separately), so they are not in the "keep these" list.
+const KEEP: string[] = PLACEHOLDERS.filter((p) => !Object.values(CARD_PLACEHOLDERS).includes(p as never));
 import { publicBaseUrl } from "@/lib/site";
 import { listEffort, listHosts, loadNudges } from "@/lib/store/admin";
 import { listGuests } from "@/lib/store/supabase";
@@ -110,7 +113,7 @@ export default async function WhatsApp({
 
       {tabNow !== "time" && (
         <nav aria-label="Message type" className="mb-5 grid grid-cols-2 gap-1 rounded-[14px] bg-paper-deep p-1 sm:inline-grid">
-          {tab("invite", "Invitation (after the card)")}
+          {tab("invite", "Invitation")}
           {tab("reminder", "Reminder (to households waiting)")}
         </nav>
       )}
@@ -123,10 +126,10 @@ export default async function WhatsApp({
           </h2>
           <p className="mb-3 text-[0.9375rem] text-ink-soft">
             {host.canManage ? "Only you, as the owner, can edit it." : "Only the event's owner can change it."} Keep{" "}
-            {PLACEHOLDERS.map((p, i) => (
+            {KEEP.map((p, i) => (
               <span key={p}>
                 <code className="rounded bg-paper-deep px-1 font-mono text-sm text-ink">{p}</code>
-                {i < PLACEHOLDERS.length - 2 ? ", " : i === PLACEHOLDERS.length - 2 ? " and " : ""}
+                {i < KEEP.length - 2 ? ", " : i === KEEP.length - 2 ? " and " : ""}
               </span>
             ))}
             : they&apos;re filled in for each family. The Marathi is a first draft: have a native reader check it.

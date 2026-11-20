@@ -172,7 +172,7 @@ function readHostFields(fd: FormData, withSide: boolean): { fullName: string; ph
   if (!fullName) return "Enter their full name.";
   if (fullName.length > 120) return "That name is too long.";
   const mobile = normaliseMobile(text(fd.get("phone")));
-  if (!mobile.ok) return "That mobile number doesn't look right. Use 10 digits, or + and the country code.";
+  if (!mobile.ok) return "That mobile number doesn't look right. Check the country and the number.";
   if (!mobile.value) return "Enter their mobile number.";
   if (!withSide) return { fullName, phone: mobile.value, side: null };
   const side = sideField.safeParse(fd.get("side"));

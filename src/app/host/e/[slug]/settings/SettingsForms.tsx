@@ -191,7 +191,7 @@ function FunctionFields(props: {
         <div className="grid gap-2 sm:grid-cols-3">
           {(
             [
-              ["both", "Veg and non-veg", "Guests say how many are vegetarian"],
+              ["both", "Veg and non-veg", "Guests say how many are non-vegetarian"],
               ["veg", "Veg only", "No veg question; everyone counts as veg"],
               ["none", "No food", "Headcount only"],
             ] as const

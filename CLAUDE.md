@@ -24,7 +24,7 @@ Read `README.md` for how to run it and what is and isn't built.
 - 12 Nov: open decisions answered; family's baseline order written down, one number per function.
 - 20 Nov: guest lists frozen, one mobile number per household.
 - 22 Nov: v1 live.
-- 23 to 24 Nov: dry run with ten relatives, at least two over 65.
+- 23 to 24 Nov: dry run with ten relatives, at least two over 65. **Skipped (owner, 20 Nov): real guests are the first test.** An end-to-end test on a throwaway event was done instead (20 Nov).
 - 25 Nov (planned): slips printed; remaining cards go out with them, each followed by the WhatsApp link. **Done early: owner, 12 Nov, slips already printed and shipped to guests (bride's side; the groom's side had no households yet, so it gets WhatsApp links only).**
 - 6 Dec: first nudge to pending households. 12 Dec: phone round.
 - 19 Dec: Pangat's number frozen beside the family's baseline (Caterer numbers). 20 Dec: first count to the caterer. 24 Dec: last change to the caterer.
@@ -60,7 +60,7 @@ The owner will decide after 3 January whether the product is sold on savings or 
 ## Kill switches
 
 - Lists not frozen by 20 Nov: drop printed slips, WhatsApp links only.
-- Fewer than 5 of 10 dry-run guests finish unaided: simplify the form or collect by phone.
+- ~~Fewer than 5 of 10 dry-run guests finish unaided: simplify the form or collect by phone.~~ Dry run skipped (owner, 20 Nov).
 - Under 60% of households replied by 10 Dec: caterer gets the family's estimate; the tool's figure is one input.
 
 ## Open decisions (all answered)

@@ -440,7 +440,7 @@ export function DeleteHousehold({ slug, id, name, replied }: { slug: string; id:
       <p className="text-[0.9375rem] text-ink-soft">
         {replied
           ? "Not possible: they have replied, so they can't be deleted. Mark them as not coming instead."
-          : "Their link, printed QR code and short code stop working for good. To correct details, use Edit above: their slip keeps working."}
+          : "Their link, printed QR code and short code stop working for good. To correct details, use Details and invitations above: their slip keeps working."}
       </p>
       <button type="submit" disabled={pending || replied} className="btn btn-secondary">
         <Trash className="h-5 w-5" aria-hidden="true" />

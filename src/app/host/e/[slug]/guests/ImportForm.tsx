@@ -187,7 +187,7 @@ export default function ImportForm({ slug }: { slug: string }) {
               ])}
             </ul>
           )}
-          {current.counts.error > 0 && <p className="hint mt-2">Fix those rows in your sheet, then choose the file again.</p>}
+          {current.counts.error > 0 && <p className="hint mt-2">Fix those rows in your sheet, then choose the file or paste the rows again.</p>}
         </div>
       )}
 
