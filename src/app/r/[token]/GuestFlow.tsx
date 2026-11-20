@@ -115,8 +115,10 @@ export default function GuestFlow({
   );
   const langButton = <LangButton lang={lang} onSwitch={setLang} />;
 
+  // svh, not 100vh (owner, 20 Nov, Galaxy S25): phone browsers count 100vh as if their address bar were
+  // hidden, so the page was taller than the screen and the last line scrolled.
   return (
-    <main lang={lang} className="mx-auto flex min-h-screen max-w-xl flex-col">
+    <main lang={lang} className="mx-auto flex min-h-svh max-w-xl flex-col">
       {step === "confirm" && (
         <>
           <TopBar

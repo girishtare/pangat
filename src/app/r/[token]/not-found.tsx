@@ -3,7 +3,7 @@ import { splitLead } from "@/lib/text";
 import { paletteEFonts } from "../../fonts";
 import Logo from "../../ui/Logo";
 
-const shell = `${paletteEFonts} font-body-e min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`;
+const shell = `${paletteEFonts} font-body-e min-h-svh bg-cream text-[17px] leading-[1.6] text-ink-e`;
 
 /**
  * A guest link that doesn't match any household: the same bilingual message as

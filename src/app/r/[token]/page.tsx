@@ -9,7 +9,7 @@ import GuestFlow from "./GuestFlow";
 export const dynamic = "force-dynamic";
 
 // Palette E, body 17 px. Marathi keeps its 1.65 line height (globals.css :lang(mr)).
-const shell = `${paletteEFonts} font-body-e min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`;
+const shell = `${paletteEFonts} font-body-e min-h-svh bg-cream text-[17px] leading-[1.6] text-ink-e`;
 
 export default async function GuestPage({
   params,
