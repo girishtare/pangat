@@ -1,7 +1,7 @@
 import "server-only";
 import type { HostContext } from "./host";
 import { formatDay } from "./i18n";
-import { CARD_PLACEHOLDERS, DEFAULT_TEXT, displayPhone, fillMessage, guestLink, shortLink, textForLanguage, whatsappLink, type MessageKind } from "./outreach";
+import { DEFAULT_TEXT, displayPhone, fillMessage, guestLink, shortLink, textForLanguage, whatsappLink, type MessageKind } from "./outreach";
 import type { Bilingual, Side } from "./types";
 
 interface Recipient {
@@ -26,7 +26,7 @@ export function householdMessage(host: HostContext, base: string, g: Recipient, 
   const lang = g.slipLang ?? "both";
   const template = host.event.messageText[kind] ?? DEFAULT_TEXT[kind];
   const cards = cardLinks(host, base, g);
-  const filled = fillMessage(textForLanguage(template, lang), {
+  return fillMessage(textForLanguage(template, lang), {
     name: g.nameEn,
     nameMr: g.nameMr,
     event: name.en,
@@ -39,17 +39,13 @@ export function householdMessage(host: HostContext, base: string, g: Recipient, 
     cardMr: cards.mr,
     cardEn: cards.en,
   });
-  // A card the text doesn't place itself goes at the end, as before {card_mr} and {card_en} existed.
-  const tail: string[] = [];
-  if (cards.mr && !template.includes(CARD_PLACEHOLDERS.mr)) tail.push(`निमंत्रण पत्रिका: ${cards.mr}`);
-  if (cards.en && !template.includes(CARD_PLACEHOLDERS.en)) tail.push(`Invitation card: ${cards.en}`);
-  return tail.length ? `${filled}\n\n${tail.join("\n")}` : filled;
 }
 
 /**
- * WhatsApp links can't carry a file, so the invitation card goes as a link:
- * Marathi, English or both, by the household's slip language, for each of
- * its side's cards the owner has uploaded (null where there is none).
+ * The card links for {card_mr} and {card_en}, when a text uses them (the reply
+ * page shows the cards, so the standard text doesn't): Marathi, English or both,
+ * by the household's slip language, for each of its side's cards the owner has
+ * uploaded (null where there is none). Nothing is added to a text without them.
  */
 function cardLinks(host: HostContext, base: string, g: Recipient): { mr: string | null; en: string | null } {
   const lang = g.slipLang ?? "both";
