@@ -556,8 +556,8 @@ function CardLinks({ token, cards, lang, compact = false, className = "" }: { to
         <a
           key={l}
           href={`/r/${encodeURIComponent(token)}/card?l=${l}`}
-          className={`inline-flex items-center justify-center gap-2 rounded-xl border-2 border-maroon bg-card-e font-bold text-maroon no-underline hover:bg-cream ${
-            compact ? "min-h-11 px-3 text-[15px]" : "min-h-12 px-4 text-base"
+          className={`inline-flex items-center justify-center rounded-xl border-2 border-maroon bg-card-e font-bold text-maroon no-underline hover:bg-cream ${
+            compact ? "min-h-11 gap-1.5 px-2.5 text-[15px]" : "min-h-12 gap-2 px-4 text-base"
           }`}
         >
           <FileText className={`${compact ? "h-[18px] w-[18px]" : "h-5 w-5"} shrink-0`} aria-hidden="true" />
