@@ -134,7 +134,7 @@ export default function DistributionList({
       } else setAddError(null);
     });
   };
-  // Invitations go by WhatsApp only to households with WhatsApp as a mode; reminders to anyone with a mobile.
+  // Invitations go by WhatsApp only to households with WhatsApp as a mode; reminders are listed only for those (page.tsx).
   const canSend = (r: ListRow) => !!r.href && (kind !== "invite" || isWa(r));
   const sendCell = (r: ListRow, full = false) =>
     !r.href ? null : canSend(r) ? (

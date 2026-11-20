@@ -48,15 +48,19 @@ export default async function WhatsApp({
 
   const pending = (g: (typeof guests)[number]) => g.replied.length < g.functionIds.length;
   const sentKey = (id: string) => (kind === "invite" ? nudges.get(id)?.invite : nudges.get(id)?.reminder) ?? null;
-  // Invitation: everyone whose WhatsApp invitation hasn't gone (card-only households with a mobile can be added). Reminder: no full reply yet.
-  const todo = guests.filter((g) => (kind === "invite" ? !g.invite.waSent && !nudges.get(g.id)?.invite : pending(g)));
-  const rows = show === "all" ? guests : todo;
+  // Reminders go only to households invited on WhatsApp, which have a mobile (owner, 20 Nov); card-only and
+  // no-mobile households aren't listed. Invitations list everyone (card-only households with a mobile can be added).
+  const pool = kind === "reminder" ? guests.filter((g) => g.invite.wa && !!g.mobile) : guests;
+  const notOnWa = guests.length - pool.length;
+  // Invitation: everyone whose WhatsApp invitation hasn't gone. Reminder: no full reply yet.
+  const todo = pool.filter((g) => (kind === "invite" ? !g.invite.waSent && !nudges.get(g.id)?.invite : pending(g)));
+  const rows = show === "all" ? pool : todo;
   const noMobile = rows.filter((g) => !g.mobile).length;
   const sample = guests[0];
 
   const totals = effort.reduce((t, e) => ({ minutes: t.minutes + e.minutes, calls: t.calls + e.calls }), { minutes: 0, calls: 0 });
   const today = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
-  const sentCount = guests.filter((g) => !!sentKey(g.id)).length;
+  const sentCount = pool.filter((g) => !!sentKey(g.id)).length;
   const allNoMobile = guests.filter((g) => !g.mobile).length;
   const hours = Math.floor(totals.minutes / 60);
   const mins = totals.minutes % 60;
@@ -158,7 +162,10 @@ export default async function WhatsApp({
               {listTitle} · {rows.length.toLocaleString("en-IN")}
             </h2>
             <p className="text-ink-soft">
-              {sentCount.toLocaleString("en-IN")} sent · {allNoMobile.toLocaleString("en-IN")} have no mobile
+              {sentCount.toLocaleString("en-IN")} sent ·{" "}
+              {kind === "reminder"
+                ? `${notOnWa.toLocaleString("en-IN")} not on WhatsApp (card only or no mobile), left out`
+                : `${allNoMobile.toLocaleString("en-IN")} have no mobile`}
             </p>
           </div>
           <div className="flex gap-2">
@@ -177,12 +184,14 @@ export default async function WhatsApp({
 
         {rows.length === 0 ? (
           <div className="mt-4">
-            <EmptyState icon={CircleCheck} title={guests.length === 0 ? "No households yet" : kind === "invite" ? "All invitations sent" : "Everyone has replied"}>
+            <EmptyState icon={CircleCheck} title={guests.length === 0 ? "No households yet" : kind === "invite" ? "All invitations sent" : pool.length === 0 ? "Nobody on WhatsApp yet" : "Everyone has replied"}>
               {guests.length === 0
                 ? "Add households on the Guest list first."
                 : kind === "invite"
                   ? "Every household has been sent the invitation from here."
-                  : "There is nobody left to remind."}
+                  : pool.length === 0
+                    ? "No household is invited on WhatsApp yet. Reminders go only to those."
+                    : "There is nobody left to remind."}
             </EmptyState>
           </div>
         ) : (
