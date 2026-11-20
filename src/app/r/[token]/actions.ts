@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { normaliseMobile } from "@/lib/guestlist";
 import { getStore, isDemo } from "@/lib/store";
-import { createLookupRequest } from "@/lib/store/admin";
+import { cardFileName, cardLines, cardTypeOf, type CardLang, type NameLayout } from "@/lib/cardName";
+import { cardSignedUrl, createLookupRequest, namedCardForGuest } from "@/lib/store/admin";
 import { isPlausibleToken } from "@/lib/token";
 import { normalise, submissionSchema } from "@/lib/validate";
 
@@ -57,4 +58,38 @@ export async function reportNotUs(token: unknown, mobile: unknown): Promise<NotU
   }
   revalidatePath("/host", "layout");
   return { ok: true };
+}
+
+export interface GuestCard {
+  /** The plain card, a link that works for an hour. */
+  url: string;
+  type: string;
+  /** The household's name lines, and where they go; no layout = the plain card. */
+  lines: string[];
+  layout: NameLayout | null;
+  fileName: string;
+}
+
+/**
+ * The card a guest's phone makes with their name on it, right on the reply page
+ * (owner, 20 Nov: no separate card page). Keyed by the household's token, like
+ * the reply itself; null when that card isn't uploaded.
+ */
+export async function guestCard(token: unknown, lang: unknown): Promise<GuestCard | null> {
+  if (typeof token !== "string" || !isPlausibleToken(token) || (lang !== "en" && lang !== "mr") || isDemo()) return null;
+  try {
+    const card = await namedCardForGuest(token, lang as CardLang);
+    if (!card) return null;
+    const type = cardTypeOf(card.path);
+    return {
+      url: await cardSignedUrl(card.path),
+      type,
+      lines: card.layout ? cardLines(lang as CardLang, card, { family: card.layout.family, placesMr: card.placesMr }) : [],
+      layout: card.layout,
+      fileName: cardFileName(card.nameEn, type === "application/pdf" ? "pdf" : type === "image/png" ? "png" : type === "image/webp" ? "webp" : "jpg"),
+    };
+  } catch (err) {
+    console.error("guestCard failed", err);
+    return null;
+  }
 }

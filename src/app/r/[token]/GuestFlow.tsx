@@ -2,7 +2,7 @@
 
 import { COUNTRIES, joinPhone } from "@/lib/phone";
 import { useState, useTransition } from "react";
-import { Check, ChevronLeft, CircleAlert, FileText, Lock } from "lucide-react";
+import { Check, ChevronLeft, CircleAlert, Lock } from "lucide-react";
 import { formatDay, formatWhen, t } from "@/lib/i18n";
 import { eventDays, splitLead } from "@/lib/text";
 import { pick, type ArrivalSlot, type HouseholdView, type Lang } from "@/lib/types";
@@ -11,6 +11,7 @@ import { displayPhone } from "@/lib/outreach";
 import Stepper from "../../ui/Stepper";
 import { reportNotUs, submitReply } from "./actions";
 import Logo from "../../ui/Logo";
+import CardButton from "./CardButton";
 
 type Step = "confirm" | "form" | "done" | "notus";
 
@@ -46,6 +47,7 @@ export default function GuestFlow({
   closed,
   source,
   initialLang,
+  cardFont,
 }: {
   token: string;
   view: HouseholdView;
@@ -53,6 +55,8 @@ export default function GuestFlow({
   source: "qr" | "link";
   /** Language the guest chose last time on this phone (cookie), if any. */
   initialLang?: Lang;
+  /** The font the name is written in on the invitation card. */
+  cardFont: { family: string; className: string };
 }) {
   const hasReplied = view.responses.length > 0;
   const [lang, setLangState] = useState<Lang>(initialLang ?? (view.household.name.mr ? "mr" : "en"));
@@ -127,7 +131,7 @@ export default function GuestFlow({
             <p className="text-sm font-bold text-maroon">{t(lang, "invitedBy")}</p>
             <p className={`${heading} wrap-names mt-0.5 text-[28px] leading-[1.3] text-maroon`}>{eventName}</p>
             {days && <p className="text-[15px] text-ink-e-soft">{days}</p>}
-            <CardLinks token={token} cards={view.cards ?? []} lang={lang} compact className="mt-3" />
+            <CardLinks token={token} cards={view.cards ?? []} lang={lang} font={cardFont} compact className="mt-3" />
           </div>
           <div className={`${card} mx-4 mt-3 rounded-2xl px-3.5 py-2.5 text-center`}>
             <p className={`${heading} wrap-names text-[22px] leading-[1.3] text-ink-e`}>{householdName}</p>
@@ -292,7 +296,7 @@ export default function GuestFlow({
               })}
             </ul>
           </section>
-          <CardLinks token={token} cards={view.cards ?? []} lang={lang} className="mx-4 mt-[18px]" />
+          <CardLinks token={token} cards={view.cards ?? []} lang={lang} font={cardFont} className="mx-4 mt-[18px]" />
           {closed ? (
             <p className={`${infoBox} mx-4 mt-[18px] flex items-start gap-2`}>
               <Lock className="mt-1 h-4 w-4 shrink-0 text-sky-ink" aria-hidden="true" />
@@ -543,26 +547,40 @@ function dietSplit(heads: number, veg: number, lang: Lang): string {
 }
 
 /**
- * "View the invitation card" (or one button per language when both are offered): opens the card with the
- * household's name on it. Same tab (owner, 20 Nov): a new tab inside WhatsApp can jump out to the browser;
- * the card page has "Back to your reply". `compact` puts two buttons side by side with short labels.
+ * "View the invitation card" (or one button per language when both are offered). Each makes the card with the
+ * household's name on this page and opens it, then becomes a menu: Open, Save, Share (owner, 20 Nov: one page,
+ * no card page in between). `compact` puts two buttons side by side with short labels.
  */
-function CardLinks({ token, cards, lang, compact = false, className = "" }: { token: string; cards: Lang[]; lang: Lang; compact?: boolean; className?: string }) {
+function CardLinks({
+  token,
+  cards,
+  lang,
+  font,
+  compact = false,
+  className = "",
+}: {
+  token: string;
+  cards: Lang[];
+  lang: Lang;
+  font: { family: string; className: string };
+  compact?: boolean;
+  className?: string;
+}) {
   if (cards.length === 0) return null;
   const row = compact && cards.length > 1;
   return (
     <div className={`flex gap-2 ${row ? "flex-wrap justify-center" : "flex-col"} ${className}`}>
       {cards.map((l) => (
-        <a
+        <CardButton
           key={l}
-          href={`/r/${encodeURIComponent(token)}/card?l=${l}`}
-          className={`inline-flex items-center justify-center rounded-xl border-2 border-maroon bg-card-e font-bold text-maroon no-underline hover:bg-cream ${
-            compact ? "min-h-11 gap-1.5 px-2.5 text-[15px]" : "min-h-12 gap-2 px-4 text-base"
-          }`}
-        >
-          <FileText className={`${compact ? "h-[18px] w-[18px]" : "h-5 w-5"} shrink-0`} aria-hidden="true" />
-          {cards.length === 1 ? t(lang, "viewCard") : row ? t(lang, l === "en" ? "cardEnShort" : "cardMrShort") : t(lang, l === "en" ? "cardEn" : "cardMr")}
-        </a>
+          token={token}
+          cardLang={l}
+          uiLang={lang}
+          compact={compact}
+          family={font.family}
+          fontClass={font.className}
+          label={cards.length === 1 ? t(lang, "viewCard") : row ? t(lang, l === "en" ? "cardEnShort" : "cardMrShort") : t(lang, l === "en" ? "cardEn" : "cardMr")}
+        />
       ))}
     </div>
   );

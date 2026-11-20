@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getStore } from "@/lib/store";
 import { isPlausibleToken } from "@/lib/token";
+import { cardFont } from "../../cardFont";
 import { paletteEFonts } from "../../fonts";
 import GuestFlow from "./GuestFlow";
 
@@ -33,7 +34,14 @@ export default async function GuestPage({
   const initialLang = pick === "en" || pick === "mr" ? pick : undefined;
   return (
     <div className={shell}>
-      <GuestFlow token={token} view={view} closed={closed} source={s === "q" ? "qr" : "link"} initialLang={initialLang} />
+      <GuestFlow
+        token={token}
+        view={view}
+        closed={closed}
+        source={s === "q" ? "qr" : "link"}
+        initialLang={initialLang}
+        cardFont={{ family: `${cardFont.style.fontFamily}, serif`, className: cardFont.className }}
+      />
     </div>
   );
 }
