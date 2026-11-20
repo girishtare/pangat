@@ -26,15 +26,22 @@ describe("messages", () => {
     expect(fillMessage(DEFAULT_TEXT.reminder, vars)).not.toMatch(/\{[a-z_]+\}/);
   });
 
-  it("puts the card links where the text says, and drops a card line with no card", () => {
-    const both = fillMessage(DEFAULT_TEXT.invite, { ...vars, cardMr: "https://c/mr", cardEn: "https://c/en" });
+  it("sends one link in the standard invitation, even with both languages", () => {
+    const text = fillMessage(DEFAULT_TEXT.invite, { ...vars, cardMr: "https://c/mr", cardEn: "https://c/en" });
+    expect(text.split("https://").length - 1).toBe(1);
+    expect(text).not.toContain("https://c/");
+  });
+
+  it("puts card links where a custom text says, and drops a card line with no card", () => {
+    const tpl = "नमस्कार!\nनिमंत्रण पत्रिका: {card_mr}\nकृपया कळवा: {link}\n\nHello!\nInvitation card: {card_en}\nReply: {link}";
+    const both = fillMessage(tpl, { ...vars, cardMr: "https://c/mr", cardEn: "https://c/en" });
     expect(both).toContain("निमंत्रण पत्रिका: https://c/mr\nकृपया");
-    expect(both).toContain("Invitation card: https://c/en\nPlease tell us");
-    const none = fillMessage(DEFAULT_TEXT.invite, vars);
+    expect(both).toContain("Invitation card: https://c/en\nReply");
+    const none = fillMessage(tpl, vars);
     expect(none).not.toContain("निमंत्रण पत्रिका");
     expect(none).not.toContain("Invitation card");
-    expect(none).toContain("सस्नेह निमंत्रण.\nकृपया");
-    const enOnly = fillMessage(DEFAULT_TEXT.invite, { ...vars, cardEn: "https://c/en" });
+    expect(none).toContain("नमस्कार!\nकृपया");
+    const enOnly = fillMessage(tpl, { ...vars, cardEn: "https://c/en" });
     expect(enOnly).not.toContain("निमंत्रण पत्रिका");
     expect(enOnly).toContain("Invitation card: https://c/en");
   });

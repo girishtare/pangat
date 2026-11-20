@@ -121,23 +121,28 @@ export default function GuestFlow({
             }
             right={langButton}
           />
-          <div className="mx-4 mt-4 rounded-2xl bg-sand px-[18px] pb-[34px] pt-[30px] text-center shadow-[inset_0_0_0_6px_#e5d3af,inset_0_0_0_7px_#790d16,inset_0_0_0_10px_#e5d3af,inset_0_0_0_11px_#790d16]">
-            <p className="text-[15px] font-bold text-maroon">{t(lang, "invitedBy")}</p>
-            <p className={`${heading} wrap-names mt-1 text-[36px] leading-[1.35] text-maroon`}>{eventName}</p>
-            {days && <p className="text-base text-ink-e-soft">{days}</p>}
-            <CardLinks token={token} cards={view.cards ?? []} lang={lang} className="mt-4" />
+          {/* One screen on a phone inside WhatsApp (owner, 20 Nov: the one link in the message lands here,
+              cards included): about 575 px at 360 wide. It still scrolls for guests with large text. */}
+          <div className="mx-4 mt-2.5 rounded-2xl bg-sand px-[18px] pb-[22px] pt-5 text-center shadow-[inset_0_0_0_6px_#e5d3af,inset_0_0_0_7px_#790d16,inset_0_0_0_10px_#e5d3af,inset_0_0_0_11px_#790d16]">
+            <p className="text-sm font-bold text-maroon">{t(lang, "invitedBy")}</p>
+            <p className={`${heading} wrap-names mt-0.5 text-[28px] leading-[1.3] text-maroon`}>{eventName}</p>
+            {days && <p className="text-[15px] text-ink-e-soft">{days}</p>}
+            <CardLinks token={token} cards={view.cards ?? []} lang={lang} compact className="mt-3" />
           </div>
-          <div className={`${card} mx-4 mt-[18px] rounded-2xl p-[18px] text-center`}>
-            <p className={`${heading} wrap-names text-[26px] leading-[1.4] text-ink-e`}>{householdName}</p>
+          <div className={`${card} mx-4 mt-3 rounded-2xl px-3.5 py-2.5 text-center`}>
+            <p className={`${heading} wrap-names text-[22px] leading-[1.3] text-ink-e`}>{householdName}</p>
           </div>
-          <h1 className="mx-4 mb-3.5 mt-[26px] text-center text-[22px] font-bold leading-[1.4]">{t(lang, "isThisYou")}</h1>
-          <div className="grid gap-3 px-4">
-            <BigButton onClick={() => setStep("form")}>{t(lang, "yesThatsUs")}</BigButton>
-            <BigButton variant="outline" onClick={() => setStep("notus")}>
+          <h1 className="mx-4 mb-2.5 mt-4 text-center text-xl font-bold leading-[1.4]">{t(lang, "isThisYou")}</h1>
+          <div className="grid gap-2.5 px-4">
+            <BigButton size="md" onClick={() => setStep("form")}>
+              {t(lang, "yesThatsUs")}
+            </BigButton>
+            <BigButton variant="outline" size="md" onClick={() => setStep("notus")}>
               {t(lang, "notUs")}
             </BigButton>
           </div>
-          <p className="mx-4 mb-[22px] mt-auto pt-8 text-center text-sm text-ink-e-soft">{t(lang, "quickNoSignup")}</p>
+          {/* Left out on short screens, so the two answers stay in view. */}
+          <p className="mx-4 mb-3.5 mt-auto pt-3 text-center text-sm text-ink-e-soft [@media(max-height:620px)]:hidden">{t(lang, "quickNoSignup")}</p>
         </>
       )}
 
@@ -327,7 +332,7 @@ export default function GuestFlow({
 
 function TopBar({ left, right }: { left?: React.ReactNode; right: React.ReactNode }) {
   return (
-    <div className={`flex items-center gap-3 px-4 pt-3.5 ${left ? "justify-between" : "justify-end"}`}>
+    <div className={`flex items-center gap-3 px-4 pt-2.5 ${left ? "justify-between" : "justify-end"}`}>
       {left}
       {right}
     </div>
@@ -537,21 +542,26 @@ function dietSplit(heads: number, veg: number, lang: Lang): string {
   return `${veg} ${t(lang, "veg")}, ${heads - veg} ${t(lang, "nonVegShort")}`;
 }
 
-/** "View the invitation card" (or one button per language when both are offered); opens the PDF. */
-function CardLinks({ token, cards, lang, className = "" }: { token: string; cards: Lang[]; lang: Lang; className?: string }) {
+/**
+ * "View the invitation card" (or one button per language when both are offered): opens the card with the
+ * household's name on it. Same tab (owner, 20 Nov): a new tab inside WhatsApp can jump out to the browser;
+ * the card page has "Back to your reply". `compact` puts two buttons side by side with short labels.
+ */
+function CardLinks({ token, cards, lang, compact = false, className = "" }: { token: string; cards: Lang[]; lang: Lang; compact?: boolean; className?: string }) {
   if (cards.length === 0) return null;
+  const row = compact && cards.length > 1;
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={`flex gap-2 ${row ? "flex-wrap justify-center" : "flex-col"} ${className}`}>
       {cards.map((l) => (
         <a
           key={l}
           href={`/r/${encodeURIComponent(token)}/card?l=${l}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-maroon bg-card-e px-4 text-base font-bold text-maroon no-underline hover:bg-cream"
+          className={`inline-flex items-center justify-center gap-2 rounded-xl border-2 border-maroon bg-card-e font-bold text-maroon no-underline hover:bg-cream ${
+            compact ? "min-h-11 px-3 text-[15px]" : "min-h-12 px-4 text-base"
+          }`}
         >
-          <FileText className="h-5 w-5 shrink-0" aria-hidden="true" />
-          {cards.length === 1 ? t(lang, "viewCard") : t(lang, l === "en" ? "cardEn" : "cardMr")}
+          <FileText className={`${compact ? "h-[18px] w-[18px]" : "h-5 w-5"} shrink-0`} aria-hidden="true" />
+          {cards.length === 1 ? t(lang, "viewCard") : row ? t(lang, l === "en" ? "cardEnShort" : "cardMrShort") : t(lang, l === "en" ? "cardEn" : "cardMr")}
         </a>
       ))}
     </div>

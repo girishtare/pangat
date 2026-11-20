@@ -13,21 +13,21 @@ export type MessageKind = "invite" | "reminder";
  */
 export const PLACEHOLDERS = ["{name_en}", "{name_mr}", "{event_en}", "{event_mr}", "{date_en}", "{date_mr}", "{phone}", "{link}", "{card_mr}", "{card_en}"] as const;
 
-/** The invitation card links (owner, 19 Nov). A line holding one is left out when that card isn't there. */
+/**
+ * Direct invitation card links (owner, 19 Nov), optional: the standard text no longer uses them, since the
+ * reply page shows the cards (20 Nov). A line holding one is left out when that card isn't there.
+ */
 export const CARD_PLACEHOLDERS = { mr: "{card_mr}", en: "{card_en}" } as const;
 
 // Marathi first-draft wording: have a native reader check it, like src/lib/i18n.ts.
 export const DEFAULT_TEXT: Record<MessageKind, string> = {
-  // The card link first, then the reply link, in each language (owner, 19 Nov).
+  // One link (owner, 20 Nov): it opens the reply page, which has the card buttons. Both languages share it.
   invite:
     "नमस्कार {name_mr}!\n" +
-    "{event_mr} साठी आपणांस सस्नेह निमंत्रण.\n" +
-    "निमंत्रण पत्रिका: {card_mr}\n" +
-    "कृपया {date_mr} पर्यंत कोण कोण येणार ते या लिंकवर कळवा: {link}\n\n" +
+    "{event_mr} साठी आपणांस सस्नेह निमंत्रण. निमंत्रण पत्रिका पाहण्यासाठी आणि {date_mr} पर्यंत कोण कोण येणार ते कळवण्यासाठी ही लिंक उघडा:\n\n" +
     "Namaskar {name_en}!\n" +
-    "You are warmly invited to {event_en}.\n" +
-    "Invitation card: {card_en}\n" +
-    "Please tell us who's coming by {date_en}, using this link: {link}",
+    "You are warmly invited to {event_en}. Open this link to see the invitation card and tell us who's coming by {date_en}:\n\n" +
+    "{link}",
   reminder:
     "नमस्कार {name_mr}!\n" +
     "{event_mr} साठी आपले उत्तर अजून आलेले नाही. कृपया {date_mr} पर्यंत या लिंकवर कळवा.\n\n" +
