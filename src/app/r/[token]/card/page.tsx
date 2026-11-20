@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Invitation card · निमंत्रण पत्रिका" };
 
-const shell = `${paletteEFonts} font-body-e min-h-screen bg-cream text-[17px] leading-[1.6] text-ink-e`;
+const shell = `${paletteEFonts} font-body-e min-h-svh bg-cream text-[17px] leading-[1.6] text-ink-e`;
 
 /**
  * A guest opens their invitation card: /r/<token>/card?l=en|mr. The household's
