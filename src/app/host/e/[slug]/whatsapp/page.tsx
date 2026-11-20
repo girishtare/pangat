@@ -52,16 +52,21 @@ export default async function WhatsApp({
   // no-mobile households aren't listed. Invitations list everyone (card-only households with a mobile can be added).
   const pool = kind === "reminder" ? guests.filter((g) => g.invite.wa && !!g.mobile) : guests;
   const notOnWa = guests.length - pool.length;
+  // Households that have replied, by any channel (QR on the slip included), are left off both lists (owner, 20 Nov):
+  // any reply means they have the invitation; a reminder still goes to one with a function left unanswered.
+  const answered = (g: (typeof guests)[number]) => (kind === "invite" ? g.replied.length > 0 : !pending(g));
+  const listed = pool.filter((g) => !answered(g));
+  const repliedOut = pool.length - listed.length;
   // Invitation: everyone whose WhatsApp invitation hasn't gone. Reminder: no full reply yet.
-  const todo = pool.filter((g) => (kind === "invite" ? !g.invite.waSent && !nudges.get(g.id)?.invite : pending(g)));
-  const rows = show === "all" ? pool : todo;
+  const todo = listed.filter((g) => (kind === "invite" ? !g.invite.waSent && !nudges.get(g.id)?.invite : pending(g)));
+  const rows = show === "all" ? listed : todo;
   const noMobile = rows.filter((g) => !g.mobile).length;
   const sample = guests[0];
 
   const totals = effort.reduce((t, e) => ({ minutes: t.minutes + e.minutes, calls: t.calls + e.calls }), { minutes: 0, calls: 0 });
   const today = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
   const sentCount = pool.filter((g) => !!sentKey(g.id)).length;
-  const allNoMobile = guests.filter((g) => !g.mobile).length;
+  const allNoMobile = listed.filter((g) => !g.mobile).length;
   const hours = Math.floor(totals.minutes / 60);
   const mins = totals.minutes % 60;
   const listTitle = show === "all" ? "All households" : kind === "invite" ? "Still to send" : "Still to remind";
@@ -162,10 +167,10 @@ export default async function WhatsApp({
               {listTitle} · {rows.length.toLocaleString("en-IN")}
             </h2>
             <p className="text-ink-soft">
-              {sentCount.toLocaleString("en-IN")} sent ·{" "}
+              {sentCount.toLocaleString("en-IN")} sent · {repliedOut.toLocaleString("en-IN")} replied
               {kind === "reminder"
-                ? `${notOnWa.toLocaleString("en-IN")} not on WhatsApp (card only or no mobile), left out`
-                : `${allNoMobile.toLocaleString("en-IN")} have no mobile`}
+                ? ` · ${notOnWa.toLocaleString("en-IN")} not on WhatsApp (card only or no mobile), left out`
+                : `, left out · ${allNoMobile.toLocaleString("en-IN")} have no mobile`}
             </p>
           </div>
           <div className="flex gap-2">
