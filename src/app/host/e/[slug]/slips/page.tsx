@@ -185,7 +185,7 @@ export default async function Slips({
             Print list
           </h2>
           <p className="mb-4 mt-0.5 text-[0.9375rem] text-ink-soft">
-            Slips asked for with <b>Print</b> or <b>Print Again</b> on the Guest list. Print them together, then clear the list.
+            Slips ticked in the <b>Print slips</b> column of the Guest list. Print them together, then clear the list.
           </p>
           <PrintList
             slug={slug}

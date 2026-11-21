@@ -174,7 +174,7 @@ export default async function EventSettings({
         <Section
           className="mt-5"
           title="Invitation card"
-          subtitle="Each side's own wedding card, as a PDF or an image (JPG, PNG), in English and in Marathi. A guest gets their side's card: a link in the WhatsApp message and a button on their reply page, in their household's language (Slips → Language of each slip). Only you can upload them."
+          subtitle="Each side's own wedding card, as a PDF or an image (JPG, PNG), in English and in Marathi. A guest gets their side's card as a button on their reply page (the one link in the WhatsApp message opens it), in their household's language (Slips → Language of each slip). Only you can upload them."
         >
           <div className="space-y-5">
             {(["bride", "groom"] as const).map((sd) => (

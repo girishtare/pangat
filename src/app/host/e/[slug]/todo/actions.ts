@@ -31,7 +31,7 @@ function readHelper(host: HostContext, fd: FormData): { ok: true; value: { fullN
   if (!fullName) return { ok: false, message: "Enter their full name." };
   if (fullName.length > 120) return { ok: false, message: "That name is too long." };
   const phone = normaliseMobile(text(fd.get("phone")));
-  if (!phone.ok) return { ok: false, message: "That mobile number doesn't look right. Use 10 digits, e.g. 98765 43210." };
+  if (!phone.ok) return { ok: false, message: "That mobile number doesn't look right. Check the country and the number." };
   const side = host.side ?? parseSide(text(fd.get("side")));
   if (!side) return { ok: false, message: "Choose the bride's side or the groom's side." };
   return { ok: true, value: { fullName, phone: phone.value, side } };
@@ -57,7 +57,7 @@ export async function editPerson(slug: string, id: string, _prev: FormState, fd:
     const fullName = text(fd.get("fullName"));
     if (!fullName || fullName.length > 120) return { ok: false, message: "Enter their full name." };
     const phone = normaliseMobile(text(fd.get("phone")));
-    if (!phone.ok) return { ok: false, message: "That mobile number doesn't look right. Use 10 digits, e.g. 98765 43210." };
+    if (!phone.ok) return { ok: false, message: "That mobile number doesn't look right. Check the country and the number." };
     await setHostName(w.host.event.id, current.hostUserId, fullName);
     await setHelperPhone(w.host.event.id, id, phone.value);
     revalidatePath(`/host/e/${slug}/settings`);

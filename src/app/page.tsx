@@ -239,7 +239,7 @@ const STEPS = [
   },
   {
     title: "They reply in a minute",
-    wide: "Haldi, wedding, reception: who is coming to each, how many, and how many eat vegetarian. No sign-up, big buttons, Marathi first.",
+    wide: "Haldi, wedding, reception: who is coming to each, how many, and how many eat non-veg. No sign-up, big buttons, Marathi first.",
     narrow: "Who is coming to each function, how many, how many vegetarian. No sign-up, Marathi first.",
     icon: (
       <>

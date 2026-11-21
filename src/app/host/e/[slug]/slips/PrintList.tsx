@@ -74,7 +74,7 @@ export default function PrintList({ slug, rows, showSide }: { slug: string; rows
 
       {n === 0 ? (
         <p className="mt-4 text-ink-soft">
-          Use <b>Print</b> or <b>Print Again</b> in the Slips column of the{" "}
+          Tick households in the <b>Print slips</b> column of the{" "}
           <Link href={`/host/e/${slug}/guests`} className="font-semibold text-kumkum underline">
             Guest list
           </Link>{" "}
