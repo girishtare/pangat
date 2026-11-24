@@ -3,7 +3,7 @@ import { ChefHat, Lock } from "lucide-react";
 import { forecast } from "@/lib/forecast";
 import { hostGate } from "@/lib/host";
 import { formatDay } from "@/lib/i18n";
-import { closer, EMPTY_NUMBERS, latestToCaterer, toCaterer, type FunctionNumbers } from "@/lib/pilot";
+import { closer, EMPTY_NUMBERS, latestToCaterer, nonvegShareCheck, toCaterer, type FunctionNumbers } from "@/lib/pilot";
 import { loadNumbers } from "@/lib/store/admin";
 import { supabaseStore } from "@/lib/store/supabase";
 import { longStamp, shortStamp } from "@/lib/when";
@@ -341,6 +341,9 @@ function VerdictCard({
   );
   const maxMiss = Math.max(1, ...misses);
   const judgedRows = rows.filter((r) => closer(r.n) !== null);
+  // The split is Pangat's alone: the family's guess is one number per function.
+  const splits = counted.map((r) => nonvegShareCheck(r.n)).filter((s): s is NonNullable<typeof s> => s !== null);
+  const avgGap = splits.length ? Math.round(splits.reduce((s, x) => s + x.gap, 0) / splits.length) : null;
   const familyOff = judgedRows.reduce((s, { n }) => s + Math.abs((n.baseline as number) - (n.actual as number)), 0);
   const pangatOff = judgedRows.reduce((s, { n }) => s + Math.abs((n.predicted as number) - (n.actual as number)), 0);
   const fns = (k: number) => `${k} function${k === 1 ? "" : "s"}`;
@@ -367,11 +370,18 @@ function VerdictCard({
       ) : (
         <p className="mt-1.5 text-base">Fill in the family&apos;s guess and freeze Pangat&apos;s number to compare them with the counts.</p>
       )}
+      {avgGap !== null && (
+        <p className="mt-1.5 text-base">
+          Non-veg share: Pangat was off by <strong>{avgGap}</strong> percentage point{avgGap === 1 ? "" : "s"}
+          {splits.length > 1 ? ` on average across ${splits.length} functions` : ""}.
+        </p>
+      )}
 
       <div className="mt-[22px] grid gap-[22px]">
         {counted.map(({ fn, n }) => {
           const actual = n.actual as number;
           const v = closer(n);
+          const split = nonvegShareCheck(n);
           const lines = [
             { label: "Family's guess", value: n.baseline, bar: "bg-sand-deep" },
             { label: "Pangat", value: n.predicted, bar: "bg-kumkum" },
@@ -407,6 +417,13 @@ function VerdictCard({
                   </div>
                 ))}
               </div>
+              {split && (
+                <p className="mt-2.5 text-[0.9375rem]">
+                  <span className="font-bold">Non-veg share:</span> Pangat {split.predicted}% ({show(n.predictedNonveg)} non-veg, {show(n.predictedVeg)} veg) ·
+                  on the day {split.actual}% ({show(n.actualNonveg)} non-veg, {show(n.actualVeg)} veg) ·{" "}
+                  <strong>{split.gap === 0 ? "the same" : `${split.gap} point${split.gap === 1 ? "" : "s"} apart`}</strong>
+                </p>
+              )}
             </div>
           );
         })}
