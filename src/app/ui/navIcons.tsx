@@ -1,7 +1,7 @@
-import { ChefHat, ClipboardList, LayoutDashboard, Settings, Ticket, Users, Wallet } from "lucide-react";
+import { ChefHat, ClipboardList, LayoutDashboard, Settings, ShieldCheck, Ticket, Users, Wallet } from "lucide-react";
 import { WhatsAppIcon } from "./kit";
 
-export type NavKey = "dashboard" | "guests" | "slips" | "whatsapp" | "todo" | "numbers" | "expenses" | "settings";
+export type NavKey = "dashboard" | "guests" | "slips" | "whatsapp" | "todo" | "numbers" | "expenses" | "settings" | "admin";
 
 export interface NavItem {
   key: NavKey;
@@ -30,5 +30,7 @@ export function NavIcon({ name, className = "h-5 w-5 shrink-0" }: { name: NavKey
       return <Wallet className={className} aria-hidden="true" />;
     case "settings":
       return <Settings className={className} aria-hidden="true" />;
+    case "admin":
+      return <ShieldCheck className={className} aria-hidden="true" />;
   }
 }
