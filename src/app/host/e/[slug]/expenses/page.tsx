@@ -89,22 +89,24 @@ export default async function Expenses({
         title="Expenses"
         subtitle="Every cost of the wedding, who pays what share, and who has paid. Only you, as the owner, see this page."
         actions={
-          expenses.length > 0 ? (
-            <>
-              {addButton}
+          // The add pop-up stays in the header even with no expenses (24 Nov): it used to sit in the empty
+          // state, so saving the first expense redrew the page without it, closing the pop-up before the
+          // bill chosen with it was uploaded (the bill was silently dropped).
+          <>
+            {addButton}
+            {expenses.length > 0 && (
               <a href={`/host/e/${slug}/expenses/export`} className="btn btn-secondary" download>
                 <FileSpreadsheet className="h-5 w-5" aria-hidden="true" />
                 Export to Excel
               </a>
-            </>
-          ) : undefined
+            )}
+          </>
         }
       />
 
       {expenses.length === 0 ? (
         <EmptyState icon={Wallet} title="No expenses yet">
-          <p>Add the first one: catering, hall, decor…</p>
-          <div className="mt-4 flex justify-center">{addButton}</div>
+          <p>Add the first one with + Add expense above: catering, hall, decor…</p>
         </EmptyState>
       ) : (
         <>
