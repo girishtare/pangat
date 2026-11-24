@@ -26,7 +26,9 @@ export default async function GuestPage({
 
   const closed = Date.now() > new Date(view.event.cutoffAt).getTime();
   // QR codes on printed slips carry ?s=q so we can see which channel worked.
-  const saved = (await cookies()).get("pangat_lang")?.value;
+  // Per household (owner, 24 Nov): the cookie is scoped to this link's path, so a phone that opens several
+  // families' links (one person forwarding them) doesn't carry one family's choice to the next.
+  const saved = (await cookies()).get("pangat_lang_hh")?.value;
   // The guest's own earlier choice wins; else the link's language (?l=, on one-language slips and WhatsApp links);
   // else the household's language, Both opening in Marathi (owner, 14 Nov). They can always switch.
   const fromHousehold = view.household.lang === "en" ? "en" : view.household.lang ? "mr" : undefined;
