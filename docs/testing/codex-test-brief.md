@@ -1,513 +1,271 @@
-# Pangat: testing brief for Codex
+# Pangat: project summary and test brief for Codex
 
-Written 12 November 2026; updated the same evening after Codex's first run (results in section 11, read that first). This is a guide to what has been built so you can test all of it thoroughly. **`CLAUDE.md` is the source of truth.** `README.md` is out of date in places (see "Docs known to be stale" at the end).
+Written 24 November 2026. It replaces the 12 November brief. **Read all of it before you start.**
+
+You will **take control of Chrome** and test the live site end to end, as a careful QA tester, then write a report (section 9). The Chrome profile is already signed in to Pangat as the owner of a real wedding, so the safety rules in section 2 come first and override everything else.
+
+`CLAUDE.md` in the repository is the source of truth for decisions and details. `README.md` is out of date in places; trust this brief and `CLAUDE.md` over it.
+
+---
 
 ## 1. What Pangat is
 
-Pangat is a web app that tells a wedding host how many guests are really coming, per function (Haldi, Wedding, Reception and so on), split into veg and non-veg.
+Pangat tells a family hosting an Indian wedding how many guests are really coming to each function (Haldi, Wedding, Reception and so on), split into veg and non-veg, so they can give the caterer a better number.
 
-How guests and hosts use it:
-- Each invited **household** gets a personal link. Guests reach it by QR code on a printed slip, by WhatsApp message, or by a six-character code read out on the phone to a host.
-- Guests reply with no account: coming yes or no per function, how many people, how many of them vegetarian, and roughly when they'll arrive.
-- **Hosts** sign in and get a dashboard, guest-list management, printable slips, WhatsApp nudges, a to-do list and a record of caterer numbers.
+- **Guests** have no account. Each invited **household** has a personal link, reached three ways:
+  - a QR code on a printed slip that goes with the paper invitation card;
+  - a WhatsApp message sent from a family member's own phone (a short link, `/i/<code>`);
+  - a six-character code read out to a host on the phone (the host then records the reply).
 
-**Pilot:** a real family wedding on **28 December 2026**, about 400 households on the bride's and groom's sides. The live event is in production now with about 100+ bride-side households.
+  On the reply page they say, for each function: coming yes or no, how many people, how many of them are non-vegetarian, and roughly when they'll arrive.
+- **Hosts** sign in (Google, or email and password). The **owner** created the event and sees both sides (bride's and groom's). **Co-owners**, up to 3 per side, see and change only their own side.
+- The app is in **English and Marathi**. Marathi uses ordinary 0–9 digits, and times read like "10:00 am" in both languages.
 
-**Do not touch the live event.** Its slug is `manali-and-anish-wedding-jhie`. Never write to it, reply on its guests' links, or change its settings. See section 9 for how to get safe test data.
+**The pilot.** A real family wedding on **28 December 2026** is live in the app now (177 households, bride's side so far). It is judged on three numbers per function: the family's guess, Pangat's number frozen on 19 December, and the count on the day. Pangat earns its place only if its number is closer to the real count than the family's guess.
 
-## 2. Stack and how it runs
+**Live site:** https://pangat-tau.vercel.app
+
+### Stack (for context; you are testing in the browser, not the code)
 
 | Part | Detail |
 |---|---|
-| App | Next.js 16.4.6 App Router, React 19, Tailwind v4, TypeScript, zod 4 |
-| Data | Supabase (Postgres plus Auth plus Storage). Project ref `sibsiwicyoawdysgqeft`, Mumbai, Free plan |
-| Hosting | Vercel, production https://pangat-tau.vercel.app. Functions run in Mumbai (`bom1`, set in `vercel.json`). Every push to `main` deploys to production |
-| CI | GitHub Actions runs `npm run typecheck`, `npm test` (vitest) and `npm run build` |
-| Tests | `tests/*.test.ts`: unit tests for the pure logic in `src/lib` |
-| Other libraries | exceljs (writes the template), read-excel-file (reads uploads), uqr (QR codes), nodemailer (Gmail SMTP), lucide-react |
-
-**Owner's PC:** do not run `npm install` or builds on it. Windows Smart App Control blocks new native npm binaries. Run in your own sandbox, or rely on CI.
-
-**Demo mode:** with no Supabase environment variables, the app uses an in-memory store (`src/lib/store/demo.ts`). That gives a sample wedding with eight households, no sign-in, and data that resets on restart. Most host features need Supabase. Demo mode covers mainly the guest flow and the dashboard.
-
-**Environment variables:**
-- `SUPABASE_URL`
-- `SUPABASE_PUBLISHABLE_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (secret)
-- optional `SMTP_USER` and `SMTP_PASS`
-- optional `GEMINI_API_KEY` or `ANTHROPIC_API_KEY`
-- optional `PANGAT_PUBLIC_URL`
-
-None of them has the `NEXT_PUBLIC_` prefix.
-
-## 3. Security model (test this hard)
-
-- **Guests never reach the database directly.** Guest pages and actions run on the server with the service-role key and look a household up only by its token. RLS is on, with **no anonymous policies**.
-- **Tokens** are 22 URL-safe characters (128 bits). `isPlausibleToken` accepts `^[A-Za-z0-9_-]{8,64}$`. An unknown token shows a bilingual "link isn't valid" page.
-- **Short codes** are 6 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789`, with no I, L, O, 0 or 1. Only a signed-in host can look one up, through Guest list search. There is no public code entry.
-- **Hosts** read through their own session (publishable key), so RLS limits each host to their events and side. The `authenticated` role has **read-only** policies and no write grants. Every write is a server action using the service-role key, after a server-side check of role and side. Policy helpers live in the unexposed `private` schema.
-- **Roles per event:**
-  - **Owner**: the creator. Sees both sides and does everything.
-  - **Co-owners**: up to 3 per side. A co-owner can cover both sides, and then counts against each side. Co-owners see and change their own side only. Owner-only areas:
-    - Caterer numbers. Migration 0017 also blocks it at database level.
-    - Event settings changes.
-    - Co-owner management.
-    - Deleting the event.
-- `src/proxy.ts` refreshes the Supabase session on `/host/*` with `getUser()`. Pages use `getClaims()`, which checks the ES256 token locally, through `signedInUser` and `hostGate` in `src/lib/host.ts`, both wrapped in React `cache()`.
-- `safeNext()` (`src/lib/auth.ts`) accepts only paths on this site after sign-in. Test it with `//evil.example`, `javascript:`, absolute URLs and encoded variants.
-- **"Not us" requests** never reveal whether a mobile matched a household. The limit is 5 requests per link per day.
-- **Invitation card PDFs** are in a private Storage bucket, `cards`. A guest gets a signed URL valid for 1 hour through `/r/<token>/card?l=en|mr`, and only their household's side. Hosts upload through a one-time signed upload link, 20 MB maximum.
-
-**Attacks worth trying:**
-- A one-side co-owner calling server actions for a household or task on the other side, with forged IDs.
-- A co-owner calling owner-only actions:
-  - `saveEvent`, `inviteHost`, `dropHost`, `removeEvent`, `freezePredicted`, `saveBaselines`
-  - card upload actions
-- A signed-in user who is not a host of the event.
-- Reading or writing tables directly through the Supabase REST API with the publishable key, both anonymous and authenticated.
-- Token enumeration and timing on `/r/<token>`.
-- Card route access for another side's PDF.
-- Over-long or odd input on every form: zod limits, Marathi text, emoji, HTML or script in names, notes and WhatsApp texts.
-- CSV or formula injection in the Excel template and upload.
-
-## 4. Routes
-
-| Route | Who | What |
-|---|---|---|
-| `/` | public | Landing page |
-| `/r/<token>` | guest | Reply page. Also takes `?s=q` (came by QR), `?l=en\|mr` (open in that language) |
-| `/r/<token>/card?l=en\|mr` | guest | Redirects to a signed URL for the household side's invitation PDF |
-| `/host/login`, `/host/signup`, `/host/forgot`, `/host/account/password` | anyone | Account pages: Google or email and password. Minimum password length is 10 |
-| `/auth/confirm`, `/auth/callback` | - | Email-link landing (types email, invite, recovery, email_change) and Google OAuth callback |
-| `/host` | host | Your events. With exactly one event it goes straight into it. `?all=1` always lists them |
-| `/host/new` | signed in | Create an event. Wedding only; starts with Haldi (day before, 10:00 am), Wedding (11:30 am), Reception (7:00 pm); cut-off defaults to 15 days before |
-| `/host/e/<slug>` | host | Dashboard. `?side=both\|bride\|groom` for the owner |
-| `/host/e/<slug>/guests` | host | Guest list. `?q=`, `?sort=name\|side\|mobile\|location\|code\|invited\|replied\|cap`, `?dir=asc\|desc`, `?page=`. Default sort is name A to Z |
-| `/host/e/<slug>/guests/template` | host | Downloads the event's Excel template |
-| `/host/e/<slug>/guests/<id>` | host | Household page: record a reply on their behalf, edit, delete, copy link, one slip |
-| `/host/e/<slug>/slips` | host | Print slips (8 per A4): `?side=`, `?place=` (a location, or `-` for none), `?lang=en\|mr\|both`, `?since=YYYY-MM-DD`, `?ids=`. `?tab=language`: Language of each slip |
-| `/host/e/<slug>/whatsapp` | host | Distribution list, message texts, effort log |
-| `/host/e/<slug>/todo` | host | People helping and tasks |
-| `/host/e/<slug>/numbers` | owner | Caterer numbers (pilot record) |
-| `/host/e/<slug>/settings` | host (edits: owner) | Event details, functions, owner and co-owners, card PDFs, delete event |
-
-## 5. Features and the rules to verify
-
-### 5.1 Guest reply (`src/app/r/[token]/`, `src/lib/validate.ts`)
-
-**The flow:**
-1. "Is this you?" ("This isn't us" leads to the mobile form).
-2. A reply per invited function: coming yes or no; if yes, people, vegetarian count and arrival (early, on time or late).
-3. A summary.
-4. The guest can change the reply until the event cut-off.
-
-**Language:**
-- English or Marathi, remembered in the `pangat_lang` cookie.
-- `?l=` from a one-language slip applies only if the guest hasn't chosen a language before.
-- Marathi uses 0-9 digits, and times read "10:00 am" in both languages.
-
-**Validation:**
-- Heads are 1 to `MAX_HEADS` (30) when coming.
-- Veg can't exceed heads.
-- At most 20 answers.
-- Every invited function must be answered exactly once. An unknown or duplicate function ID is rejected.
-- After the cut-off a guest gets "closed". Hosts can still record replies on their behalf.
-
-**Food per function** (`functions.catered`, `functions.veg_only`):
-- **No food:** veg and non-veg are stored as 0, and the diet question is hidden.
-- **Veg only:** the veg question is hidden, and everyone counts as veg, even for older replies.
-
-**Sources:** `qr` when `?s=q` is present, otherwise `link`. Host replies are `on_behalf`.
-
-**Change detection** (`src/lib/store/changed.ts`, `replyChanged`):
-- Only replies that actually changed are written.
-- Re-sending an unchanged reply adds no `response_history` row.
-- A host correcting one function doesn't turn the guest's other replies into "on behalf".
-
-**Layout:**
-- On the summary, function names wrap whole, never mid-word.
-- The veg and non-veg split sits on the same line as the date and time.
-
-**Soft cap:** a household's cap never stops a guest replying with more people.
-
-### 5.2 "Not us" (`reportNotUs`, `src/lib/lookup.ts`, migration 0008)
-
-**The guest side:**
-- The guest enters a mobile. It's normalised to +91, and an invalid one gives `bad_mobile`.
-- The answer is the same whether or not a household matched.
-- Limit: 5 per link per day.
-
-**The host side:**
-- The request shows in a queue on the Guest list and as a banner on the Dashboard.
-- Each request has a one-tap WhatsApp send of the matched household's own link, or Dismiss.
-
-**Visibility:**
-- A one-side host sees a request if the opened link or the matched household is on their side.
-- The other side's household details stay hidden (`canSeeLookup` and `canNameMatch`).
-
-### 5.3 Dashboard (`src/app/host/Dashboard.tsx`, `src/lib/forecast.ts`)
-
-**Per function, in two groups:**
-- **Cards (households):** Invited, Yes, No, Waiting, Replied.
-- **People:** Invited, Confirmed, Veg, Non-veg, Expected.
-
-**Forecast:**
-- `expected = confirmed heads × yesShowRate + pending people × pendingShowRate`.
-- A pending card's people = its cap. With no cap, it's the function's average heads per "yes".
-- The rates are stored per event, with defaults of 0.90 and 0.40. The owner has chosen to keep 0.40.
-
-**Side scoping** (`src/lib/sides.ts`):
-- The owner sees Both, then each side.
-- A co-owner sees only their side.
-- The owner can switch with `?side=`.
-
-**Also:**
-- "N people invited" on the cards, plus a count of cards with no cap.
-- Dashboard visits are recorded per host for the review.
-
-Verify the numbers by hand against the database for a mix of these cases:
-- yes, no and pending replies
-- cap and no cap
-- veg-only and no-food functions
-
-### 5.4 Guest list (`src/app/host/e/[slug]/guests/`, `src/lib/guestlist.ts`, `src/lib/template.ts`)
-
-**Adding households:**
-- **Add a household** opens a pop-up. **Import from Excel** does too: upload `.xlsx` or `.csv`, or paste cells.
-- Every row goes through a check step that shows problems before saving. The save uses the atomic `import_households` RPC, which only the service role can call.
-
-**Excel template:**
-- It's built per event, so its columns follow that event's functions.
-- Columns: Name (required), Marathi name, Side, Mobile (kept as text), Location, **one Yes/blank column per function** (headed with the function's name; at least one Yes per household; no "all"), Cap, Comments / Notes.
-- A "How to fill" sheet, and dropdowns for Side and Yes/blank.
-- Only the "Guests" sheet is read.
-- Older formats still import: a single "Functions" column (comma list; blank or "all" = every function).
-- A Yes/No column whose header isn't a current function gives a sheet-level problem. This catches renamed functions.
-
-**Normalising and limits:**
-- Mobiles are normalised to +91.
-- Location: 80 characters at most. Notes: 500.
-
-**Duplicates** (`sameHousehold`):
-- **Same side and same mobile** is the same household.
-- **Same side and same name** is the same household only when neither mobile nor location tells them apart. A blank doesn't count as different.
-- Duplicates are caught both within the paste and against existing households.
-
-**One-side hosts:** a one-side co-owner can only add to their own side.
-
-**List:**
-- 50 a page, with Previous and Next above and below.
-- Sorted by household name, A to Z, by default. Every column sorts, with blanks last. Paging links leave the default sort out of the URL.
-- On phones a Sort by menu replaces the clickable headers.
-
-**Search** (`LiveSearch`):
-- It updates `?q=` 250 ms after typing stops and works as a plain form without JavaScript.
-- It matches name (English or Marathi), place, notes, mobile and code.
-- A new search goes back to page 1.
-
-**Flags and counts:**
-- Households over their cap are flagged ("N replied"), and an "over their cap" card links to `?sort=cap&dir=desc`.
-- Count cards turn into an all-clear ("All N have a Marathi name") when nothing is missing.
-
-**Household page:**
-- Record a reply on their behalf.
-- Edit details and invitations. A function that has already been replied to can't be removed.
-- Delete, only if there is no reply.
-- Copy the guest link.
-
-### 5.5 Slips (`src/app/host/e/[slug]/slips/`)
-
-**Language of each slip tab:**
-- Set per household or for ticked households: English, Marathi or Both (`households.slip_lang`, default Both).
-- Households in name order, A to Z.
-- Search by name or place.
-- Three drop-downs, each with counts: **Side** (owner only), **Location** (every place on that side, case ignored, plus "No location given") and **Language**. Each counts within the ones before it: side, then location, then language. Changing side resets location.
-- A Location column appears from 640 px; on phones it shows under the name.
-
-**Print slips tab:**
-- 8 per A4. The print geometry is 194 × 281 mm.
-- Slips are in household-name order, on screen and in print.
-- **Which slips** filters: Side (owner only), **Location** (a drop-down of the side's places with counts; "No location given" appears only when some household has none), Language, and "added on or after". **Show** applies them; **All slips** clears them. The Location list follows the Side in the URL, so it updates only after Show.
-- The screen shows one A4 sheet at a time, with Previous and Next and "Sheet 2 of 9 · slips 9–16 of 72".
-- A search starts again at sheet 1.
-
-**What each slip shows:**
-- Household name.
-- QR code to `/r/<token>?s=q`, plus `&l=` for one-language slips.
-- Short code.
-- Reply-by date, written "24th December 2026".
-- The side's contact number for "no smartphone? call …".
-- With Both, Marathi lines come first, then English.
-- Text sizes (12 Nov): the "Scan…" and reply-by lines are 8.5 pt on two-language slips and 9.5 pt on one-language slips, regular weight; the "No smartphone?" line is 7.2 / 8 pt. Only the event name in the header is bold. Fit was checked on screen with a long two-line name in both scripts (it fits, with about 1 px to spare); it has not been checked on paper.
-
-**QR codes:**
-- They are drawn in the browser (`src/app/ui/QrCode.tsx`).
-- The print copy of every ticked slip is built only when printing starts: `beforeprint` plus `flushSync`, which also covers Ctrl+P.
-- The owner printed a sheet and the codes scan correctly.
-
-**To test:**
-- Every ticked slip prints, not just the visible sheet.
-- Printing with nothing ticked.
-- Odd counts, for example 9 slips.
-- Very long names in both scripts, now that the text is bigger: nothing may be cut off or spill out of a slip, on screen or in print preview.
-- Location filter: a place typed two ways ("Borivali" and "borivali ") counts as one; a place with an apostrophe or comma; a `?place=` that doesn't exist (should show every location).
-- Each QR code decodes to the right household's link.
-
-### 5.6 WhatsApp (`src/app/host/e/[slug]/whatsapp/`, `src/lib/outreach.ts`)
-
-**Distribution list:**
-- Pending households, 50 a page on the client.
-- Ticks and "Tick all" cover every page and act on the households shown.
-- The search filters on the client: name (English or Marathi), place, code and mobile digits.
-
-**Sending:**
-- The send button opens `https://wa.me/<number>?text=…`, prefilled with the invitation or reminder text.
-- Each send is recorded in `nudges`.
-
-**Message texts:**
-- They are editable.
-- Placeholders: `{name_en} {name_mr} {event_en} {event_mr} {date_en} {date_mr} {phone} {link}`. The old forms `{name} {event} {date}` still work.
-
-**Card link:** the message carries the household's card link in its slip language.
-
-**Effort log:** minutes and calls spent chasing replies, for the review.
-
-**To test:**
-- Encoding of Marathi text and line breaks in the wa.me URL.
-- Households with no mobile.
-- A placeholder used twice or misspelt.
-
-### 5.7 To-do (`src/app/host/e/[slug]/todo/`, `src/lib/todo.ts`, migrations 0011 and 0012)
-
-**People helping:**
-- Full name, mobile and side. They never sign in.
-- The owner and co-owners are added automatically by a trigger that keeps them in step with `hosts`. The owner appears as "Both sides".
-- A co-owner who still has tasks can't be removed until those tasks are reassigned.
-
-**Tasks:**
-- Title, note, optional function, deadline, and status (to do, in progress or done).
-- Overdue is worked out in IST.
-- A WhatsApp button sends a task to its person.
-
-**Who sees what:**
-- The owner sees both sides; a co-owner sees only theirs.
-- This uses RLS on read and a side check on every write.
-
-**Search:** it matches task, note, person and function. It sits on the side-filter row.
-
-**Status switch:** the tapped status shows at once and the switch dims until the save finishes (added 12 Nov after a save took several seconds). Check that a failed save puts the old status back and shows the error.
-
-### 5.8 Caterer numbers (owner only; `src/app/host/e/[slug]/numbers/`, `src/lib/pilot.ts`, migrations 0006, 0010 and 0017)
-
-**What's on the tab, per function:**
-- **Family's guess** (the baseline). The code and database call it `baseline`.
-- **Freeze:** snapshots Pangat's expected headcount and its veg/non-veg split as the first count. The pilot is judged on this number.
-- **Freeze revised:** a later revised count. It's refused until a first freeze exists.
-- **To the caterer:** the higher of the baseline and the latest frozen number (the revised one if there is one).
-- **Actual counts on the day:** the total only for veg-only functions.
-- **Verdict:** whichever was closer to the actual count, Pangat's number or the family's guess, or a tie. The verdict card goes first once actual counts exist.
-
-**Caterer dates** are set in Event settings. The first count is due 20 Dec, and the last change is 25 Dec. The live event currently says 24 Dec, which needs fixing.
-
-**Questions to answer:**
-- The Freeze buttons ask for a browser `confirm()` first, so an automated tab must accept the dialog (Playwright: `page.on("dialog", d => d.accept())`). Freezing again is allowed: the dialog warns "This replaces the numbers frozen earlier", then the first count is overwritten. The freeze has **not yet been tested end to end**; please do it on a throwaway event.
-- What does `readCount` do with blank, negative, decimal or huge input?
-
-### 5.9 Event settings (`src/app/host/e/[slug]/settings/`)
-
-**Event details:**
-- English and Marathi names, cut-off, show rates, side contact numbers, caterer due and final dates.
-- Four invitation PDFs: bride's and groom's side, each in English and Marathi.
-- Delete the event: a warning, then a 5-second countdown that Cancel or Escape stops. Everything in the event is deleted in one statement, but people's accounts stay.
-
-**Functions:**
-- Add, rename, re-time, venue and map link.
-- Food: veg and non-veg, veg only, or no food.
-- Delete a function, unless someone has replied to it.
-- A new function can optionally invite every household.
-
-**Owner and co-owners:**
-- Invite by name, email, mobile and side.
-- A new person gets Supabase's invitation email. Someone who already has an account is added at once and gets a Pangat email.
-- Edit, Send again and Remove.
-- Remove deletes the account only if the person hosts nothing else and nothing they recorded points at the account.
-
-### 5.10 Suggest Marathi (`src/app/ui/MarathiInput.tsx`, `src/lib/suggest.ts`, `src/lib/marathi.ts`)
-
-**Where and how it works:**
-- A Suggest button sits next to every Marathi name field: event, functions, and household add and edit.
-- It reads the English field from the same form and asks Gemini (`gemini-3.8-flash`, low thinking). It falls back to Claude if only `ANTHROPIC_API_KEY` is set.
-- It fills the field. Nothing is saved until the host saves, and Undo restores the old value.
-- Signed-in hosts only.
-
-**Rules** (`SUGGEST_SYSTEM`):
-- Keep every name and add nothing.
-- Honorifics are kept.
-- "Late" becomes स्वर्गीय.
-- "and family" becomes सहपरिवार, with no आणि.
-- Tare is written तरे, not तारे.
-- The output must be Devanagari only (`cleanSuggestion`).
-
-**Layout:** below 640 px the Suggest button sits under the field so the field gets the full width; from 640 px it sits beside it.
-
-**To test:**
-- Empty English.
-- Over 200 characters.
-- Prompt-injection text in the English field.
-- The API being down.
-
-### 5.11 Accounts and emails
-
-**Sign-up and sign-in:**
-- Open sign-up with Google, or with email and password confirmed by email (Gmail SMTP).
-- Password reset.
-- Minimum password length is 10.
-- Google sign-in links to an existing email account with the same address.
-
-**Emails:**
-- All emails share one design (`src/lib/emailDesign.ts`).
-- Supabase's invitation template is in `supabase/templates/invite.html`.
-
-**Choose a password page:** names the event and side when the person co-owns exactly one event.
-
-## 6. UI rules to check
-
-**Palette:**
-- Maroon, sand, cream and dusty blue only, with no yellow. The one exception is the logo's saffron dot.
-- `haldi` `#aec4d4` is never used for text.
-- Focus ring: `3px solid #4f6b80`.
-
-**Fonts and sizes:**
-- English: IBM Plex Sans for text and Space Grotesk 600 for headings.
-- Marathi: Noto Sans for text and Noto Sans Devanagari for headings.
-- Host pages have a 15 px body. The guest page is 17 px.
-- Inputs are 16 px on phones, so iOS doesn't zoom.
-
-**Times:** always hh:mm am/pm.
-
-**Responsive:**
-- No sideways scroll at 360 px.
-- Reviewed at 1440×900, 1366×768, 390 and 360.
-- On phones, tables become stacked cards or scroll inside their box.
-
-**Forms:**
-- Typed forms use `useFormAction`, so a validation error keeps what was typed.
-- Navigation links show a spinner while the next page loads (`NavPending`).
-
-**Accessibility:**
-- Labels, `role="alert"` on errors, and `aria-sort` on sortable headers.
-- Keyboard use of the pop-ups (`<dialog>`).
-- Escape cancels the delete countdown.
-
-## 7. Database (`supabase/migrations/0001`–`0020`)
-
-**Main tables:**
-- `events` (with `kind`)
-- `functions` (`catered`, `veg_only`, `sort_order`)
-- `households` (`token`, `short_code`, `side`, `mobile`, `soft_cap`, `slip_lang`, `location`, `notes`)
-- `invites` (household × function)
-- `responses` and `response_history` (history cascades with the household, migration 0018)
-- `hosts` (role and side)
-- `lookup_requests`
-- `function_numbers`
-- `nudges`, `effort_log`, `dashboard_views`
-- `helpers`, `tasks`
-
-**RPC:** `import_households` (service role only).
-
-**Storage:** bucket `cards` (private).
-
-**Things to check:**
-- Run the Supabase security advisor; it should be clean.
-- RLS for each role: anonymous, signed in but not a host, one-side co-owner, both-sides co-owner, owner.
-- Cascades on deleting an event and deleting a household.
-
-## 8. Existing automated tests
-
-`tests/` covers:
-- auth (`safeNext`, password rules)
-- events (dates and slugs)
-- forecast
-- guestSort
-- guestlist (parsing, duplicates, templates)
-- lookup visibility
-- the Marathi cleaner
-- outreach (placeholders, wa.me links)
-- pilot (to-caterer, verdict)
-- sides
-- template
-- text
-- todo
-- token
-- validate
-- when (time formatting)
-
-**Not covered:**
-- Server actions
-- RLS
-- Pages and components
-- Excel round-trip with real files
-- Printing
-- End-to-end flows
-
-Integration and end-to-end tests (for example Playwright against a local build with a Supabase branch or a local Supabase) would be the biggest gain.
-
-## 9. Test data and rules of engagement
-
-**Production database:**
-- It holds the real wedding.
-- Work on a **separate Supabase project or branch**, or a local Supabase, with migrations 0001–0020 applied and `supabase/seed/demo_wedding.sql` loaded.
-- That seed creates a `demo-wedding` event with sample households and replies. Re-running it clears replies but keeps host links.
-
-**If you must use the live site:**
-- Create a throwaway event of your own through `/host/new`, and delete it afterwards.
-- Never reply on real guests' links.
-- Never send WhatsApp messages or emails to real people.
-
-**Test accounts:**
-- Create your own.
-- Supabase Free plan email sending is rate-limited, and confirmation emails go out through the owner's Gmail, so keep sign-ups few.
-
-**Never commit secrets.** The repo folder syncs through OneDrive.
-
-**Report findings** with steps, the expected result, the actual result and a severity, ranked by impact on the 28 December pilot: wrong headcounts, data leaking across sides, guests unable to reply, and printing problems come first.
-
-## 10. Docs known to be stale
-
-- `README.md`:
-  - Mentions a single "Functions" column in the template; it is now one Yes column per function.
-  - Says public sign-up is off; sign-up has been open since 10 Nov.
-  - Lists the migrations only up to 0010.
-  - Says "food yes/no"; it is now three choices.
-- `src/lib/pilot.ts`: the header comment says "frozen on 14 December"; it's 19 December.
-- `CLAUDE.md` says the caterer's last date is 25 December. The live event's setting still says 24 December (checked 12 Nov). This is the owner's setting to change, not a code defect.
-
-## 11. First test run (12 November) and what to do next
-
-Codex's first end-to-end run used a throwaway event, which has since been deleted. Here is what happened to each finding.
-
-| Finding | Verdict | Status |
-|---|---|---|
-| Marathi name field too narrow at 360 px (Suggest button beside it) | Real: 135 px of field for a 240 px placeholder | **Fixed** (PR 99). Suggest sits under the field on phones; the field is 255 px at 360 px |
-| "Coming · 1 people" on the guest summary (English) | Real; Marathi was already right | **Fixed** (PR 99), and "1 people invited" on dashboard cards too |
-| "Wedding" and "Reception" split mid-word on dashboard cards at 1280 × 846 | Not reproducible: every heading is one line at that size, even "Engagement ceremony"; the date moves below when space runs out | No change. Report it again only with a screenshot and the exact viewport |
-| Caterer last date 24 vs 25 Dec | A setting, not a defect | Owner to change in Event settings |
-| Task status took seconds with no feedback | Real | **Fixed** (PR 99). The tapped status shows at once and the switch dims while saving |
-| First-count freeze couldn't be completed | The browser `confirm()` dialog blocked the test tab | Still untested; accept the dialog and test it |
-
-**Changed since the first run** (re-test these):
-- Guest list sorted by name by default (PR 94).
-- Slips in name order; Location filter in Which slips (PR 96).
-- Language of each slip: Side, Location and Language drop-downs (PR 97).
-- Slip text one point bigger, not bold (PR 98).
-- The three fixes in the table above (PR 99).
-
-**Focus for the next run**, in this order:
-1. Caterer numbers end to end on a throwaway event: baseline, Freeze, Freeze revised, To the caterer, actual counts, and the verdict. Accept the `confirm()` dialogs.
-2. Permissions: sign in as a one-side co-owner (a second test account invited to the throwaway event) and try the other side's households, tasks and "not us" requests, plus the owner-only pages and actions. Section 3 lists the attacks.
-3. Excel round trip: download the template, fill it (including duplicates, a renamed function column, Marathi, a blank mobile, a location), upload it, check the result.
-4. Print preview of Print slips with the new sizes and a filter applied: every ticked slip, nothing cut off.
-5. Re-check the changes listed above at 360 px, 390 px, 1280 × 846 and 1440 × 900.
-6. A guest reply on a phone-sized screen in both languages, including one person, veg-only and no-food functions, and a change of reply.
-
-**Running the automated tests:** the local folder has no `node_modules`, and installing on the owner's PC is not allowed. Use GitHub Actions (it already runs typecheck, tests and build on every push) or your own sandbox.
+| App | Next.js 16 (App Router), React 19, Tailwind v4, TypeScript, zod 4 |
+| Data | Supabase: Postgres, Auth, Storage. Row-level security on every table, no anonymous policies |
+| Hosting | Vercel, functions in Mumbai. Every merge to `main` deploys to production |
+| CI | GitHub Actions: typecheck, vitest unit tests (21 files, about 170 tests), build |
+| Keep-warm | A database cron job opens `/r/keepwarm00`, `/i/keepwarm00` and `/host/login` every 5 minutes, so you will see those requests in logs. They are expected |
+
+---
+
+## 2. Safety rules (follow exactly)
+
+1. **Do not touch the real wedding.** It is "Manali and Anish Wedding", address `/host/e/manali-and-anish-wedding-jhie`.
+   - Do not open, change, add to or delete anything in it: Dashboard, Guest list, Slips, WhatsApp, To-do, Caterer numbers, Expenses, Event settings, Admin.
+   - Do not open any of its guests' reply links.
+   - If Pangat drops you into that event (it does when you host only one event), go to **All events** (`/host?all=1`) straight away.
+2. **Make your own throwaway event** and do all testing in it:
+   - **All events → Create an event.** Name it "QA Test Wedding", wedding date about six weeks from today.
+   - Put "QA TEST" in every household name you add.
+   - Delete it at the end (section 8).
+3. **Never send anything to a real person.**
+   - WhatsApp buttons open `wa.me` (or the phone's share sheet). Read the message, then **close the tab without sending**.
+   - Use clearly fake numbers: +91 90000 00001, 90000 00002 and so on; for another country, +971 50 000 0001.
+   - **Do not invite co-owners by email** unless the person running this test gives you an address of theirs.
+4. **No real files.** For invitation cards and expense bills, upload a small image or PDF you make yourself (a screenshot of a blank page is fine), in your test event only.
+5. **Do not change account settings, passwords or sign-in methods.** Do not sign out unless a test needs it; if you must, stop and ask the person running the test to sign back in.
+6. **Browser confirm dialogs.** Several buttons ask "Are you sure?" with the browser's `confirm()`. Accept them only inside your test event. If any confirm or delete appears for the real wedding, cancel it, stop, and report it.
+7. **Do not print.** Use Print preview (Ctrl+P), then Cancel.
+8. **Do not merge, push, or change the repository, Supabase or Vercel.** You are testing only.
+
+---
+
+## 3. Settled decisions: do not report these as bugs
+
+The owner has decided these; report them only if the app doesn't do what is described.
+
+- Caterer dates: first count due 20 December, last change 24 December. Pangat's number is frozen the day before the first count (19 December).
+- Replies are **yes or no** only; there is no "maybe".
+- The guest page asks **"How many non-vegetarian?"**, starting at 0, with "Vegetarian: N" worked out underneath. Arrival starts at "On time".
+- A household's **Guest Count** (cap) is a flag only. It never stops a guest replying with more people; the Guest list just shows "over their Guest Count".
+- Show rates default to 90% (people who said yes) and 40% (people on cards that haven't replied).
+- **Veg only** functions don't ask the diet question and count everyone as veg. **No food** functions ask no diet question.
+- The real wedding has no groom's-side households yet, and some households have no mobile. Both are expected.
+- A guest's own language choice beats the slip's or link's language, on that phone, for that household only.
+
+---
+
+## 4. Features (what to test)
+
+### 4.1 Accounts (`/host/login`, `/host/signup`, `/host/forgot`, `/host/account/password`)
+- Sign in with Google, or email and password (at least 10 characters). Anyone can sign up; email confirmation and password reset come by email.
+- After sign-in: **All events** (`/host`, or `/host?all=1` to always list them) with **Create an event** (`/host/new`): English name and Marathi name (with **Suggest Marathi**), wedding date, reply cut-off (default 15 days before). Wedding is the only event kind; others say "coming soon". A new event starts with Haldi (day before, 10:00 am), Wedding (11:30 am) and Reception (7:00 pm).
+- Each event lives at `/host/e/<event>`. The left rail (laptop) or Menu (phone) has: Dashboard, Guest list, Slips, WhatsApp, To-do, and for the owner only Caterer numbers, Expenses, Event settings and Admin. The event's name sits above every page.
+
+### 4.2 Event settings (owner)
+- **Event details:** English and Marathi name, reply cut-off (moving it earlier warns about printed slips), show rates, each side's contact number (with a country-code drop-down; printed on slips), the caterer's two dates.
+- **Invitation card:** four slots (bride's / groom's side × English / Marathi). Each takes a PDF or JPG, PNG or WebP up to 20 MB, with View, Replace and Remove.
+  - **Name on the envelope:** per uploaded card, a preview of page 1 with a real household's name and place, buttons to move and resize, Save. An "Add सहपरिवार / and family" tick. Whole page / Close-up switch.
+  - **Places in Marathi:** every distinct household location written once in Marathi ("Suggest the missing ones"); used on the Marathi card.
+- **Functions:** name (with Suggest Marathi), date and time, venue, map link; Food: Veg and non-veg / Veg only / No food; an **icon** from 35 (the icon follows the name as you type, e.g. Sangeet → music; icons another function uses are greyed out; two functions can't share one). Add a function (optionally inviting every household); delete one unless someone has replied to it.
+- **Owner and co-owners:** invite by name, email, mobile and side (both, bride's, groom's); up to 3 per side; edit, Send again, Remove.
+- **Delete this event:** a warning, then a countdown that Cancel or Escape stops.
+
+### 4.3 Guest list
+- **Count cards:** households; no mobile; no Marathi name; invitations not fully sent (tap to filter); over their Guest Count. A card turns into an all-clear when nothing is missing.
+- **Search** filters as you type (about a quarter of a second after you stop): name in English or Marathi, place (English or Marathi), notes, mobile, code.
+- **Sorting and pages:** household name A to Z by default; every column header sorts, blanks last; phones get a Sort by menu. 50 households a page with Previous / Next.
+- **Columns:** Household (Marathi name and notes underneath), Guest Count, Side, Mobile, Location (Marathi place after the English), Code, Invited to (function icons, legend above), Replied, **Invitation mode** (an envelope for card and/or a WhatsApp icon, each with a "sent" tick box that turns green), **Print slips** (a tick box = on the print list; WhatsApp-only households show "—").
+- **+ Add a household** (wide pop-up):
+  - Name and Location, each "In English" | "In Marathi" side by side, with one **Suggest Marathi** for both (fills only empty boxes, with Undo).
+  - Side | Mobile (country-code drop-down, India first), Language (मराठी / English / Both) | Send the invitation by (Card / WhatsApp; **WhatsApp can't be ticked without a mobile** and a tap shows a red "Enter phone number to enable the checkbox."), Invited to (one tick per function), Guest Count | Notes.
+  - The English location offers the event's known places; a known place fills its Marathi.
+  - Footer: **Save household and add new** (keeps side, language, invitation and functions; clears the rest; says "Added … · code …") and **Save household and close**.
+  - Duplicates are refused: same side and mobile; or same side and name when neither mobile nor location tells them apart.
+- **Import from Excel** (pop-up): download the event's template (Name, Marathi name, Side, Country code, Mobile, Location, Language, Send the invitation by, one Yes column per function, Guest Count, Comments / Notes, plus a "How to fill" sheet and drop-downs). Upload `.xlsx` or `.csv`, or paste cells. Every row is checked first; problems are listed per row; the button says "Fix N rows to add households" while any row has a problem.
+- **Export to Excel:** a "Guest list" sheet with every household and each function's reply ("Yes · 4 (2 veg)", "No", "Waiting").
+- **Household page** (click a name; it opens in a **new tab**):
+  - **Details and invitations:** the same layout as Add. "‹ Save and back to Guest list" saves and closes the tab (it was opened from the list), and the Guest list tab refreshes itself.
+  - **Record a reply on their behalf** (phone call or in person): per function yes or no, people, Non-veg (starts at 0 for a new reply), arrival. Works after the cut-off. After saving, the tab closes as above.
+  - Copy the guest's link.
+  - **Delete household**: only when they haven't replied, with a warning that their printed QR and code stop working for good.
+
+### 4.4 Guest reply page (`/r/<token>`, short link `/i/<code>`)
+Open these in a **new incognito window**, so the owner's session isn't involved.
+- **First screen:** the invitation, with **card buttons** when a card is uploaded (two side by side for a "Both" household: "मराठी पत्रिका" / "इंग्रजी पत्रिका"). The card is made on the page with the household's name on the envelope. First tap opens it in a new tab; after that the button is a menu: Open, Save, Share (Share only where the phone can share files). Then "Is this invitation for you?" with **Yes, that's us** / **No, this isn't us**. This screen is sized to fit a phone inside WhatsApp (about 575 px tall at 360 px wide).
+- **Reply form, per function:** Coming yes / no; if yes, how many people (1 to 30), **how many non-vegetarian** (starts at 0; "Vegetarian: N" underneath; changing the people count keeps the non-veg number), arrival (early / on time / a little late). Veg-only and no-food functions skip the diet question.
+- **Summary** reads like "1 non-veg, 2 veg", then Send. The reply can be changed until the cut-off; after it the page shows the reply as closed (card buttons still work).
+- **Language:** opens in the guest's own earlier choice **for that household on that phone**; otherwise the link's `?l=` (one-language slips and WhatsApp links carry it); otherwise the household's language ("Both" opens in Marathi). The guest can switch any time, and the switch is remembered for that household only.
+- **"No, this isn't us":** the guest leaves a mobile (country box shows "+91"; tapping it lists every country). The answer is the same whether or not the number matches a household, at most 5 requests per link per day. Hosts see the request on the Guest list (and a banner on the Dashboard): one-tap WhatsApp of the matched household's own link, or Dismiss.
+- A made-up link such as `/r/notarealtoken123` shows a bilingual "link isn't valid" page (HTTP 404).
+- Source is recorded: `?s=q` on the URL = came by QR; otherwise WhatsApp link; host-recorded = on behalf.
+
+### 4.5 Dashboard
+- One card per function: **Expected**, Confirmed, veg / non-veg, a yes / no / waiting bar, and how many replied.
+- **All the numbers** table: Cards (households): Invited, Yes, No, Waiting, Replied. People: Invited (Guest Counts added up, plus how many cards have none), Confirmed, Veg, Non-veg, Expected.
+- **Expected** = confirmed people × 90% + people on cards that haven't replied × 40%. A waiting card's people = its Guest Count, or the function's average people per "yes" when it has none.
+- The owner switches Both / Bride's / Groom's (`?side=`). A co-owner sees only their side, whatever the address says.
+
+### 4.6 Slips (printed QR slips), three tabs
+- **Print list** (opens first): households put on the list from the Guest list; Take off, Clear the list, **Print these N slips**.
+- **Language:** each household's slip language; search; Side, Location and Language filters with counts (each counts within the ones before it); set one household or tick several; the Print column here *is* the print list (saved as you tick).
+- **Print slips:** one A4 sheet (8 slips, portrait) at a time on the left with Previous / Next and "Sheet 2 of 9 · slips 9–16 of 72"; **Additional filters** pop-up (Side, Location, Language, added on or after) and **Print N slips** on the right. Print-list slips start ticked and come first; the rest are greyed out. Only ticked slips print. WhatsApp-only households never appear.
+- **Each slip:** event name, household name, QR code, short code, "reply by 24th December 2026" (from the cut-off), and "No smartphone? Call <side's number> and give your code". One-language slips are in that language and their QR adds `&l=`; "Both" slips put Marathi first.
+
+### 4.7 WhatsApp
+- **Message** tab: invitation and reminder texts (the owner can edit; placeholders such as `{name_en}`, `{name_mr}`, `{event_en}`, `{date_mr}`, `{phone}`, `{link}`), with a preview. A household gets only its language's paragraphs; "Both" gets Marathi then English, then the link once.
+- **Distribution list**, with Invitation and Reminder:
+  - **Invitation** leaves off every household that has replied (any channel). It has no Replied column. WhatsApp-mode households show **Send invitation**; card-only households with a mobile show **Add to WA invitation** (then it becomes Send invitation); once sent, **Send again**. On phones, **Share card with their name** makes the household's card(s) and opens the share sheet.
+  - **Reminder** lists only WhatsApp-invited households that haven't answered every function, and has a Replied column.
+  - Sorted by name by default; every column sorts; 50 a page; tick several and "Send to ticked" walks through them in order.
+  - Sending marks WhatsApp as sent (Guest list's Invitation mode turns green).
+- **Time spent chasing:** log minutes and phone calls.
+
+### 4.8 To-do
+- **People helping:** full name, mobile (country code), side. The owner and co-owners are on it automatically.
+- **Tasks:** title, note, optional function, deadline, status To do / In progress / Done (changes as you tap and dims while saving). Overdue tasks are marked. A WhatsApp button sends a task to its person. Search (task, note, person, function) and side filter.
+- A co-owner sees and edits only their side.
+
+### 4.9 Caterer numbers (owner only)
+1. **Family's guess** per function.
+2. **Freeze the first count**: "Freeze the day before the caterer needs the first count (freeze on 19 December; due 20 December)". It snapshots Pangat's Expected and its veg / non-veg split (asks to confirm; freezing again replaces it).
+3. **Freeze a revised count** later (only after a first freeze; until the caterer's last date).
+4. **To the caterer:** the higher of the family's guess and the latest frozen number.
+5. **Counted on the day:** Total, Veg, Non-veg (total only for veg-only and no-food functions).
+6. **Which number was closer?** Per function and overall, Pangat or the family's guess, with bars; plus the **non-veg share**: "Pangat 38% (260 non-veg, 420 veg) · on the day 42% (290 non-veg, 400 veg) · 4 points apart", and an average line under the headline. Inputs accept whole numbers 0 to 100,000.
+
+### 4.10 Expenses (owner only)
+- **Summary** tab: totals, per side, **Settle up** (who owes whom, rounded to whole rupees, with **Record a settlement** and a Settlements list), due soon.
+- **All expenses** tab (`?tab=all`): the list with sorting and filters.
+- **Add / edit expense** pop-up: title, function (or General), category, total, who pays (Bride's side only / Groom's side only / Shared by percentage or by amount), payments (date, amount, how, and "Paid by" only for shared expenses; a payment can be edited), rest due by, notes, and a **bill** (PDF / JPG / PNG / WebP up to 20 MB; View, Replace, Remove).
+- **Export to Excel:** Expenses, Payments and Settle up sheets.
+
+### 4.11 Admin (owner only)
+- **Clear a reply:** every household with a reply, with its answers per function, channel and time; search by name, place, mobile or code. **Clear reply** shows the reply in a confirm, then deletes it and its history; the household is back to waiting and its link still works. Frozen caterer numbers don't change.
+
+### 4.12 Co-owners (side limits)
+- The menu hides Caterer numbers, Expenses, Event settings and Admin; opening them by address shows "Only the event's owner …".
+- Guest list, Slips, WhatsApp lists, To-do and Dashboard show only their side; another side's household page is "not found".
+- Every save checks the side and role on the server. (Checked live on 24 November by making a test account a co-owner; **trying to save across sides has not been tested live**.)
+
+### 4.13 Looks and layout
+- One palette: maroon, sand, cream, dusty blue; no yellow (except the saffron dot in the logo).
+- English text IBM Plex Sans, headings Space Grotesk; Marathi Noto Sans / Noto Sans Devanagari.
+- Times always "10:00 am" style.
+- **No sideways scrolling at 360 px** anywhere; tables become stacked cards or scroll inside their box on phones.
+- Errors appear under the field; forms keep what you typed after an error.
+
+---
+
+## 5. Test plan
+
+Record evidence as you go: what you did, what you expected, what happened, and screenshots of problems. Test at a normal laptop width first (about 1366 × 768), then repeat key screens at 390 px and 360 px wide with Chrome DevTools' device toolbar.
+
+### A. Set up
+1. Go to `/host?all=1`. Create "QA Test Wedding". Try Suggest Marathi on the name.
+2. Event settings → Functions: add "Sangeet" (the icon should follow the name), set Wedding to **No food** and Reception to **Veg only**, try giving two functions the same icon (refused).
+3. Event details: set both sides' contact numbers (one +91, one +971; fake), caterer dates (first count about 5 weeks out, last change a few days later).
+
+### B. Households
+1. Add about 10 households by hand: both sides; with and without mobile; one +971 number; each language (Marathi, English, Both); Card only, WhatsApp only, both; different Guest Counts and one with none; a location (some typed two ways, e.g. "Pune" and "pune "); notes. Use **Save and add new** for most and **Save and close** for one.
+2. Check WhatsApp can't be ticked without a mobile (red message).
+3. Try a duplicate (same name and side, no mobile or location). It should be refused.
+4. Download the Excel template, check its columns and drop-downs, fill 6 rows: a bad mobile, an unknown country code, WhatsApp with no mobile, no function ticked, a duplicate of an existing household, and one good row. Upload; each problem should be reported on its row and only the good row added.
+5. Guest list: sort every column; search by part of a name, a Marathi name, a place, the last 4 digits of a mobile, a code; tick and untick the Invitation mode "sent" boxes and Print slips.
+6. Open a household (new tab): edit details and use "Save and back" (tab closes, list refreshes); record a reply on their behalf. Try deleting one with no reply (allowed, with a warning) and one that has replied (blocked).
+7. Export to Excel and compare with the list.
+
+### C. Guest reply flow (incognito)
+For 4 households, copy the link from the household page (or the short link from a WhatsApp message preview) and open it in **incognito**:
+1. Language: an English household opens in English, a Marathi one in Marathi, a Both one in Marathi. Switch language on one, then open a different household: it must keep its own language.
+2. Reply: yes to some, no to others; people and non-veg counts (try non-veg above people, people 0 when coming, people above the Guest Count, 31 people); a no to everything.
+3. Reload: the reply is still there. Change it.
+4. "No, this isn't us" with a fake mobile (and a bad one); check the request on the Guest list and the Dashboard banner; Dismiss it.
+5. `/r/notarealtoken123` and `/i/zzzzzzzzzz`: the bilingual "link isn't valid" page.
+6. At 360 px: the first screen fits without scrolling (default text size); nothing cut off.
+
+### D. Dashboard
+1. Check every number by hand against your replies: confirmed people, veg and non-veg (Reception counts everyone as veg; Wedding shows no food), Expected with the formula in 4.5.
+2. Switch Both / Bride's / Groom's.
+
+### E. Slips
+1. Put 3 households on the print list from the Guest list; check the Print list tab and the Language tab's Print column agree.
+2. Language tab: change one household, then several at once; filters and counts.
+3. Print slips: print-list slips first and ticked; Previous / Next; Additional filters; Print preview shows only ticked slips, 8 per A4 portrait, nothing cut off (try a long name in both scripts). **Cancel.**
+4. Check one QR code decodes to that household's link (with `&l=` for one-language slips).
+
+### F. WhatsApp
+1. Message preview has the placeholders filled in; a Marathi-only household gets only Marathi.
+2. Distribution list: sort; Send invitation vs Add to WA invitation; households that replied are not on Invitation; Reminder shows only WhatsApp-invited households.
+3. Click one **Send invitation**, read the wa.me message (right language, one link that opens the reply page), **close without sending**; the household now shows sent (Send again) and its Guest list icon is green.
+4. Log minutes and calls under Time spent.
+
+### G. To-do
+Add a person helping (fake number) and two tasks; change status; search; WhatsApp button (close without sending); an overdue deadline shows as overdue.
+
+### H. Caterer numbers
+1. Family's guess for each function; try negative, decimal and very large values (refused).
+2. Freeze the first count (accept the confirm); check it matches the Dashboard's Expected and split; freeze a revised count; check "To the caterer".
+3. Enter counts on the day; check the verdict, the bars and the non-veg share lines by hand.
+
+### I. Expenses
+Add three expenses (one bride's side, one groom's side, one shared 60/40) with partial payments; attach a small test bill and view it; check Settle up by hand; record a settlement; edit a payment; export to Excel; delete one expense.
+
+### J. Invitation card
+Upload a small test image or PDF to one card slot; View; set the name position and Save; open that side's guest link (incognito) and use the card button (open, then the menu). Remove the card.
+
+### K. Admin
+Clear one test household's reply; check it shows as waiting on the Guest list and Dashboard, and its link opens the reply form again.
+
+### L. Phone width
+At 390 px and 360 px: Dashboard, Guest list, Add a household, household page, Slips tabs, WhatsApp list, To-do, Caterer numbers, Expenses, Event settings, Admin, guest reply page. No sideways scrolling; nothing cut off or overlapping.
+
+### M. Co-owner (only if given a second account)
+Invite it as a groom's-side co-owner of your test event. In incognito, signed in as them: check the menu, the owner-only pages by address, that only groom's-side households show everywhere, that a bride's-side household page by address is "not found", and try to change a bride's-side household through any form you can reach.
+
+---
+
+## 6. Things not yet tested by anyone (higher value)
+
+- A co-owner trying to save something on the other side (section 5 M).
+- Share card on a real phone (Android and iPhone), and the card's name placement on a PDF and an image card.
+- Print preview with the current slip sizes and very long names; real paper.
+- Excel round trip with a messy real-world file (merged cells, extra sheets, numbers stored as numbers).
+- Expenses bills end to end.
+- Large lists: the Guest list, Slips and WhatsApp list with 150+ households (create them by import in your test event).
+
+## 7. Severity guide
+
+At least **Major**: anything that could give a wrong headcount or split, show one side's guests to the other side's co-owner, stop a guest from replying, open a guest's page in the wrong household, break a printed QR code or spoil printed slips, or lose a reply. Report only what you saw; mark guesses as guesses.
+
+## 8. Clean up
+
+1. Event settings → Event details → **Delete this event**, for "QA Test Wedding" only. Check the name before confirming.
+2. Check `/host?all=1` still lists "Manali and Anish Wedding". Do not open it.
+3. Close any incognito windows.
+
+## 9. Report
+
+1. **Summary:** what you tested, how long it took, what you could not test and why.
+2. **Bugs**, most serious first. For each: title, severity (Blocker / Major / Minor / Cosmetic), page and screen width, steps to reproduce, expected, actual, screenshot.
+3. **Confusing wording or layout**, separate from bugs.
+4. **What worked:** a short list.
