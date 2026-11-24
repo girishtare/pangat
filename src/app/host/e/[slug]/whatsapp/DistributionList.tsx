@@ -136,6 +136,9 @@ export default function DistributionList({
   };
   // Invitations go by WhatsApp only to households with WhatsApp as a mode; reminders are listed only for those (page.tsx).
   const canSend = (r: ListRow) => !!r.href && (kind !== "invite" || isWa(r));
+  // The Invitation list leaves off every household with a reply (owner, 20 Nov), so a Replied column there would always say "No reply".
+  const showReplied = kind !== "invite";
+  const sorts = showReplied ? SORTS : SORTS.filter((s) => s.key !== "replied");
   const sendCell = (r: ListRow, full = false) =>
     !r.href ? null : canSend(r) ? (
       <SendButton slug={slug} householdId={r.id} kind={kind} href={r.href} sentBefore={r.sentBefore} full={full} />
@@ -357,7 +360,7 @@ export default function DistributionList({
               {th("name", "Household", "text-left!")}
               {th("mobile", "Mobile")}
               {th("mode", "Invitation mode")}
-              {th("replied", "Replied")}
+              {showReplied && th("replied", "Replied")}
               {th("sent", "Invitation sent")}
               {th("reminders", "Reminders")}
               <th>
@@ -392,9 +395,11 @@ export default function DistributionList({
                 <td>
                   <ModeIcons m={r.invite} wa={isWa(r)} />
                 </td>
-                <td>
-                  <ReplyBadge replied={r.replied} invited={r.invited} />
-                </td>
+                {showReplied && (
+                  <td>
+                    <ReplyBadge replied={r.replied} invited={r.invited} />
+                  </td>
+                )}
                 <td className="whitespace-nowrap">{r.invitationSent ?? "—"}</td>
                 <td className="whitespace-nowrap">{r.reminders}</td>
                 <td>{sendCell(r) ?? "—"}</td>
@@ -416,7 +421,7 @@ export default function DistributionList({
             }}
             className="input"
           >
-            {SORTS.map((s) => (
+            {sorts.map((s) => (
               <option key={s.key} value={s.key}>
                 {s.label}
               </option>
@@ -448,7 +453,7 @@ export default function DistributionList({
                   <Link href={`/host/e/${slug}/guests/${r.id}`} className="wrap-names min-w-0 font-bold text-ink">
                     {r.nameEn}
                   </Link>
-                  <ReplyBadge replied={r.replied} invited={r.invited} />
+                  {showReplied && <ReplyBadge replied={r.replied} invited={r.invited} />}
                 </div>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
                   {showSide && <SideBadge side={r.side} />}
