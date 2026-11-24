@@ -143,7 +143,7 @@ function DemoBox() {
   );
 }
 
-/* Hero illustrations. Decorative only, so hidden from screen readers. */
+/* Hero illustrations. Decorative only, so hidden from screen readers. Made-up names only: this page is public (owner, 24 Nov). */
 
 const cardFrame =
   "rounded-xl bg-sand text-center shadow-[inset_0_0_0_5px_#e5d3af,inset_0_0_0_6px_#790d16,inset_0_0_0_9px_#e5d3af,inset_0_0_0_10px_#790d16]";
@@ -152,8 +152,8 @@ function InviteCard() {
   return (
     <div className={`${cardFrame} px-3 pb-6 pt-5`}>
       <div className="text-xs font-bold text-maroon">You are warmly invited</div>
-      <div className={`${display} text-[25px] leading-[1.3] text-maroon sm:text-[28px]`}>Manali &amp; Anish</div>
-      <div className="text-xs text-ink-e-soft">Monday, 28 December · Mumbai</div>
+      <div className={`${display} text-[25px] leading-[1.3] text-maroon sm:text-[28px]`}>Priya &amp; Rohan</div>
+      <div className="text-xs text-ink-e-soft">Saturday, 6 February · Pune</div>
     </div>
   );
 }
@@ -181,7 +181,7 @@ function PhoneMockup() {
           <InviteCard />
           <div className="rounded-[14px] border border-sand bg-card-e p-3 text-center">
             <div className="text-xs text-ink-e-soft">This invitation is for</div>
-            <div className="text-[17px] font-bold">Shri. Anil Kini &amp; family</div>
+            <div className="text-[17px] font-bold">Shri. Suresh Patil &amp; family</div>
           </div>
           <div className="text-center text-[15px] font-bold">Is this invitation for you?</div>
           <div className="flex min-h-[46px] items-center justify-center rounded-xl bg-maroon font-bold text-white">Yes, that&apos;s us</div>
