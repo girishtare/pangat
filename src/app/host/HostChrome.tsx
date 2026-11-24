@@ -57,6 +57,7 @@ function navItems(host: HostContext, current: NavKey): NavItem[] {
     { key: "numbers", href: `${base}/numbers`, label: "Caterer numbers", ownerOnly: true },
     { key: "expenses", href: `${base}/expenses`, label: "Expenses", ownerOnly: true },
     { key: "settings", href: `${base}/settings`, label: "Event settings", ownerOnly: true },
+    { key: "admin", href: `${base}/admin`, label: "Admin", ownerOnly: true },
   ];
   return all
     .filter((i) => !i.ownerOnly || host.canManage)
