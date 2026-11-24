@@ -13,6 +13,14 @@ import { ActualForm, BaselineForm, FreezeButton } from "./NumbersForms";
 
 export const dynamic = "force-dynamic";
 
+/** "2026-12-20" → "2026-12-19" (dates only, no time zone involved). */
+function dayBefore(date: string | null): string | null {
+  if (!date) return null;
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // The UI says "family's guess"; code, database and tests keep "baseline".
 
 const when = longStamp;
@@ -56,6 +64,8 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
   const revisedAt = rows.map((r) => r.n.revisedAt).find(Boolean) ?? null;
   const day = (d: string | null) => (d ? formatDay(`${d}T12:00:00+05:30`, "en") : null);
   const dueOn = day(host.event.catererDueOn);
+  // Pangat's number is frozen the day before the caterer's first count (plan: 19 Dec for 20 Dec).
+  const freezeOn = day(dayBefore(host.event.catererDueOn));
   const finalOn = day(host.event.catererFinalOn);
   const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
   const pastFinal = !!host.event.catererFinalOn && todayIst > host.event.catererFinalOn;
@@ -243,9 +253,9 @@ export default async function CatererNumbers({ params }: { params: Promise<{ slu
                 First count
               </p>
               <p className="hint">
-                Freeze when the caterer needs the first count{dueOn ? ` (${dueOn})` : ""}: the pilot is judged on this freeze.
+                Freeze the day before the caterer needs the first count{freezeOn ? ` (freeze on ${freezeOn}; due ${dueOn})` : ""}: the pilot is judged on this freeze.
               </p>
-              <p className="hint mb-3">{frozenAt ? `Frozen ${when(frozenAt)}.` : `Not frozen yet${dueOn ? `; due ${dueOn}` : ""}.`}</p>
+              <p className="hint mb-3">{frozenAt ? `Frozen ${when(frozenAt)}.` : `Not frozen yet${freezeOn ? `; freeze on ${freezeOn}` : ""}.`}</p>
               <FreezeButton
                 slug={slug}
                 kind="first"

@@ -2,7 +2,7 @@
 
 import { COUNTRIES, joinPhone } from "@/lib/phone";
 import { useState, useTransition } from "react";
-import { Check, ChevronLeft, CircleAlert, Lock } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, CircleAlert, Lock } from "lucide-react";
 import { formatDay, formatWhen, t } from "@/lib/i18n";
 import { eventDays, splitLead } from "@/lib/text";
 import { pick, type ArrivalSlot, type HouseholdView, type Lang } from "@/lib/types";
@@ -438,19 +438,24 @@ function NotUs({ token, lang, langButton, onBack }: { token: string; lang: Lang;
             {t(lang, "mobileLabel")}
           </label>
           <div className="flex items-stretch overflow-hidden rounded-[14px] border-2 border-maroon bg-white focus-within:shadow-[0_0_0_4px_rgba(174,196,212,0.6)]">
-            {/* Country code (owner, 14 Nov): India first; relatives abroad pick theirs. */}
-            <select
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              aria-label={lang === "mr" ? "देशाचा कोड" : "Country code"}
-              className="max-w-[6.5rem] border-0 border-r border-sand bg-cream px-2 font-bold text-ink-e-soft outline-none!"
-            >
-              {COUNTRIES.map((c) => (
-                <option key={c.iso} value={c.iso}>
-                  +{c.code} {c.name}
-                </option>
-              ))}
-            </select>
+            {/* Country code (owner, 14 Nov): India first; relatives abroad pick theirs. The closed box shows just "+91"
+                (the full name was cut to "+91 Indi"); the list itself, invisible on top, opens with every country named. */}
+            <div className="relative flex shrink-0 items-center gap-1 border-r border-sand bg-cream px-3 font-bold text-ink-e-soft">
+              <span aria-hidden="true">+{COUNTRIES.find((c) => c.iso === country)?.code ?? "91"}</span>
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                aria-label={lang === "mr" ? "देशाचा कोड" : "Country code"}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.iso} value={c.iso}>
+                    +{c.code} {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <input
               id="notus-mobile"
               value={mobile}
