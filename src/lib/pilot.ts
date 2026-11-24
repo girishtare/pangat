@@ -68,6 +68,22 @@ export function closer(n: Pick<FunctionNumbers, "baseline" | "predicted" | "actu
   return p < b ? "tool" : b < p ? "baseline" : "tie";
 }
 
+/**
+ * How close Pangat's frozen veg / non-veg split came to the day's (owner, 24 Nov: the 3 January review needs
+ * "predicted and actual veg to non-veg split"). Shares are whole percentages of non-veg; the gap is in
+ * percentage points. Null until both splits exist (veg-only and no-food functions never have one).
+ */
+export function nonvegShareCheck(
+  n: Pick<FunctionNumbers, "predictedVeg" | "predictedNonveg" | "actualVeg" | "actualNonveg">,
+): { predicted: number; actual: number; gap: number } | null {
+  const { predictedVeg: pv, predictedNonveg: pn, actualVeg: av, actualNonveg: an } = n;
+  if (pv === null || pn === null || av === null || an === null) return null;
+  if (pv + pn === 0 || av + an === 0) return null;
+  const predicted = Math.round((pn / (pv + pn)) * 100);
+  const actual = Math.round((an / (av + an)) * 100);
+  return { predicted, actual, gap: Math.abs(predicted - actual) };
+}
+
 /** A whole number from a form field, blank meaning "not set". */
 export function readCount(raw: FormDataEntryValue | null, max = 100000): { ok: true; value: number | null } | { ok: false } {
   const s = String(raw ?? "").trim().replace(/,/g, "");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { closer, latestToCaterer, readCount, splitByConfirmed, toCaterer } from "@/lib/pilot";
+import { closer, latestToCaterer, nonvegShareCheck, readCount, splitByConfirmed, toCaterer } from "@/lib/pilot";
 
 describe("pilot record", () => {
   it("splits the tool's number by the confirmed veg ratio", () => {
@@ -21,6 +21,17 @@ describe("pilot record", () => {
     expect(latestToCaterer({ baseline: 700, predicted: 640, revised: 760 })).toBe(760);
     expect(latestToCaterer({ baseline: 700, predicted: 760, revised: 680 })).toBe(700);
     expect(latestToCaterer({ baseline: null, predicted: 640, revised: 600 })).toBe(600);
+  });
+
+  it("compares the frozen non-veg share with the day's", () => {
+    expect(nonvegShareCheck({ predictedVeg: 420, predictedNonveg: 260, actualVeg: 400, actualNonveg: 290 })).toEqual({
+      predicted: 38,
+      actual: 42,
+      gap: 4,
+    });
+    expect(nonvegShareCheck({ predictedVeg: 100, predictedNonveg: 0, actualVeg: 90, actualNonveg: 0 })).toEqual({ predicted: 0, actual: 0, gap: 0 });
+    expect(nonvegShareCheck({ predictedVeg: 420, predictedNonveg: 260, actualVeg: null, actualNonveg: null })).toBeNull();
+    expect(nonvegShareCheck({ predictedVeg: 0, predictedNonveg: 0, actualVeg: 10, actualNonveg: 5 })).toBeNull();
   });
 
   it("judges which number came closer to the actual count", () => {
