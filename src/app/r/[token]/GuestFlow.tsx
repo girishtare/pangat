@@ -53,7 +53,7 @@ export default function GuestFlow({
   view: HouseholdView;
   closed: boolean;
   source: "qr" | "link";
-  /** Language the guest chose last time on this phone (cookie), if any. */
+  /** Language chosen last time for this household on this phone (cookie), if any. */
   initialLang?: Lang;
   /** The font the name is written in on the invitation card. */
   cardFont: { family: string; className: string };
@@ -62,8 +62,10 @@ export default function GuestFlow({
   const [lang, setLangState] = useState<Lang>(initialLang ?? (view.household.name.mr ? "mr" : "en"));
   const setLang = (next: Lang) => {
     setLangState(next);
-    // Remember the choice on this phone, so the page opens in it next time.
-    document.cookie = `pangat_lang=${next}; path=/; max-age=31536000; samesite=lax`;
+    // Remember the choice for this household on this phone (path = this link), so its page opens in it next time
+    // and other households' links keep their own language (owner, 24 Nov). The old phone-wide cookie is removed.
+    document.cookie = `pangat_lang_hh=${next}; path=/r/${token}; max-age=31536000; samesite=lax`;
+    document.cookie = "pangat_lang=; path=/; max-age=0; samesite=lax";
   };
   // Replied to some functions but not all (one was added later): open the form, not the thank-you page.
   const unanswered = view.functions.some((f) => !view.responses.some((r) => r.functionId === f.id));
